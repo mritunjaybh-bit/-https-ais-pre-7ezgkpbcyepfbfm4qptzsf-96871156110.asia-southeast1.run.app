@@ -1,0 +1,6 @@
+{
+  "name": "Cà Phê - Authentic Vietnamese Coffee Powders & Instant Blends",
+  "description": "Direct-trade Vietnamese ground coffee powders, flavored blends, 3-in-1 instant sachets, Phin gravity brewing kits, and step-by-step masterclass brewing guides with interactive timers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
