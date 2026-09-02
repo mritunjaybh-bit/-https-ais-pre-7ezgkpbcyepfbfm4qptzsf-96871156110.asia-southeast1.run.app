@@ -32,6 +32,24 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab, onOpenTracker }) =>
             <p className="text-xs text-[#ae8d87] leading-relaxed pr-4">
               Direct-trade artisanal Vietnamese ground coffee powders, instant 3-in-1 condensed milk sachets, pure freeze-dried crystals, and stainless steel Phin gravity brewing kits. Sourced directly from heirloom micro-lot farmers in Buôn Ma Thuột & Đà Lạt.
             </p>
+
+            {/* Orders Update & Roastery Desk */}
+            <div className="bg-[#180b09] p-3.5 rounded-xl border border-[#504442] space-y-1.5">
+              <div className="flex items-center gap-2 text-[#feca4d] font-bold text-xs">
+                <Mail className="w-4 h-4 text-[#feca4d]" />
+                <span>Order Updates & Inquiries</span>
+              </div>
+              <p className="text-[11px] text-[#ae8d87]">
+                Order confirmations, dispatch routing, and courier tracking updates are handled at:
+              </p>
+              <a
+                href="mailto:Mritunjay.Bhardwaj@caphevietnam.in"
+                className="inline-block text-xs font-semibold text-white hover:text-[#feca4d] underline font-mono transition-colors"
+              >
+                Mritunjay.Bhardwaj@caphevietnam.in
+              </a>
+            </div>
+
             <div className="text-xs text-[#feca4d] font-semibold flex items-center gap-1.5 pt-1">
               <span>☕ 100% Volcanic Basalt Earth • Nitrogen Sealed Valve Pouches</span>
             </div>
@@ -109,13 +127,13 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab, onOpenTracker }) =>
               Roastery Dispatch Club
             </h4>
             <p className="text-[#ae8d87] leading-relaxed">
-              Subscribe for harvest drops, 15% off first orders, and exclusive micro-lot tasting flights.
+              Subscribe for harvest drops, fresh single-origin releases, and authentic Vietnamese brewing stories.
             </p>
 
             {subscribed ? (
               <div className="bg-[#3e2723] p-3 rounded-lg border border-[#feca4d]/40 flex items-center gap-2 text-emerald-400 font-semibold">
                 <Check className="w-4 h-4 text-emerald-400" />
-                <span>Welcome! Check your inbox for voucher code VIETNAM15.</span>
+                <span>Welcome! You're subscribed to our roastery releases & harvest updates.</span>
               </div>
             ) : (
               <form onSubmit={handleSubscribe} className="space-y-2">

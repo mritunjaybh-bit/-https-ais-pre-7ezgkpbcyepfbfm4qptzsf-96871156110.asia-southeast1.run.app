@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Currency, CartItem } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
 import { Logo } from './Logo';
-import { CheckCircle, Truck, Package, Sparkles, MapPin, Printer, ArrowRight, ShieldCheck } from 'lucide-react';
+import { CheckCircle, Truck, Package, Sparkles, MapPin, Printer, ArrowRight, ShieldCheck, Mail } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface OrderConfirmationModalProps {
@@ -98,7 +98,7 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
         </div>
 
         {/* Destination & Recipient */}
-        <div className="p-4 bg-white border-b border-[#d3c3c0]/40 space-y-1">
+        <div className="p-4 bg-white border-b border-[#d3c3c0]/40 space-y-2">
           <div className="flex items-center gap-1.5 text-[#785a00] font-bold text-[11px] uppercase tracking-wider">
             <MapPin className="w-3.5 h-3.5" />
             <span>Shipping Destination</span>
@@ -109,7 +109,23 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
           <p className="text-xs text-[#504442]">
             {orderDetails.shippingAddress}, {orderDetails.cityPincode}
           </p>
-          <p className="text-[11px] text-[#827472]">Tracking updates sent to: {orderDetails.customerEmail}</p>
+          <p className="text-[11px] text-[#827472]">Customer tracking updates: {orderDetails.customerEmail}</p>
+
+          {/* Roastery Order Notification Box */}
+          <div className="mt-2 p-2.5 bg-[#faf2f0] rounded-lg border border-[#d3c3c0]/60 flex items-start gap-2 text-xs">
+            <Mail className="w-4 h-4 text-[#785a00] flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-[#271310]">
+                Order dispatched to roastery desk: <span className="font-mono text-[#785a00]">Mritunjay.Bhardwaj@caphevietnam.in</span>
+              </p>
+              <p className="text-[11px] text-[#827472] mt-0.5">
+                For queries, updates, or custom delivery instructions, email{' '}
+                <a href="mailto:Mritunjay.Bhardwaj@caphevietnam.in" className="text-[#785a00] underline">
+                  Mritunjay.Bhardwaj@caphevietnam.in
+                </a>
+              </p>
+            </div>
+          </div>
 
           {orderDetails.giftMessage && (
             <div className="mt-2 p-2.5 bg-[#faf2f0] rounded-lg border border-[#d3c3c0]/50 text-xs italic text-[#504442]">

@@ -30,32 +30,8 @@ export default function App() {
   const [currency, setCurrency] = useState<Currency>('INR');
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
 
-  // Initial cart with packaged coffee powder & instant sachets
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 'init-powder-1',
-      productId: 'saigon-heritage-phin-powder',
-      name: 'Saigon Heritage Phin Coffee Powder',
-      vietnameseName: 'Cà Phê Bột Phin Truyền Thống Sài Gòn',
-      unitPriceINR: 380,
-      quantity: 1,
-      imageUrl: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=800&q=80',
-      selectedSize: '250g Valve Pouch',
-      selectedGrind: 'Authentic Phin Grind (Coarse)',
-      category: 'coffee-powder',
-    },
-    {
-      id: 'init-instant-2',
-      productId: 'saigon-3in1-instant-sachets',
-      name: 'Saigon 3-in-1 Condensed Milk Instant Coffee',
-      vietnameseName: 'Cà Phê Hòa Tan 3in1 Sữa Đặc Sài Gòn',
-      unitPriceINR: 340,
-      quantity: 1,
-      imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
-      selectedSize: 'Box of 20 Sachets',
-      category: 'instant-coffee',
-    },
-  ]);
+  // Initial cart starts empty
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isTrackerOpen, setIsTrackerOpen] = useState<boolean>(false);

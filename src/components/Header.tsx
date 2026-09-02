@@ -14,7 +14,8 @@ import {
   Check,
   Clock,
   Package,
-  Truck
+  Truck,
+  Mail
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatCurrency';
 import { CURRENCY_RATES } from '../data/coffeeData';
@@ -68,10 +69,16 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Fresh Single-Origin Ground Powders & Instant Coffee • Air Courier Dispatch Across India</span>
         </div>
         <div className="mx-auto flex items-center gap-2 text-[11px] md:text-xs">
-          <span className="text-[#feca4d] font-semibold">Special Offer:</span>
-          <span>
-            Use code <strong className="text-white bg-[#3e2723] px-1.5 py-0.5 rounded border border-[#feca4d]/40">VIETNAM15</strong> for 15% off ground coffee powders & instant boxes
+          <span className="text-[#feca4d] font-semibold flex items-center gap-1">
+            <Mail className="w-3.5 h-3.5" />
+            Order Updates & Inquiries:
           </span>
+          <a
+            href="mailto:Mritunjay.Bhardwaj@caphevietnam.in"
+            className="text-white hover:text-[#feca4d] underline font-medium transition-colors"
+          >
+            Mritunjay.Bhardwaj@caphevietnam.in
+          </a>
         </div>
         <div className="hidden md:flex items-center gap-4 text-[11px] text-[#ae8d87]">
           <span>Fresh Nitrogen Sealed</span>

@@ -49,19 +49,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   if (!isOpen) return null;
 
   const [shippingType, setShippingType] = useState<'standard' | 'express'>('standard');
-  const [shippingAddress, setShippingAddress] = useState<string>('Flat 402, Lotus Residency, MG Road');
-  const [cityPincode, setCityPincode] = useState<string>('Bengaluru, 560001');
-  const [customerName, setCustomerName] = useState<string>('Rahul Sharma');
-  const [customerPhone, setCustomerPhone] = useState<string>('+91 98765 43210');
-  const [customerEmail, setCustomerEmail] = useState<string>('rahul.coffee@example.com');
+  const [shippingAddress, setShippingAddress] = useState<string>('');
+  const [cityPincode, setCityPincode] = useState<string>('');
+  const [customerName, setCustomerName] = useState<string>('');
+  const [customerPhone, setCustomerPhone] = useState<string>('');
+  const [customerEmail, setCustomerEmail] = useState<string>('');
   const [promoCode, setPromoCode] = useState<string>('');
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoSuccess, setPromoSuccess] = useState<string | null>(null);
   const [includeGiftWrap, setIncludeGiftWrap] = useState<boolean>(false);
-  const [giftMessage, setGiftMessage] = useState<string>(
-    'Enjoy authentic Vietnamese coffee powder & fresh Phin brews!'
-  );
+  const [giftMessage, setGiftMessage] = useState<string>('');
 
   const subtotalINR = items.reduce((sum, item) => sum + item.unitPriceINR * item.quantity, 0);
   const freeShippingThreshold = 799;
@@ -81,12 +79,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     if (code === 'VIETNAM15' || code === 'XINCHAO') {
       const discount = Math.round(subtotalINR * 0.15);
       setAppliedDiscount(discount);
-      setPromoSuccess('15% Coffee Powder & Instant discount applied!');
+      setPromoSuccess('15% Coffee discount applied!');
     } else if (code === 'FREESHIP') {
       setAppliedDiscount(shippingFeeINR);
       setPromoSuccess('Free express courier applied!');
     } else {
-      setPromoError('Invalid promo code. Try "VIETNAM15"');
+      setPromoError('Invalid promo code.');
       setAppliedDiscount(0);
     }
   };
@@ -96,15 +94,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const handleSubmitOrder = (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
+    if (!customerName.trim() || !customerPhone.trim() || !customerEmail.trim() || !shippingAddress.trim() || !cityPincode.trim()) {
+      alert('Please fill in all delivery and contact fields.');
+      return;
+    }
 
     onCheckout({
       shippingType,
-      shippingAddress: shippingAddress.trim() || '123 Coffee Lane',
-      cityPincode: cityPincode.trim() || 'Bengaluru, 560001',
-      customerName: customerName.trim() || 'Valued Coffee Lover',
-      customerPhone: customerPhone.trim() || '+91 98765 43210',
-      customerEmail: customerEmail.trim() || 'customer@example.com',
-      giftMessage: includeGiftWrap ? giftMessage : undefined,
+      shippingAddress: shippingAddress.trim(),
+      cityPincode: cityPincode.trim(),
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim(),
+      customerEmail: customerEmail.trim(),
+      giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
       discountINR: appliedDiscount,
       finalTotalINR,
     });
@@ -256,7 +258,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     type="text"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Enter VIETNAM15"
+                    placeholder="Enter voucher code (optional)"
                     className="flex-1 bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-3 py-1.5 text-xs font-semibold uppercase text-[#271310] focus:outline-none focus:border-[#785a00]"
                   />
                   <button
@@ -322,7 +324,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         required
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
-                        className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] focus:outline-none focus:border-[#785a00]"
+                        placeholder="Enter your full name"
+                        className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] placeholder:text-[#a0918e] focus:outline-none focus:border-[#785a00]"
                       />
                     </div>
 
@@ -334,7 +337,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           required
                           value={customerPhone}
                           onChange={(e) => setCustomerPhone(e.target.value)}
-                          className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] focus:outline-none focus:border-[#785a00]"
+                          placeholder="+91 98765 43210"
+                          className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] placeholder:text-[#a0918e] focus:outline-none focus:border-[#785a00]"
                         />
                       </div>
                       <div>
@@ -344,7 +348,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           required
                           value={customerEmail}
                           onChange={(e) => setCustomerEmail(e.target.value)}
-                          className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] focus:outline-none focus:border-[#785a00]"
+                          placeholder="your.email@example.com"
+                          className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] placeholder:text-[#a0918e] focus:outline-none focus:border-[#785a00]"
                         />
                       </div>
                     </div>
@@ -356,7 +361,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         required
                         value={shippingAddress}
                         onChange={(e) => setShippingAddress(e.target.value)}
-                        className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] focus:outline-none focus:border-[#785a00]"
+                        placeholder="Flat/House No., Building, Street Name"
+                        className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] placeholder:text-[#a0918e] focus:outline-none focus:border-[#785a00]"
                       />
                     </div>
 
@@ -367,9 +373,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         required
                         value={cityPincode}
                         onChange={(e) => setCityPincode(e.target.value)}
-                        className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] focus:outline-none focus:border-[#785a00]"
+                        placeholder="City, PIN Code (e.g. Bengaluru, 560001)"
+                        className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] placeholder:text-[#a0918e] focus:outline-none focus:border-[#785a00]"
                       />
                     </div>
+                  </div>
+
+                  {/* Order Updates Email Notice */}
+                  <div className="bg-[#f5ecea] p-2.5 rounded-lg border border-[#d3c3c0]/60 text-[11px] text-[#504442] flex items-start gap-2">
+                    <Package className="w-3.5 h-3.5 text-[#785a00] flex-shrink-0 mt-0.5" />
+                    <span>
+                      Order notifications & dispatch updates are tracked with your email and our roastery operations desk:{' '}
+                      <strong className="text-[#271310]">Mritunjay.Bhardwaj@caphevietnam.in</strong>
+                    </span>
                   </div>
 
                   {/* Gift Wrap Toggle */}
