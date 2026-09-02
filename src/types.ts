@@ -96,6 +96,10 @@ export interface PlacedOrder {
   finalTotalINR: number;
   items: CartItem[];
   createdAt: number;
+  timestamp: string;
+  paymentStatus: 'paid' | 'pending' | 'failed';
+  paymentId?: string;
+  paymentMethod?: string;
   status: OrderState;
   trackingNumber?: string;
   courierPartner?: string;

@@ -20,6 +20,9 @@ interface OrderConfirmationModalProps {
     discountINR: number;
     finalTotalINR: number;
     items: CartItem[];
+    paymentStatus?: 'paid' | 'pending' | 'failed';
+    paymentId?: string;
+    paymentMethod?: string;
     emailSentSuccess?: boolean;
     emailMessage?: string;
   } | null;
@@ -207,11 +210,17 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
             </div>
           )}
           <div className="flex justify-between text-sm font-bold text-[#271310] pt-1 border-t border-[#d3c3c0]/40">
-            <span>Total Paid (Prepaid/COD):</span>
+            <span>Total Paid (Razorpay Online):</span>
             <span className="font-serif text-base text-[#785a00]">
               {formatPrice(orderDetails.finalTotalINR, currency)}
             </span>
           </div>
+          {orderDetails.paymentId && (
+            <div className="flex justify-between text-[11px] text-[#504442] pt-0.5">
+              <span>Razorpay Transaction ID:</span>
+              <span className="font-mono text-[#785a00] font-semibold">{orderDetails.paymentId}</span>
+            </div>
+          )}
         </div>
 
         {/* Modal Footer */}

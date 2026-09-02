@@ -25,6 +25,7 @@ import { OrderConfirmationModal } from './components/OrderConfirmationModal';
 import { OrderStatusTracker } from './components/OrderStatusTracker';
 import { Footer } from './components/Footer';
 import { CheckCircle2, MailCheck, X } from 'lucide-react';
+import { getAllOrders, saveOrder, updateOrderStatus as updateStoredOrderStatus } from './utils/orderStorage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('shop');
@@ -37,7 +38,7 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isTrackerOpen, setIsTrackerOpen] = useState<boolean>(false);
   const [trackingOrderId, setTrackingOrderId] = useState<string | undefined>(undefined);
-  const [orders, setOrders] = useState<PlacedOrder[]>([]);
+  const [orders, setOrders] = useState<PlacedOrder[]>(() => getAllOrders());
   const [emailAlert, setEmailAlert] = useState<{
     show: boolean;
     orderId: string;
@@ -55,6 +56,9 @@ export default function App() {
     discountINR: number;
     finalTotalINR: number;
     items: CartItem[];
+    paymentStatus?: 'paid' | 'pending' | 'failed';
+    paymentId?: string;
+    paymentMethod?: string;
     emailSentSuccess?: boolean;
     emailMessage?: string;
   } | null>(null);
@@ -140,6 +144,9 @@ export default function App() {
     giftMessage?: string;
     discountINR: number;
     finalTotalINR: number;
+    paymentStatus?: 'paid' | 'pending' | 'failed';
+    paymentId?: string;
+    paymentMethod?: string;
     emailSentSuccess?: boolean;
     emailMessage?: string;
   }) => {
@@ -149,14 +156,21 @@ export default function App() {
       ...details,
       items: [...cartItems],
       createdAt: Date.now(),
+      timestamp: new Date().toISOString(),
       status: 'Order Placed & Roasting',
       courierPartner: details.shippingType === 'express' ? 'BlueDart Air Express' : 'Delhivery Surface',
       trackingNumber: `BD-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      paymentStatus: details.paymentStatus || 'paid',
+      paymentId: details.paymentId,
+      paymentMethod: details.paymentMethod || 'Razorpay Online (UPI/Cards)',
       emailSentSuccess: details.emailSentSuccess ?? true,
       emailMessage: details.emailMessage,
     };
 
-    setOrders((prev) => [newPlacedOrder, ...prev]);
+    // Save order in persistent storage database
+    saveOrder(newPlacedOrder);
+
+    setOrders((prev) => [newPlacedOrder, ...prev.filter((o) => o.orderId !== orderId)]);
     setConfirmedOrder({
       orderId,
       ...details,
@@ -178,6 +192,7 @@ export default function App() {
 
   // Update status from Tracker
   const handleUpdateOrderStatus = (orderId: string, newStatus: OrderState) => {
+    updateStoredOrderStatus(orderId, newStatus);
     setOrders((prev) =>
       prev.map((o) => (o.orderId === orderId ? { ...o, status: newStatus } : o))
     );

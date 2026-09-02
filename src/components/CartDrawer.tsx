@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CartItem, Currency } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
 import { sendOrderEmails, EmailSendResult } from '../utils/emailService';
+import { openRazorpayCheckout } from '../utils/razorpayService';
 import {
   X,
   Trash2,
@@ -18,7 +19,8 @@ import {
   MapPin,
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  CreditCard
 } from 'lucide-react';
 
 interface CartDrawerProps {
@@ -39,6 +41,9 @@ interface CartDrawerProps {
     giftMessage?: string;
     discountINR: number;
     finalTotalINR: number;
+    paymentStatus?: 'paid' | 'pending' | 'failed';
+    paymentId?: string;
+    paymentMethod?: string;
     emailSentSuccess?: boolean;
     emailMessage?: string;
   }) => void;
@@ -68,8 +73,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [includeGiftWrap, setIncludeGiftWrap] = useState<boolean>(false);
   const [giftMessage, setGiftMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
-  const [emailStatusMessage, setEmailStatusMessage] = useState<string | null>(null);
+  const [checkoutStep, setCheckoutStep] = useState<
+    'idle' | 'payment_pending' | 'payment_success' | 'sending_emails' | 'success' | 'error'
+  >('idle');
+  const [stepMessage, setStepMessage] = useState<string | null>(null);
 
   const subtotalINR = items.reduce((sum, item) => sum + item.unitPriceINR * item.quantity, 0);
   const freeShippingThreshold = 799;
@@ -101,88 +108,151 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const finalTotalINR = Math.max(0, subtotalINR + shippingFeeINR - appliedDiscount);
 
+  // Form Validation
+  const validateForm = (): string | null => {
+    const name = customerName.trim();
+    const phone = customerPhone.trim();
+    const email = customerEmail.trim();
+    const address = shippingAddress.trim();
+    const cityPin = cityPincode.trim();
+
+    if (!name || !phone || !email || !address || !cityPin) {
+      return 'Please fill in all delivery and contact fields.';
+    }
+    if (name.length < 2) {
+      return 'Please enter your full name (at least 2 characters).';
+    }
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+      return 'Please enter a valid mobile phone number (at least 10 digits).';
+    }
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      return 'Please enter a valid email address (e.g. yourname@example.com).';
+    }
+    if (address.length < 5) {
+      return 'Please provide complete delivery street or flat address.';
+    }
+    if (cityPin.length < 3) {
+      return 'Please provide your delivery city and postal PIN code.';
+    }
+    return null;
+  };
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0 || isSubmitting) return;
 
-    if (
-      !customerName.trim() ||
-      !customerPhone.trim() ||
-      !customerEmail.trim() ||
-      !shippingAddress.trim() ||
-      !cityPincode.trim()
-    ) {
-      alert('Please fill in all delivery and contact fields.');
-      return;
-    }
-
-    // Basic email validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) {
-      alert('Please enter a valid email address.');
+    // Step 1: Form Validation
+    const validationError = validateForm();
+    if (validationError) {
+      setCheckoutStep('error');
+      setStepMessage(validationError);
       return;
     }
 
     const orderId = `CP-${Math.floor(100000 + Math.random() * 900000)}`;
+    const cleanCustomerName = customerName.trim();
+    const cleanCustomerPhone = customerPhone.trim();
+    const cleanCustomerEmail = customerEmail.trim();
+    const cleanShippingAddress = shippingAddress.trim();
+    const cleanCityPincode = cityPincode.trim();
+
     setIsSubmitting(true);
-    setEmailStatus('sending');
-    setEmailStatusMessage('Sending order confirmation emails to owner and customer...');
+    setCheckoutStep('payment_pending');
+    setStepMessage('Opening secure Razorpay payment gateway (UPI, Cards, Wallets)...');
+
+    // Step 2: Razorpay Payment
+    let paymentResponse: { razorpay_payment_id: string; razorpay_order_id?: string };
+    try {
+      paymentResponse = await openRazorpayCheckout({
+        orderId,
+        amountINR: finalTotalINR,
+        customerName: cleanCustomerName,
+        customerEmail: cleanCustomerEmail,
+        customerPhone: cleanCustomerPhone,
+        shippingAddress: `${cleanShippingAddress}, ${cleanCityPincode}`,
+      });
+      console.log('[Payment] Razorpay payment successful:', paymentResponse);
+    } catch (paymentErr: any) {
+      console.error('[Payment] Razorpay payment declined/failed/cancelled:', paymentErr);
+      setIsSubmitting(false);
+      setCheckoutStep('error');
+      // On failed payment, show an error and do NOT submit the order
+      setStepMessage(
+        paymentErr?.message || 'Payment transaction was declined or cancelled. Your order has not been placed.'
+      );
+      return;
+    }
+
+    // Step 3: Payment Succeeded -> Send Both Order Emails via EmailJS
+    setCheckoutStep('sending_emails');
+    setStepMessage(`Payment verified (ID: ${paymentResponse.razorpay_payment_id})! Sending confirmation emails...`);
 
     try {
       const emailResult: EmailSendResult = await sendOrderEmails({
         orderId,
         items,
-        customerName: customerName.trim(),
-        customerEmail: customerEmail.trim(),
-        customerPhone: customerPhone.trim(),
-        shippingAddress: shippingAddress.trim(),
-        cityPincode: cityPincode.trim(),
+        customerName: cleanCustomerName,
+        customerEmail: cleanCustomerEmail,
+        customerPhone: cleanCustomerPhone,
+        shippingAddress: cleanShippingAddress,
+        cityPincode: cleanCityPincode,
         finalTotalINR,
       });
 
       if (emailResult.success) {
-        setEmailStatus('success');
-        setEmailStatusMessage('Both emails sent successfully! Customer & owner confirmed.');
+        setCheckoutStep('success');
+        setStepMessage('Payment confirmed & both confirmation emails dispatched successfully!');
       } else {
-        setEmailStatus('error');
-        setEmailStatusMessage(emailResult.message || 'Email dispatch incomplete.');
+        // Log/show error if either fails
+        console.warn('[EmailJS] One or more emails failed:', emailResult);
+        setCheckoutStep('error');
+        setStepMessage(emailResult.message || 'Payment confirmed, but confirmation email dispatch was incomplete.');
       }
 
-      // Allow brief moment for visual confirmation before opening receipt modal
+      // Step 4: Finalize local order & trigger receipt modal
       setTimeout(() => {
         setIsSubmitting(false);
         onCheckout({
           orderId,
           shippingType,
-          shippingAddress: shippingAddress.trim(),
-          cityPincode: cityPincode.trim(),
-          customerName: customerName.trim(),
-          customerPhone: customerPhone.trim(),
-          customerEmail: customerEmail.trim(),
+          shippingAddress: cleanShippingAddress,
+          cityPincode: cleanCityPincode,
+          customerName: cleanCustomerName,
+          customerPhone: cleanCustomerPhone,
+          customerEmail: cleanCustomerEmail,
           giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
           discountINR: appliedDiscount,
           finalTotalINR,
+          paymentStatus: 'paid',
+          paymentId: paymentResponse.razorpay_payment_id,
+          paymentMethod: 'Razorpay Online (UPI/Cards/Wallets)',
           emailSentSuccess: emailResult.success,
           emailMessage: emailResult.message,
         });
       }, 700);
     } catch (err: any) {
-      console.error('EmailJS execution error:', err);
+      console.error('[Checkout] Email execution error after payment:', err);
       setIsSubmitting(false);
-      setEmailStatus('error');
-      setEmailStatusMessage(err?.text || err?.message || 'Error executing email service.');
+      setCheckoutStep('error');
+      setStepMessage(err?.text || err?.message || 'Error executing email notification service.');
 
-      // Proceed with local checkout so user order isn't lost
+      // Payment was already captured, ensure user still gets their order confirmation
       onCheckout({
         orderId,
         shippingType,
-        shippingAddress: shippingAddress.trim(),
-        cityPincode: cityPincode.trim(),
-        customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
-        customerEmail: customerEmail.trim(),
+        shippingAddress: cleanShippingAddress,
+        cityPincode: cleanCityPincode,
+        customerName: cleanCustomerName,
+        customerPhone: cleanCustomerPhone,
+        customerEmail: cleanCustomerEmail,
         giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
         discountINR: appliedDiscount,
         finalTotalINR,
+        paymentStatus: 'paid',
+        paymentId: paymentResponse.razorpay_payment_id,
+        paymentMethod: 'Razorpay Online (UPI/Cards/Wallets)',
         emailSentSuccess: false,
         emailMessage: 'Email delivery pending roastery connection.',
       });
@@ -395,12 +465,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   {/* Customer Inputs */}
                   <div className="space-y-2">
                     <div>
-                      <label className="text-[10px] font-bold text-[#827472] uppercase block">Full Name:</label>
+                      <label htmlFor="customer_name" className="text-[10px] font-bold text-[#827472] uppercase block">
+                        Full Name:
+                      </label>
                       <input
+                        id="customer_name"
+                        name="customer_name"
                         type="text"
                         required
                         value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
+                        onChange={(e) => {
+                          setCustomerName(e.target.value);
+                          if (checkoutStep === 'error') setStepMessage(null);
+                        }}
                         placeholder="Enter your full name"
                         className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] placeholder:text-[#a0918e] focus:outline-none focus:border-[#785a00]"
                       />
@@ -408,23 +485,37 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[10px] font-bold text-[#827472] uppercase block">Mobile Phone:</label>
+                        <label htmlFor="customer_phone" className="text-[10px] font-bold text-[#827472] uppercase block">
+                          Mobile Phone:
+                        </label>
                         <input
+                          id="customer_phone"
+                          name="customer_phone"
                           type="tel"
                           required
                           value={customerPhone}
-                          onChange={(e) => setCustomerPhone(e.target.value)}
+                          onChange={(e) => {
+                            setCustomerPhone(e.target.value);
+                            if (checkoutStep === 'error') setStepMessage(null);
+                          }}
                           placeholder="+91 98765 43210"
                           className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] placeholder:text-[#a0918e] focus:outline-none focus:border-[#785a00]"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-[#827472] uppercase block">Email for Tracking:</label>
+                        <label htmlFor="customer_email" className="text-[10px] font-bold text-[#827472] uppercase block">
+                          Email for Tracking:
+                        </label>
                         <input
+                          id="customer_email"
+                          name="customer_email"
                           type="email"
                           required
                           value={customerEmail}
-                          onChange={(e) => setCustomerEmail(e.target.value)}
+                          onChange={(e) => {
+                            setCustomerEmail(e.target.value);
+                            if (checkoutStep === 'error') setStepMessage(null);
+                          }}
                           placeholder="your.email@example.com"
                           className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] placeholder:text-[#a0918e] focus:outline-none focus:border-[#785a00]"
                         />
@@ -432,24 +523,38 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-bold text-[#827472] uppercase block">Address / Street / Flat:</label>
+                      <label htmlFor="shipping_address" className="text-[10px] font-bold text-[#827472] uppercase block">
+                        Address / Street / Flat:
+                      </label>
                       <input
+                        id="shipping_address"
+                        name="shipping_address"
                         type="text"
                         required
                         value={shippingAddress}
-                        onChange={(e) => setShippingAddress(e.target.value)}
+                        onChange={(e) => {
+                          setShippingAddress(e.target.value);
+                          if (checkoutStep === 'error') setStepMessage(null);
+                        }}
                         placeholder="Flat/House No., Building, Street Name"
                         className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] placeholder:text-[#a0918e] focus:outline-none focus:border-[#785a00]"
                       />
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-bold text-[#827472] uppercase block">City & PIN Code:</label>
+                      <label htmlFor="city_pincode" className="text-[10px] font-bold text-[#827472] uppercase block">
+                        City & PIN Code:
+                      </label>
                       <input
+                        id="city_pincode"
+                        name="city_pincode"
                         type="text"
                         required
                         value={cityPincode}
-                        onChange={(e) => setCityPincode(e.target.value)}
+                        onChange={(e) => {
+                          setCityPincode(e.target.value);
+                          if (checkoutStep === 'error') setStepMessage(null);
+                        }}
                         placeholder="City, PIN Code (e.g. Bengaluru, 560001)"
                         className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-xs text-[#271310] placeholder:text-[#a0918e] focus:outline-none focus:border-[#785a00]"
                       />
@@ -525,34 +630,35 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             </div>
 
-            {/* Email Dispatch Feedback Status Banner */}
-            {emailStatus === 'sending' && (
+            {/* Checkout & Email Feedback Status Banner */}
+            {(checkoutStep === 'payment_pending' || checkoutStep === 'sending_emails') && (
               <div className="p-2.5 rounded-lg bg-[#faf2f0] border border-[#d3c3c0] text-xs flex items-center gap-2 text-[#785a00]">
                 <Loader2 className="w-4 h-4 animate-spin text-[#785a00] flex-shrink-0" />
-                <span className="font-medium">Sending order emails to owner & customer via EmailJS...</span>
+                <span className="font-medium">{stepMessage || 'Processing checkout...'}</span>
               </div>
             )}
-            {emailStatus === 'success' && (
+            {checkoutStep === 'success' && (
               <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-300 text-xs flex items-center gap-2 text-emerald-800">
                 <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span className="font-semibold">Both confirmation emails sent successfully!</span>
+                <span className="font-semibold">{stepMessage || 'Payment verified & order emails sent successfully!'}</span>
               </div>
             )}
-            {emailStatus === 'error' && (
+            {checkoutStep === 'error' && (
               <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-xs flex items-center gap-2 text-amber-900">
                 <AlertCircle className="w-4 h-4 text-amber-700 flex-shrink-0" />
-                <span>{emailStatusMessage || 'Could not verify email delivery.'}</span>
+                <span>{stepMessage || 'Payment or validation error.'}</span>
               </div>
             )}
 
             <button
+              id="place-order-button"
               form="checkout-form"
               type="submit"
               disabled={isSubmitting}
               className={`w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 ${
                 isSubmitting
                   ? 'bg-[#504442] text-white cursor-wait opacity-80'
-                  : emailStatus === 'success'
+                  : checkoutStep === 'success'
                   ? 'bg-emerald-700 hover:bg-emerald-800 text-white cursor-pointer'
                   : 'bg-[#785a00] hover:bg-[#8e6b00] text-white cursor-pointer active:scale-98'
               }`}
@@ -560,12 +666,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Sending Emails & Placing Order...</span>
+                  <span>
+                    {checkoutStep === 'payment_pending'
+                      ? 'Processing Razorpay Payment...'
+                      : 'Sending Emails & Placing Order...'}
+                  </span>
                 </>
-              ) : emailStatus === 'success' ? (
+              ) : checkoutStep === 'success' ? (
                 <>
                   <CheckCircle className="w-4 h-4 text-white" />
-                  <span>Emails Sent & Order Confirmed!</span>
+                  <span>Payment & Emails Confirmed!</span>
                 </>
               ) : (
                 <>
