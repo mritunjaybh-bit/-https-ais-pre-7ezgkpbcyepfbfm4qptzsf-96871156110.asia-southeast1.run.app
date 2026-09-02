@@ -10,7 +10,7 @@
 
 export const RAZORPAY_CONFIG = {
   // Test / Live Key ID (Vite client-side prefix: VITE_RAZORPAY_KEY_ID)
-  KEY_ID: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TXLMB808xUqZ2s',
+  KEY_ID: import.meta.env.VITE_RAZORPAY_KEY_ID || '',
   MERCHANT_NAME: 'Cà Phê Vietnam',
   DESCRIPTION: 'Authentic Vietnamese Coffee Powders & Blends',
   THEME_COLOR: '#785a00',
@@ -145,6 +145,10 @@ export function loadRazorpaySDK(): Promise<boolean> {
 export async function openRazorpayCheckout(
   options: PaymentOptions
 ): Promise<RazorpayPaymentSuccessPayload> {
+  if (!RAZORPAY_CONFIG.KEY_ID) {
+    throw new Error('Razorpay Key ID (VITE_RAZORPAY_KEY_ID) is not configured in environment variables.');
+  }
+
   const isLoaded = await loadRazorpaySDK();
   if (!isLoaded || !(window as any).Razorpay) {
     throw new Error('Razorpay payment gateway failed to load. Please check your internet connection.');

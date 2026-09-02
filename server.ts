@@ -6,10 +6,13 @@ import Razorpay from 'razorpay';
 import { createServer as createViteServer } from 'vite';
 
 // Load environment variables from .env
-dotenv.config();
+dotenv.config({ override: true });
 
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'rzp_test_TXLMB808xUqZ2s';
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'uYTFFmToofIEfvawQPYjIbVn';
+function getRazorpayCredentials() {
+  const key_id = (process.env.RAZORPAY_KEY_ID || '').trim();
+  const key_secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+  return { key_id, key_secret };
+}
 
 async function startServer() {
   const app = express();
@@ -20,9 +23,10 @@ async function startServer() {
 
   // Health check endpoint
   app.get('/api/health', (_req: Request, res: Response) => {
+    const { key_id, key_secret } = getRazorpayCredentials();
     res.json({
       status: 'ok',
-      razorpay_configured: Boolean(RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET),
+      razorpay_configured: Boolean(key_id && key_secret),
       timestamp: new Date().toISOString(),
     });
   });
@@ -40,9 +44,10 @@ async function startServer() {
   app.post('/api/create-order', async (req: Request, res: Response) => {
     try {
       const { amount, currency = 'INR', receipt } = req.body;
+      const { key_id, key_secret } = getRazorpayCredentials();
 
       // Validate credentials
-      if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+      if (!key_id || !key_secret) {
         return res.status(401).json({
           error: 'Razorpay API credentials (KEY_ID or KEY_SECRET) are not configured on the server.',
         });
@@ -57,8 +62,8 @@ async function startServer() {
       }
 
       const instance = new Razorpay({
-        key_id: RAZORPAY_KEY_ID,
-        key_secret: RAZORPAY_KEY_SECRET,
+        key_id,
+        key_secret,
       });
 
       const options = {
@@ -106,6 +111,7 @@ async function startServer() {
   app.post('/api/verify-payment', (req: Request, res: Response) => {
     try {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+      const { key_secret } = getRazorpayCredentials();
 
       // Validate required fields
       if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -115,7 +121,7 @@ async function startServer() {
         });
       }
 
-      if (!RAZORPAY_KEY_SECRET) {
+      if (!key_secret) {
         return res.status(500).json({
           success: false,
           error: 'Razorpay secret key is not configured on the server.',
@@ -125,7 +131,7 @@ async function startServer() {
       // Generate expected HMAC-SHA256 signature
       const payload = `${razorpay_order_id}|${razorpay_payment_id}`;
       const expectedSignature = crypto
-        .createHmac('sha256', RAZORPAY_KEY_SECRET)
+        .createHmac('sha256', key_secret)
         .update(payload)
         .digest('hex');
 
