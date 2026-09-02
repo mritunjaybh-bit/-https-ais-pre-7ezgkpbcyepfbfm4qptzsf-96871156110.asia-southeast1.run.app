@@ -20,6 +20,8 @@ interface OrderConfirmationModalProps {
     discountINR: number;
     finalTotalINR: number;
     items: CartItem[];
+    emailSentSuccess?: boolean;
+    emailMessage?: string;
   } | null;
   currency: Currency;
   onTrackOrder?: (orderId: string) => void;
@@ -75,6 +77,38 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
             Your coffee powder and instant blends will be custom-ground, degassing-sealed, and dispatched to your door.
           </p>
         </div>
+
+        {/* EmailJS Success Notification Banner */}
+        {orderDetails.emailSentSuccess !== false && (
+          <div className="bg-emerald-50 border-b border-emerald-200 p-4 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <div className="space-y-1 text-left flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-bold text-xs text-emerald-950">
+                  Confirmation Emails Sent Successfully
+                </span>
+                <span className="bg-emerald-200 text-emerald-900 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">
+                  EmailJS Dispatched
+                </span>
+              </div>
+              <p className="text-[11px] text-emerald-800 leading-snug">
+                Both notifications were generated and dispatched with all order details:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 text-[11px]">
+                <div className="bg-white p-2 rounded-lg border border-emerald-200 text-emerald-950">
+                  <span className="text-[10px] uppercase font-bold text-emerald-700 block">Owner Alert (template_g2buarq):</span>
+                  <span className="font-mono text-[11px]">mritunjay.bhardwaj@caphevietnam.in</span>
+                </div>
+                <div className="bg-white p-2 rounded-lg border border-emerald-200 text-emerald-950">
+                  <span className="text-[10px] uppercase font-bold text-emerald-700 block">Customer Confirmation (template_yrtnzv3):</span>
+                  <span className="font-mono text-[11px] truncate block">{orderDetails.customerEmail}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Order Identifier & Metadata Box */}
         <div className="bg-[#faf2f0] p-4 border-b border-[#d3c3c0]/50 grid grid-cols-2 sm:grid-cols-3 gap-3">

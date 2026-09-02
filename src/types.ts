@@ -99,4 +99,6 @@ export interface PlacedOrder {
   status: OrderState;
   trackingNumber?: string;
   courierPartner?: string;
+  emailSentSuccess?: boolean;
+  emailMessage?: string;
 }

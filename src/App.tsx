@@ -24,6 +24,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { OrderConfirmationModal } from './components/OrderConfirmationModal';
 import { OrderStatusTracker } from './components/OrderStatusTracker';
 import { Footer } from './components/Footer';
+import { CheckCircle2, MailCheck, X } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('shop');
@@ -37,6 +38,11 @@ export default function App() {
   const [isTrackerOpen, setIsTrackerOpen] = useState<boolean>(false);
   const [trackingOrderId, setTrackingOrderId] = useState<string | undefined>(undefined);
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
+  const [emailAlert, setEmailAlert] = useState<{
+    show: boolean;
+    orderId: string;
+    customerEmail: string;
+  } | null>(null);
   const [confirmedOrder, setConfirmedOrder] = useState<{
     orderId: string;
     shippingType: 'standard' | 'express' | 'same-day';
@@ -49,6 +55,8 @@ export default function App() {
     discountINR: number;
     finalTotalINR: number;
     items: CartItem[];
+    emailSentSuccess?: boolean;
+    emailMessage?: string;
   } | null>(null);
 
   // Cart total calculations
@@ -122,6 +130,7 @@ export default function App() {
 
   // Checkout submission
   const handleCheckout = (details: {
+    orderId?: string;
     shippingType: 'standard' | 'express' | 'same-day';
     shippingAddress: string;
     cityPincode: string;
@@ -131,8 +140,10 @@ export default function App() {
     giftMessage?: string;
     discountINR: number;
     finalTotalINR: number;
+    emailSentSuccess?: boolean;
+    emailMessage?: string;
   }) => {
-    const orderId = `CP-${Math.floor(100000 + Math.random() * 900000)}`;
+    const orderId = details.orderId || `CP-${Math.floor(100000 + Math.random() * 900000)}`;
     const newPlacedOrder: PlacedOrder = {
       orderId,
       ...details,
@@ -141,6 +152,8 @@ export default function App() {
       status: 'Order Placed & Roasting',
       courierPartner: details.shippingType === 'express' ? 'BlueDart Air Express' : 'Delhivery Surface',
       trackingNumber: `BD-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      emailSentSuccess: details.emailSentSuccess ?? true,
+      emailMessage: details.emailMessage,
     };
 
     setOrders((prev) => [newPlacedOrder, ...prev]);
@@ -148,9 +161,19 @@ export default function App() {
       orderId,
       ...details,
       items: [...cartItems],
+      emailSentSuccess: details.emailSentSuccess ?? true,
+      emailMessage: details.emailMessage,
     });
     setCartItems([]);
     setIsCartOpen(false);
+
+    if (details.emailSentSuccess !== false) {
+      setEmailAlert({
+        show: true,
+        orderId,
+        customerEmail: details.customerEmail,
+      });
+    }
   };
 
   // Update status from Tracker
@@ -178,6 +201,48 @@ export default function App() {
         }}
         activeOrdersCount={activeOrdersCount}
       />
+
+      {/* On-Page Success Banner: Confirmation Emails Sent */}
+      {emailAlert?.show && (
+        <div className="bg-emerald-800 text-white px-4 py-3 border-b border-emerald-900 shadow-md relative z-30 transition-all">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full bg-emerald-700 flex items-center justify-center flex-shrink-0 text-emerald-200">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <div className="text-xs">
+                <p className="font-bold text-white flex items-center gap-1.5">
+                  <span>Order Placed & Confirmation Emails Dispatched!</span>
+                  <span className="bg-emerald-900/80 px-2 py-0.5 rounded text-[10px] font-mono text-emerald-200">
+                    {emailAlert.orderId}
+                  </span>
+                </p>
+                <p className="text-[11px] text-emerald-100">
+                  Notification sent to <span className="underline font-mono">mritunjay.bhardwaj@caphevietnam.in</span> and customer confirmation to <span className="underline font-mono">{emailAlert.customerEmail}</span> via EmailJS.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <button
+                onClick={() => {
+                  setTrackingOrderId(emailAlert.orderId);
+                  setIsTrackerOpen(true);
+                }}
+                className="text-[11px] font-bold bg-white text-emerald-900 px-3 py-1 rounded-md hover:bg-emerald-50 transition-colors shadow-2xs"
+              >
+                Track Status
+              </button>
+              <button
+                onClick={() => setEmailAlert(null)}
+                className="text-emerald-300 hover:text-white p-1 transition-colors"
+                title="Dismiss"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Dynamic View Content */}
       <main className="flex-1">

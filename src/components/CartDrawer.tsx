@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CartItem, Currency } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
+import { sendOrderEmails, EmailSendResult } from '../utils/emailService';
 import {
   X,
   Trash2,
@@ -14,7 +15,10 @@ import {
   Package,
   Truck,
   ShieldCheck,
-  MapPin
+  MapPin,
+  Loader2,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 
 interface CartDrawerProps {
@@ -25,6 +29,7 @@ interface CartDrawerProps {
   onUpdateQuantity: (id: string, delta: number) => void;
   onRemoveItem: (id: string) => void;
   onCheckout: (orderDetails: {
+    orderId?: string;
     shippingType: 'standard' | 'express' | 'same-day';
     shippingAddress: string;
     cityPincode: string;
@@ -34,6 +39,8 @@ interface CartDrawerProps {
     giftMessage?: string;
     discountINR: number;
     finalTotalINR: number;
+    emailSentSuccess?: boolean;
+    emailMessage?: string;
   }) => void;
 }
 
@@ -60,6 +67,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [promoSuccess, setPromoSuccess] = useState<string | null>(null);
   const [includeGiftWrap, setIncludeGiftWrap] = useState<boolean>(false);
   const [giftMessage, setGiftMessage] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [emailStatusMessage, setEmailStatusMessage] = useState<string | null>(null);
 
   const subtotalINR = items.reduce((sum, item) => sum + item.unitPriceINR * item.quantity, 0);
   const freeShippingThreshold = 799;
@@ -91,25 +101,92 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const finalTotalINR = Math.max(0, subtotalINR + shippingFeeINR - appliedDiscount);
 
-  const handleSubmitOrder = (e: React.FormEvent) => {
+  const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) return;
-    if (!customerName.trim() || !customerPhone.trim() || !customerEmail.trim() || !shippingAddress.trim() || !cityPincode.trim()) {
+    if (items.length === 0 || isSubmitting) return;
+
+    if (
+      !customerName.trim() ||
+      !customerPhone.trim() ||
+      !customerEmail.trim() ||
+      !shippingAddress.trim() ||
+      !cityPincode.trim()
+    ) {
       alert('Please fill in all delivery and contact fields.');
       return;
     }
 
-    onCheckout({
-      shippingType,
-      shippingAddress: shippingAddress.trim(),
-      cityPincode: cityPincode.trim(),
-      customerName: customerName.trim(),
-      customerPhone: customerPhone.trim(),
-      customerEmail: customerEmail.trim(),
-      giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
-      discountINR: appliedDiscount,
-      finalTotalINR,
-    });
+    // Basic email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    const orderId = `CP-${Math.floor(100000 + Math.random() * 900000)}`;
+    setIsSubmitting(true);
+    setEmailStatus('sending');
+    setEmailStatusMessage('Sending order confirmation emails to owner and customer...');
+
+    try {
+      const emailResult: EmailSendResult = await sendOrderEmails({
+        orderId,
+        items,
+        customerName: customerName.trim(),
+        customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone.trim(),
+        shippingAddress: shippingAddress.trim(),
+        cityPincode: cityPincode.trim(),
+        finalTotalINR,
+      });
+
+      if (emailResult.success) {
+        setEmailStatus('success');
+        setEmailStatusMessage('Both emails sent successfully! Customer & owner confirmed.');
+      } else {
+        setEmailStatus('error');
+        setEmailStatusMessage(emailResult.message || 'Email dispatch incomplete.');
+      }
+
+      // Allow brief moment for visual confirmation before opening receipt modal
+      setTimeout(() => {
+        setIsSubmitting(false);
+        onCheckout({
+          orderId,
+          shippingType,
+          shippingAddress: shippingAddress.trim(),
+          cityPincode: cityPincode.trim(),
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          customerEmail: customerEmail.trim(),
+          giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
+          discountINR: appliedDiscount,
+          finalTotalINR,
+          emailSentSuccess: emailResult.success,
+          emailMessage: emailResult.message,
+        });
+      }, 700);
+    } catch (err: any) {
+      console.error('EmailJS execution error:', err);
+      setIsSubmitting(false);
+      setEmailStatus('error');
+      setEmailStatusMessage(err?.text || err?.message || 'Error executing email service.');
+
+      // Proceed with local checkout so user order isn't lost
+      onCheckout({
+        orderId,
+        shippingType,
+        shippingAddress: shippingAddress.trim(),
+        cityPincode: cityPincode.trim(),
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        customerEmail: customerEmail.trim(),
+        giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
+        discountINR: appliedDiscount,
+        finalTotalINR,
+        emailSentSuccess: false,
+        emailMessage: 'Email delivery pending roastery connection.',
+      });
+    }
   };
 
   return (
@@ -448,13 +525,54 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             </div>
 
+            {/* Email Dispatch Feedback Status Banner */}
+            {emailStatus === 'sending' && (
+              <div className="p-2.5 rounded-lg bg-[#faf2f0] border border-[#d3c3c0] text-xs flex items-center gap-2 text-[#785a00]">
+                <Loader2 className="w-4 h-4 animate-spin text-[#785a00] flex-shrink-0" />
+                <span className="font-medium">Sending order emails to owner & customer via EmailJS...</span>
+              </div>
+            )}
+            {emailStatus === 'success' && (
+              <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-300 text-xs flex items-center gap-2 text-emerald-800">
+                <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span className="font-semibold">Both confirmation emails sent successfully!</span>
+              </div>
+            )}
+            {emailStatus === 'error' && (
+              <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-xs flex items-center gap-2 text-amber-900">
+                <AlertCircle className="w-4 h-4 text-amber-700 flex-shrink-0" />
+                <span>{emailStatusMessage || 'Could not verify email delivery.'}</span>
+              </div>
+            )}
+
             <button
               form="checkout-form"
               type="submit"
-              className="w-full py-3.5 px-4 rounded-xl bg-[#785a00] hover:bg-[#8e6b00] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              disabled={isSubmitting}
+              className={`w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 ${
+                isSubmitting
+                  ? 'bg-[#504442] text-white cursor-wait opacity-80'
+                  : emailStatus === 'success'
+                  ? 'bg-emerald-700 hover:bg-emerald-800 text-white cursor-pointer'
+                  : 'bg-[#785a00] hover:bg-[#8e6b00] text-white cursor-pointer active:scale-98'
+              }`}
             >
-              <span>Place Coffee Order</span>
-              <ArrowRight className="w-4 h-4" />
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Sending Emails & Placing Order...</span>
+                </>
+              ) : emailStatus === 'success' ? (
+                <>
+                  <CheckCircle className="w-4 h-4 text-white" />
+                  <span>Emails Sent & Order Confirmed!</span>
+                </>
+              ) : (
+                <>
+                  <span>Place Coffee Order</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
 
             <div className="flex items-center justify-center gap-2 text-[10px] text-[#827472]">
