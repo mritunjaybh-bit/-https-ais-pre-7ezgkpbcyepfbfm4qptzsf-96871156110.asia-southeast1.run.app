@@ -163,7 +163,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     setStepMessage('Opening secure Razorpay payment gateway (UPI, Cards, Wallets)...');
 
     // Step 2: Razorpay Payment
-    let paymentResponse: { razorpay_payment_id: string; razorpay_order_id?: string };
+    let paymentResponse: {
+      razorpay_payment_id: string;
+      razorpay_order_id?: string;
+      razorpay_signature?: string;
+    };
     try {
       paymentResponse = await openRazorpayCheckout({
         orderId,
