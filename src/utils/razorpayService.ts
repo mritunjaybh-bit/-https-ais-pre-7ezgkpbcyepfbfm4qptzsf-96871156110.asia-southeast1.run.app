@@ -8,9 +8,16 @@
  *    to backend POST /api/verify-payment for HMAC-SHA256 signature verification
  */
 
+export function getRazorpayClientKey(): string {
+  const envKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+  return typeof envKey === 'string' ? envKey.trim().replace(/^["']|["']$/g, '') : '';
+}
+
 export const RAZORPAY_CONFIG = {
-  // Test / Live Key ID (Vite client-side prefix: VITE_RAZORPAY_KEY_ID)
-  KEY_ID: import.meta.env.VITE_RAZORPAY_KEY_ID || '',
+  // Client-Side Public Key ID for Razorpay Checkout Modal
+  get KEY_ID(): string {
+    return getRazorpayClientKey();
+  },
   MERCHANT_NAME: 'Cà Phê Vietnam',
   DESCRIPTION: 'Authentic Vietnamese Coffee Powders & Blends',
   THEME_COLOR: '#785a00',

@@ -1,10 +1,10 @@
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 
-dotenv.config({ override: true });
+dotenv.config();
 
 function getSecret() {
-  return (process.env.RAZORPAY_KEY_SECRET || '').trim();
+  return (process.env.RAZORPAY_KEY_SECRET || '').trim().replace(/^["']|["']$/g, '');
 }
 
 export default async function handler(req: any, res: any) {

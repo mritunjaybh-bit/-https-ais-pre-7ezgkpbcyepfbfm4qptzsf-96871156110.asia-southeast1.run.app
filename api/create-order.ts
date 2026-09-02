@@ -1,11 +1,12 @@
 import Razorpay from 'razorpay';
 import dotenv from 'dotenv';
 
-dotenv.config({ override: true });
+// Load local .env in development
+dotenv.config();
 
 function getCredentials() {
-  const key_id = (process.env.RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || '').trim();
-  const key_secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+  const key_id = (process.env.RAZORPAY_KEY_ID || '').trim().replace(/^["']|["']$/g, '');
+  const key_secret = (process.env.RAZORPAY_KEY_SECRET || '').trim().replace(/^["']|["']$/g, '');
   return { key_id, key_secret };
 }
 
@@ -42,8 +43,11 @@ export default async function handler(req: any, res: any) {
     const { key_id, key_secret } = getCredentials();
 
     if (!key_id || !key_secret) {
+      const missingVars = [];
+      if (!key_id) missingVars.push('RAZORPAY_KEY_ID');
+      if (!key_secret) missingVars.push('RAZORPAY_KEY_SECRET');
       return res.status(401).json({
-        error: 'Razorpay API credentials (RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET) are missing. Please configure them in your environment variables.',
+        error: `Missing required server environment variable(s): ${missingVars.join(', ')}. Please configure these in your deployment/Vercel settings.`,
       });
     }
 
