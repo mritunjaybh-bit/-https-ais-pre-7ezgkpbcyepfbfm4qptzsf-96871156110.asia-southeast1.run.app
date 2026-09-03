@@ -144,7 +144,7 @@ export default function App() {
     giftMessage?: string;
     discountINR: number;
     finalTotalINR: number;
-    paymentStatus?: 'paid' | 'pending' | 'failed';
+    paymentStatus?: 'paid' | 'pending' | 'Pending (COD)' | 'failed' | string;
     paymentId?: string;
     paymentMethod?: string;
     emailSentSuccess?: boolean;

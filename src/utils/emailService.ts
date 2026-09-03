@@ -18,6 +18,8 @@ export interface SendOrderEmailsPayload {
   shippingAddress: string;
   cityPincode: string;
   finalTotalINR: number;
+  paymentMethod?: string;
+  paymentStatus?: string;
 }
 
 export interface EmailSendResult {
@@ -60,8 +62,18 @@ export async function sendOrderEmails(
     )
     .join('\n');
 
+  const isCOD = payload.paymentMethod === 'COD' || payload.paymentStatus?.includes('COD');
+
+  const paymentNotice = isCOD
+    ? `\n\n[Payment Notice: Cash on Delivery (COD). Total amount ₹${payload.finalTotalINR} will be collected upon delivery.]`
+    : '';
+
+  const formattedOrderItems = `${order_items}${paymentNotice}`;
+
   const order_quantity = payload.items.reduce((sum, item) => sum + item.quantity, 0);
-  const order_total = `₹${payload.finalTotalINR}`;
+  const order_total = isCOD
+    ? `₹${payload.finalTotalINR} (Cash on Delivery - payment will be collected on delivery)`
+    : `₹${payload.finalTotalINR}`;
   const order_time = new Date().toLocaleString('en-IN', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -70,9 +82,14 @@ export async function sendOrderEmails(
   // Base template variables required by prompt
   const baseVariables = {
     order_id: payload.orderId,
-    order_items,
+    order_items: formattedOrderItems,
     order_quantity,
     order_total,
+    payment_method: isCOD ? 'Cash on Delivery (COD)' : (payload.paymentMethod || 'Razorpay Online'),
+    payment_status: isCOD ? 'Pending (COD)' : (payload.paymentStatus || 'Paid'),
+    payment_note: isCOD
+      ? `Cash on Delivery: Payment of ₹${payload.finalTotalINR} will be collected on delivery.`
+      : 'Online payment captured and verified.',
     customer_name: customerNameClean,
     customer_email: customerEmailClean,
     customer_phone: customerPhoneClean,

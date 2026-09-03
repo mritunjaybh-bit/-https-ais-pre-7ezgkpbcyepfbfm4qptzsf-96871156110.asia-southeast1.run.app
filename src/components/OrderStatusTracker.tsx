@@ -219,6 +219,12 @@ export const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
                   Recipient: <strong className="text-[#271310]">{currentOrder.customerName}</strong> •{' '}
                   {currentOrder.customerPhone}
                 </p>
+                <p className="text-[11px] text-[#504442]">
+                  Payment: <strong className="text-[#271310]">{currentOrder.paymentMethod || 'Online'}</strong> •{' '}
+                  <span className={currentOrder.paymentStatus?.includes('COD') || currentOrder.paymentStatus === 'pending' ? 'text-amber-700 font-semibold' : 'text-emerald-700 font-semibold'}>
+                    {currentOrder.paymentStatus || 'Paid'}
+                  </span>
+                </p>
               </div>
 
               <div className="sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-[#f4ecea]">

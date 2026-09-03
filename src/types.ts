@@ -97,7 +97,7 @@ export interface PlacedOrder {
   items: CartItem[];
   createdAt: number;
   timestamp: string;
-  paymentStatus: 'paid' | 'pending' | 'failed';
+  paymentStatus: 'paid' | 'pending' | 'Pending (COD)' | 'failed' | string;
   paymentId?: string;
   paymentMethod?: string;
   status: OrderState;

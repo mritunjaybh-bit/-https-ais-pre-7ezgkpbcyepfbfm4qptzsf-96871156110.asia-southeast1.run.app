@@ -1,4 +1,3 @@
-import Razorpay from 'razorpay';
 import dotenv from 'dotenv';
 
 // Load local .env in development
@@ -42,6 +41,11 @@ export default async function handler(req: any, res: any) {
     const { amount, currency = 'INR', receipt } = body;
     const { key_id, key_secret } = getCredentials();
 
+    // Runtime debug logging of first 6 characters of RAZORPAY_KEY_ID
+    console.log(
+      `[Razorpay /api/create-order] Runtime credentials loaded: RAZORPAY_KEY_ID prefix: "${key_id.slice(0, 6)}" (total length: ${key_id.length}), RAZORPAY_KEY_SECRET length: ${key_secret.length}`
+    );
+
     if (!key_id || !key_secret) {
       const missingVars = [];
       if (!key_id) missingVars.push('RAZORPAY_KEY_ID');
@@ -58,12 +62,11 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const instance = new Razorpay({
-      key_id,
-      key_secret,
-    });
+    // Step 1: Explicit Basic Auth header (base64 of RAZORPAY_KEY_ID:RAZORPAY_KEY_SECRET)
+    const basicAuth = Buffer.from(`${key_id}:${key_secret}`).toString('base64');
+    const authHeader = `Basic ${basicAuth}`;
 
-    const options = {
+    const orderPayload = {
       amount: numericAmount,
       currency: currency.toUpperCase(),
       receipt: receipt ? String(receipt).slice(0, 40) : `rcpt_${Date.now()}`,
@@ -72,24 +75,40 @@ export default async function handler(req: any, res: any) {
       },
     };
 
-    const razorpayOrder = await instance.orders.create(options);
-
-    return res.status(200).json({
-      order_id: razorpayOrder.id,
-      amount: razorpayOrder.amount,
-      currency: razorpayOrder.currency,
+    // Step 2: POST request to https://api.razorpay.com/v1/orders
+    const razorpayResponse = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        Authorization: authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderPayload),
     });
-  } catch (err: any) {
-    console.error('[Razorpay /api/create-order error]:', err);
 
-    if (err.statusCode === 401 || err?.error?.code === 'BAD_REQUEST_ERROR') {
-      return res.status(err.statusCode || 401).json({
-        error: err?.error?.description || err.message || 'Razorpay authentication or validation failed.',
+    const responseData: any = await razorpayResponse.json();
+
+    if (!razorpayResponse.ok) {
+      console.error('[Razorpay /api/create-order error]:', razorpayResponse.status, responseData);
+      return res.status(razorpayResponse.status).json({
+        error:
+          responseData?.error?.description ||
+          responseData?.error?.message ||
+          responseData?.message ||
+          'Razorpay order creation failed.',
+        razorpay_error_code: responseData?.error?.code,
+        key_id_prefix: key_id.slice(0, 6),
       });
     }
 
+    return res.status(200).json({
+      order_id: responseData.id,
+      amount: responseData.amount,
+      currency: responseData.currency,
+    });
+  } catch (err: any) {
+    console.error('[Razorpay /api/create-order exception]:', err);
     return res.status(500).json({
-      error: err?.error?.description || err.message || 'Failed to create Razorpay order.',
+      error: err?.message || 'Internal server error while creating Razorpay order.',
     });
   }
 }

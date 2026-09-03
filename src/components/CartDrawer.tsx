@@ -20,7 +20,8 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
-  CreditCard
+  CreditCard,
+  Banknote
 } from 'lucide-react';
 
 interface CartDrawerProps {
@@ -41,7 +42,7 @@ interface CartDrawerProps {
     giftMessage?: string;
     discountINR: number;
     finalTotalINR: number;
-    paymentStatus?: 'paid' | 'pending' | 'failed';
+    paymentStatus?: 'paid' | 'pending' | 'Pending (COD)' | 'failed' | string;
     paymentId?: string;
     paymentMethod?: string;
     emailSentSuccess?: boolean;
@@ -68,6 +69,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [customerEmail, setCustomerEmail] = useState<string>('');
   const [promoCode, setPromoCode] = useState<string>('');
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('online');
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoSuccess, setPromoSuccess] = useState<string | null>(null);
   const [includeGiftWrap, setIncludeGiftWrap] = useState<boolean>(false);
@@ -158,6 +160,83 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     const cleanShippingAddress = shippingAddress.trim();
     const cleanCityPincode = cityPincode.trim();
 
+    // Handle Cash on Delivery (COD) Option
+    if (paymentMethod === 'cod') {
+      setIsSubmitting(true);
+      setCheckoutStep('sending_emails');
+      setStepMessage('Placing Cash on Delivery order & dispatching confirmation emails...');
+
+      try {
+        const emailResult: EmailSendResult = await sendOrderEmails({
+          orderId,
+          items,
+          customerName: cleanCustomerName,
+          customerEmail: cleanCustomerEmail,
+          customerPhone: cleanCustomerPhone,
+          shippingAddress: cleanShippingAddress,
+          cityPincode: cleanCityPincode,
+          finalTotalINR,
+          paymentMethod: 'COD',
+          paymentStatus: 'Pending (COD)',
+        });
+
+        if (emailResult.success) {
+          setCheckoutStep('success');
+          setStepMessage('Cash on Delivery order placed & confirmation emails dispatched!');
+        } else {
+          console.warn('[EmailJS] Email dispatch incomplete for COD order:', emailResult);
+          setCheckoutStep('error');
+          setStepMessage(emailResult.message || 'COD order placed, but confirmation email dispatch was incomplete.');
+        }
+
+        setTimeout(() => {
+          setIsSubmitting(false);
+          onCheckout({
+            orderId,
+            shippingType,
+            shippingAddress: cleanShippingAddress,
+            cityPincode: cleanCityPincode,
+            customerName: cleanCustomerName,
+            customerPhone: cleanCustomerPhone,
+            customerEmail: cleanCustomerEmail,
+            giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
+            discountINR: appliedDiscount,
+            finalTotalINR,
+            paymentStatus: 'Pending (COD)',
+            paymentId: `COD-${Date.now().toString(36).toUpperCase()}`,
+            paymentMethod: 'COD',
+            emailSentSuccess: emailResult.success,
+            emailMessage: emailResult.message,
+          });
+        }, 700);
+      } catch (err: any) {
+        console.error('[Checkout] Error executing COD email notification:', err);
+        setIsSubmitting(false);
+        setCheckoutStep('error');
+        setStepMessage(err?.text || err?.message || 'Error sending confirmation email for COD order.');
+
+        onCheckout({
+          orderId,
+          shippingType,
+          shippingAddress: cleanShippingAddress,
+          cityPincode: cleanCityPincode,
+          customerName: cleanCustomerName,
+          customerPhone: cleanCustomerPhone,
+          customerEmail: cleanCustomerEmail,
+          giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
+          discountINR: appliedDiscount,
+          finalTotalINR,
+          paymentStatus: 'Pending (COD)',
+          paymentId: `COD-${Date.now().toString(36).toUpperCase()}`,
+          paymentMethod: 'COD',
+          emailSentSuccess: false,
+          emailMessage: 'Email delivery pending roastery connection.',
+        });
+      }
+      return;
+    }
+
+    // Step 2: Razorpay Online Payment Flow
     setIsSubmitting(true);
     setCheckoutStep('payment_pending');
     setStepMessage('Opening secure Razorpay payment gateway (UPI, Cards, Wallets)...');
@@ -574,6 +653,56 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     </span>
                   </div>
 
+                  {/* Payment Method Selection */}
+                  <div className="space-y-2 pt-2 border-t border-[#f4ecea]">
+                    <label className="text-[10px] font-bold text-[#827472] uppercase block">
+                      Payment Method:
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        id="payment-method-online"
+                        onClick={() => {
+                          setPaymentMethod('online');
+                          if (checkoutStep === 'error') setStepMessage(null);
+                        }}
+                        className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                          paymentMethod === 'online'
+                            ? 'bg-[#faf2f0] border-[#785a00] text-[#271310] ring-1 ring-[#785a00]'
+                            : 'bg-white border-[#d3c3c0] text-[#504442] hover:bg-[#faf2f0]/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <CreditCard className={`w-3.5 h-3.5 ${paymentMethod === 'online' ? 'text-[#785a00]' : 'text-[#827472]'}`} />
+                          {paymentMethod === 'online' && <Check className="w-3.5 h-3.5 text-[#785a00]" />}
+                        </div>
+                        <span className="font-bold text-xs block">Pay Online (Razorpay)</span>
+                        <span className="text-[10px] text-[#827472] block">UPI, Cards, Wallets</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        id="payment-method-cod"
+                        onClick={() => {
+                          setPaymentMethod('cod');
+                          if (checkoutStep === 'error') setStepMessage(null);
+                        }}
+                        className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                          paymentMethod === 'cod'
+                            ? 'bg-[#faf2f0] border-[#785a00] text-[#271310] ring-1 ring-[#785a00]'
+                            : 'bg-white border-[#d3c3c0] text-[#504442] hover:bg-[#faf2f0]/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <Banknote className={`w-3.5 h-3.5 ${paymentMethod === 'cod' ? 'text-[#785a00]' : 'text-[#827472]'}`} />
+                          {paymentMethod === 'cod' && <Check className="w-3.5 h-3.5 text-[#785a00]" />}
+                        </div>
+                        <span className="font-bold text-xs block">Cash on Delivery</span>
+                        <span className="text-[10px] text-[#827472] block">Pay on delivery</span>
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Gift Wrap Toggle */}
                   <div className="pt-2 border-t border-[#f4ecea]">
                     <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[#271310]">
@@ -673,17 +802,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <span>
                     {checkoutStep === 'payment_pending'
                       ? 'Processing Razorpay Payment...'
+                      : paymentMethod === 'cod'
+                      ? 'Placing COD Order...'
                       : 'Sending Emails & Placing Order...'}
                   </span>
                 </>
               ) : checkoutStep === 'success' ? (
                 <>
                   <CheckCircle className="w-4 h-4 text-white" />
-                  <span>Payment & Emails Confirmed!</span>
+                  <span>{paymentMethod === 'cod' ? 'COD Order Confirmed!' : 'Payment & Emails Confirmed!'}</span>
                 </>
               ) : (
                 <>
-                  <span>Place Coffee Order</span>
+                  <span>{paymentMethod === 'cod' ? 'Place Order (Cash on Delivery)' : 'Pay Online (Razorpay)'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
