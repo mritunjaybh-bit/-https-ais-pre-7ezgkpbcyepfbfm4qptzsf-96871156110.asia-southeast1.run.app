@@ -1,22 +1,48 @@
+import fs from 'fs';
+import path from 'path';
 import dotenv from 'dotenv';
 
-// Load local .env in development
-dotenv.config();
+// Load local .env with override
+dotenv.config({ override: true });
 
 function getCredentials() {
-  const key_id = (process.env.RAZORPAY_KEY_ID || '').trim().replace(/^["']|["']$/g, '');
-  const key_secret = (process.env.RAZORPAY_KEY_SECRET || '').trim().replace(/^["']|["']$/g, '');
+  let envFileVars: Record<string, string> = {};
+  try {
+    const envPath = path.join(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const parsed = dotenv.parse(fs.readFileSync(envPath));
+      envFileVars = parsed;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  const key_id = (
+    envFileVars.RAZORPAY_KEY_ID ||
+    process.env.RAZORPAY_KEY_ID ||
+    'rzp_test_TXiWmJNf8bquNa'
+  ).trim().replace(/^["']|["']$/g, '');
+
+  const key_secret = (
+    envFileVars.RAZORPAY_KEY_SECRET ||
+    process.env.RAZORPAY_KEY_SECRET ||
+    'Tln2tKfSinwXZSwPOdG2WvJK'
+  ).trim().replace(/^["']|["']$/g, '');
+
   return { key_id, key_secret };
 }
 
 export default async function handler(req: any, res: any) {
   // CORS Headers
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  const origin = req.headers?.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  if (origin !== '*') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
   if (req.method === 'OPTIONS') {
@@ -104,6 +130,7 @@ export default async function handler(req: any, res: any) {
       order_id: responseData.id,
       amount: responseData.amount,
       currency: responseData.currency,
+      key_id,
     });
   } catch (err: any) {
     console.error('[Razorpay /api/create-order exception]:', err);

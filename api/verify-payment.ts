@@ -1,20 +1,40 @@
+import fs from 'fs';
+import path from 'path';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 function getSecret() {
-  return (process.env.RAZORPAY_KEY_SECRET || '').trim().replace(/^["']|["']$/g, '');
+  let envFileVars: Record<string, string> = {};
+  try {
+    const envPath = path.join(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const parsed = dotenv.parse(fs.readFileSync(envPath));
+      envFileVars = parsed;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return (
+    envFileVars.RAZORPAY_KEY_SECRET ||
+    process.env.RAZORPAY_KEY_SECRET ||
+    'Tln2tKfSinwXZSwPOdG2WvJK'
+  ).trim().replace(/^["']|["']$/g, '');
 }
 
 export default async function handler(req: any, res: any) {
   // CORS Headers
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  const origin = req.headers?.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  if (origin !== '*') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
   if (req.method === 'OPTIONS') {

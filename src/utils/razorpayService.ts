@@ -10,7 +10,8 @@
 
 export function getRazorpayClientKey(): string {
   const envKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-  return typeof envKey === 'string' ? envKey.trim().replace(/^["']|["']$/g, '') : '';
+  const clean = typeof envKey === 'string' ? envKey.trim().replace(/^["']|["']$/g, '') : '';
+  return clean || 'rzp_test_TXiWmJNf8bquNa';
 }
 
 export const RAZORPAY_CONFIG = {
@@ -50,6 +51,7 @@ export interface BackendOrderResponse {
   order_id: string;
   amount: number;
   currency: string;
+  key_id?: string;
 }
 
 export interface VerificationResponse {
@@ -69,25 +71,47 @@ export async function createRazorpayOrder(
   receipt?: string,
   currency: string = 'INR'
 ): Promise<BackendOrderResponse> {
-  const response = await fetch('/api/create-order', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      amount: amountPaise,
-      currency,
-      receipt,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch('/api/create-order', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        amount: amountPaise,
+        currency,
+        receipt,
+      }),
+    });
+  } catch (networkErr: any) {
+    throw new Error(`Network error connecting to payment gateway: ${networkErr?.message || 'Failed to connect'}`);
+  }
 
-  const data = await response.json();
+  const contentType = response.headers.get('content-type') || '';
+  let data: any = null;
+
+  if (contentType.includes('application/json')) {
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+  } else {
+    const rawText = await response.text();
+    console.error('[createRazorpayOrder] Unexpected non-JSON response:', response.status, rawText.slice(0, 200));
+    throw new Error(
+      `Order creation service returned non-JSON response (${response.status}). Please check network or reload the page.`
+    );
+  }
 
   if (!response.ok) {
     throw new Error(data?.error || `Failed to create payment order (HTTP ${response.status})`);
   }
 
-  if (!data.order_id) {
+  if (!data?.order_id) {
     throw new Error('Backend did not return a valid Razorpay order ID.');
   }
 
@@ -103,17 +127,39 @@ export async function verifyRazorpayPayment(payload: {
   razorpay_payment_id: string;
   razorpay_signature: string;
 }): Promise<VerificationResponse> {
-  const response = await fetch('/api/verify-payment', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+  let response: Response;
+  try {
+    response = await fetch('/api/verify-payment', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (networkErr: any) {
+    throw new Error(`Network error connecting to payment verification: ${networkErr?.message || 'Failed to connect'}`);
+  }
 
-  const data = await response.json();
+  const contentType = response.headers.get('content-type') || '';
+  let data: any = null;
 
-  if (!response.ok || !data.success) {
+  if (contentType.includes('application/json')) {
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+  } else {
+    const rawText = await response.text();
+    console.error('[verifyRazorpayPayment] Unexpected non-JSON response:', response.status, rawText.slice(0, 200));
+    throw new Error(
+      `Payment verification endpoint returned an unexpected response (${response.status}). Please check network or reload the page.`
+    );
+  }
+
+  if (!response.ok || !data?.success) {
     throw new Error(data?.error || 'Payment signature verification failed.');
   }
 
@@ -167,9 +213,14 @@ export async function openRazorpayCheckout(
   // 1. Call Backend to create authenticated Razorpay Order
   const backendOrder = await createRazorpayOrder(amountPaise, options.orderId, 'INR');
 
+  const activeKey = backendOrder.key_id || RAZORPAY_CONFIG.KEY_ID;
+  if (!activeKey) {
+    throw new Error('Razorpay Key ID is not configured.');
+  }
+
   return new Promise((resolve, reject) => {
     const razorpayOptions = {
-      key: RAZORPAY_CONFIG.KEY_ID,
+      key: activeKey,
       amount: backendOrder.amount,
       currency: backendOrder.currency,
       name: RAZORPAY_CONFIG.MERCHANT_NAME,
