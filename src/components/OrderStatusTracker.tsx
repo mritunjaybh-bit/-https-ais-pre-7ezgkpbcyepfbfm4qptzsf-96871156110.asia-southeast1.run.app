@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PlacedOrder, OrderState, Currency } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
+import { getOrderById } from '../utils/orderStorage';
 import {
   X,
   Clock,
@@ -15,7 +16,9 @@ import {
   MapPin,
   RefreshCw,
   Box,
-  Mail
+  Mail,
+  Copy,
+  Check
 } from 'lucide-react';
 
 interface OrderStatusTrackerProps {
@@ -43,16 +46,33 @@ export const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
   const [selectedOrderId, setSelectedOrderId] = useState<string>(
     initialOrderId || (orders[0]?.orderId ?? '')
   );
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
-  const currentOrder = orders.find(
-    (o) => o.orderId.toLowerCase() === selectedOrderId.toLowerCase()
-  ) || orders[0];
+  useEffect(() => {
+    if (initialOrderId) {
+      setSelectedOrderId(initialOrderId);
+      setSearchId(initialOrderId);
+    }
+  }, [initialOrderId]);
+
+  const currentOrder =
+    orders.find((o) => o.orderId.toLowerCase() === selectedOrderId.toLowerCase()) ||
+    (selectedOrderId ? getOrderById(selectedOrderId) : undefined) ||
+    orders[0];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchId.trim()) {
       setSelectedOrderId(searchId.trim().toUpperCase());
     }
+  };
+
+  const handleCopyTrackingLink = () => {
+    if (!currentOrder) return;
+    const url = `${window.location.origin}/order/${currentOrder.orderId}`;
+    navigator.clipboard?.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   const stages: {
@@ -361,21 +381,40 @@ export const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
               </div>
             </div>
 
-            {/* Roastery Desk Updates Notice */}
-            <div className="bg-white p-3 rounded-xl border border-[#d3c3c0]/60 flex items-center justify-between gap-3 text-xs">
+            {/* Customer Care & Direct Order Link Notice */}
+            <div className="bg-white p-3 rounded-xl border border-[#d3c3c0]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2 text-[#504442]">
                 <Mail className="w-4 h-4 text-[#785a00] flex-shrink-0" />
                 <span>
-                  Order updates & delivery support:{' '}
-                  <strong className="text-[#271310] font-mono">Mritunjay.Bhardwaj@caphevietnam.in</strong>
+                  Delivery questions or brewing tips? Contact{' '}
+                  <strong className="text-[#271310] font-medium">support@caphevietnam.in</strong>
                 </span>
               </div>
-              <a
-                href="mailto:Mritunjay.Bhardwaj@caphevietnam.in"
-                className="text-[#785a00] underline font-semibold text-[11px] hover:text-[#271310] flex-shrink-0"
-              >
-                Email Support
-              </a>
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <button
+                  type="button"
+                  onClick={handleCopyTrackingLink}
+                  className="px-2.5 py-1 text-[11px] rounded-md border border-[#d3c3c0] text-[#504442] hover:text-[#271310] bg-[#faf2f0] flex items-center gap-1 font-medium transition-colors cursor-pointer"
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-600" />
+                      <span className="text-emerald-700">Link Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3 text-[#827472]" />
+                      <span>Copy Order URL</span>
+                    </>
+                  )}
+                </button>
+                <a
+                  href="mailto:support@caphevietnam.in"
+                  className="text-[#785a00] underline font-semibold text-[11px] hover:text-[#271310] flex-shrink-0"
+                >
+                  Email Support
+                </a>
+              </div>
             </div>
           </div>
         )}

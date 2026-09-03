@@ -40,13 +40,13 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab, onOpenTracker }) =>
                 <span>Order Updates & Inquiries</span>
               </div>
               <p className="text-[11px] text-[#ae8d87]">
-                Order confirmations, dispatch routing, and courier tracking updates are handled at:
+                Order confirmations, dispatch routing, and courier tracking updates:
               </p>
               <a
-                href="mailto:Mritunjay.Bhardwaj@caphevietnam.in"
+                href="mailto:support@caphevietnam.in"
                 className="inline-block text-xs font-semibold text-white hover:text-[#feca4d] underline font-mono transition-colors"
               >
-                Mritunjay.Bhardwaj@caphevietnam.in
+                support@caphevietnam.in
               </a>
             </div>
 

@@ -1,8 +1,22 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Currency, CartItem } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
 import { Logo } from './Logo';
-import { CheckCircle, Truck, Package, Sparkles, MapPin, Printer, ArrowRight, ShieldCheck, Mail } from 'lucide-react';
+import {
+  CheckCircle,
+  Truck,
+  Package,
+  Sparkles,
+  MapPin,
+  Printer,
+  ArrowRight,
+  ShieldCheck,
+  Mail,
+  Copy,
+  Check,
+  Clock,
+  ExternalLink
+} from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface OrderConfirmationModalProps {
@@ -37,6 +51,9 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
   currency,
   onTrackOrder,
 }) => {
+  const [copiedId, setCopiedId] = useState<boolean>(false);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
+
   useEffect(() => {
     if (isOpen) {
       confetti({
@@ -49,6 +66,27 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
   }, [isOpen]);
 
   if (!isOpen || !orderDetails) return null;
+
+  const trackingUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/order/${orderDetails.orderId}`;
+
+  const handleCopyOrderId = () => {
+    navigator.clipboard?.writeText(orderDetails.orderId);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
+  };
+
+  const handleCopyTrackingLink = () => {
+    navigator.clipboard?.writeText(trackingUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleTrackClick = () => {
+    if (onTrackOrder) {
+      onTrackOrder(orderDetails.orderId);
+    }
+    onClose();
+  };
 
   return (
     <div
@@ -68,69 +106,115 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
             <CheckCircle className="w-7 h-7 text-[#feca4d]" />
           </div>
           <span className="text-[10px] uppercase font-bold tracking-widest text-[#feca4d] block">
-            Order Confirmed • Roastery Notified
+            Order Confirmed
           </span>
           <h3
             className="text-2xl font-bold text-white font-serif"
             style={{ fontFamily: 'Playfair Display, serif' }}
           >
-            Fresh Roasting & Packing
+            Your order has been placed successfully!
           </h3>
           <p className="text-xs text-[#f4eceb]/80 max-w-sm mx-auto">
-            Your coffee powder and instant blends will be custom-ground, degassing-sealed, and dispatched to your door.
+            Thank you for brewing with us! A confirmation email has been sent to{' '}
+            <strong className="text-white font-mono">{orderDetails.customerEmail}</strong>.
           </p>
         </div>
 
-        {/* EmailJS Success Notification Banner */}
-        {orderDetails.emailSentSuccess !== false && (
-          <div className="bg-emerald-50 border-b border-emerald-200 p-4 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
-              <CheckCircle className="w-5 h-5" />
-            </div>
-            <div className="space-y-1 text-left flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-xs text-emerald-950">
-                  Confirmation Emails Sent Successfully
-                </span>
-                <span className="bg-emerald-200 text-emerald-900 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">
-                  EmailJS Dispatched
-                </span>
-              </div>
-              <p className="text-[11px] text-emerald-800 leading-snug">
-                Both notifications were generated and dispatched with all order details:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 text-[11px]">
-                <div className="bg-white p-2 rounded-lg border border-emerald-200 text-emerald-950">
-                  <span className="text-[10px] uppercase font-bold text-emerald-700 block">Owner Alert (template_g2buarq):</span>
-                  <span className="font-mono text-[11px]">mritunjay.bhardwaj@caphevietnam.in</span>
-                </div>
-                <div className="bg-white p-2 rounded-lg border border-emerald-200 text-emerald-950">
-                  <span className="text-[10px] uppercase font-bold text-emerald-700 block">Customer Confirmation (template_yrtnzv3):</span>
-                  <span className="font-mono text-[11px] truncate block">{orderDetails.customerEmail}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Order Identifier & Metadata Box */}
+        {/* Order Identifier & Timing Metadata Box */}
         <div className="bg-[#faf2f0] p-4 border-b border-[#d3c3c0]/50 grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div>
-            <span className="text-[10px] uppercase text-[#827472] font-semibold block">Order Reference:</span>
-            <span className="font-mono font-bold text-sm text-[#785a00]">{orderDetails.orderId}</span>
+            <span className="text-[10px] uppercase text-[#827472] font-semibold block">Order ID:</span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="font-mono font-bold text-sm text-[#785a00]">{orderDetails.orderId}</span>
+              <button
+                type="button"
+                onClick={handleCopyOrderId}
+                title="Copy Order ID"
+                className="text-[#827472] hover:text-[#271310] p-0.5 rounded transition-colors cursor-pointer"
+              >
+                {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           </div>
           <div>
             <span className="text-[10px] uppercase text-[#827472] font-semibold block">Estimated Delivery:</span>
-            <span className="font-bold text-xs text-[#271310]">
-              {orderDetails.shippingType === 'express' ? '1 - 2 Business Days' : '3 - 5 Business Days'}
+            <span className="font-bold text-xs text-[#271310] block mt-0.5">
+              {orderDetails.shippingType === 'express' ? '1 – 2 Business Days' : '3 – 5 Business Days'}
             </span>
+            <span className="text-[10px] text-[#827472]">Fresh roasting in 24h</span>
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <span className="text-[10px] uppercase text-[#827472] font-semibold block">Fulfillment Type:</span>
-            <span className="font-bold text-xs text-emerald-800 flex items-center gap-1">
+            <span className="text-[10px] uppercase text-[#827472] font-semibold block">Fulfillment:</span>
+            <span className="font-bold text-xs text-emerald-800 flex items-center gap-1 mt-0.5">
               <Truck className="w-3.5 h-3.5" />
               Air Express Courier
             </span>
+            <span className="text-[10px] text-[#827472]">Nitrogen-sealed valve</span>
+          </div>
+        </div>
+
+        {/* Customer-Friendly Order Tracking Card */}
+        <div className="bg-[#f5ecea]/70 p-4 border-b border-[#d3c3c0]/50 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#271310] uppercase tracking-wide flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-[#785a00]" />
+              Order Status & Live Progress
+            </span>
+            <span className="bg-[#785a00]/10 text-[#785a00] font-bold text-[10px] px-2 py-0.5 rounded-full">
+              Order Placed
+            </span>
+          </div>
+
+          {/* 4-Step Progress Mini-Bar */}
+          <div className="grid grid-cols-4 gap-1 text-center text-[10px] pt-1">
+            <div className="space-y-1">
+              <div className="h-1.5 rounded-full bg-[#785a00]" />
+              <span className="font-bold text-[#785a00] block text-[9px] leading-tight">Order Placed</span>
+            </div>
+            <div className="space-y-1">
+              <div className="h-1.5 rounded-full bg-[#d3c3c0]/60" />
+              <span className="text-[#827472] block text-[9px] leading-tight">Preparing</span>
+            </div>
+            <div className="space-y-1">
+              <div className="h-1.5 rounded-full bg-[#d3c3c0]/60" />
+              <span className="text-[#827472] block text-[9px] leading-tight">Out for Delivery</span>
+            </div>
+            <div className="space-y-1">
+              <div className="h-1.5 rounded-full bg-[#d3c3c0]/60" />
+              <span className="text-[#827472] block text-[9px] leading-tight">Delivered</span>
+            </div>
+          </div>
+
+          {/* Action Row */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1">
+            <button
+              type="button"
+              id="track-order-button"
+              onClick={handleTrackClick}
+              className="px-3.5 py-2 rounded-lg bg-[#785a00] hover:bg-[#8e6b00] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span>Track Your Order</span>
+              <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopyTrackingLink}
+              className="text-[11px] text-[#504442] hover:text-[#271310] flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#d3c3c0]/70 bg-white transition-colors cursor-pointer"
+            >
+              {copiedLink ? (
+                <>
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span className="text-emerald-700 font-semibold">Tracking Link Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3 text-[#827472]" />
+                  <span>Copy Tracking Link</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -146,23 +230,9 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
           <p className="text-xs text-[#504442]">
             {orderDetails.shippingAddress}, {orderDetails.cityPincode}
           </p>
-          <p className="text-[11px] text-[#827472]">Customer tracking updates: {orderDetails.customerEmail}</p>
-
-          {/* Roastery Order Notification Box */}
-          <div className="mt-2 p-2.5 bg-[#faf2f0] rounded-lg border border-[#d3c3c0]/60 flex items-start gap-2 text-xs">
-            <Mail className="w-4 h-4 text-[#785a00] flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-[#271310]">
-                Order dispatched to roastery desk: <span className="font-mono text-[#785a00]">Mritunjay.Bhardwaj@caphevietnam.in</span>
-              </p>
-              <p className="text-[11px] text-[#827472] mt-0.5">
-                For queries, updates, or custom delivery instructions, email{' '}
-                <a href="mailto:Mritunjay.Bhardwaj@caphevietnam.in" className="text-[#785a00] underline">
-                  Mritunjay.Bhardwaj@caphevietnam.in
-                </a>
-              </p>
-            </div>
-          </div>
+          <p className="text-[11px] text-[#827472]">
+            Tracking notifications will be delivered to: <span className="font-mono text-[#271310]">{orderDetails.customerEmail}</span>
+          </p>
 
           {orderDetails.giftMessage && (
             <div className="mt-2 p-2.5 bg-[#faf2f0] rounded-lg border border-[#d3c3c0]/50 text-xs italic text-[#504442]">
@@ -237,29 +307,27 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
         {/* Modal Footer */}
         <div className="bg-[#fff8f6] p-4 border-t border-[#d3c3c0]/50 flex flex-wrap items-center justify-between gap-2.5">
           <button
+            type="button"
             onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-lg border border-[#d3c3c0] text-[#504442] hover:bg-white transition-colors flex items-center gap-1.5 font-semibold text-xs"
+            className="px-3.5 py-2 rounded-lg border border-[#d3c3c0] text-[#504442] hover:bg-white transition-colors flex items-center gap-1.5 font-semibold text-xs cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print Invoice</span>
           </button>
 
-          {onTrackOrder && (
-            <button
-              onClick={() => {
-                onTrackOrder(orderDetails.orderId);
-                onClose();
-              }}
-              className="px-4 py-2 rounded-lg bg-[#feca4d] hover:bg-[#ffda7a] text-[#271310] font-bold text-xs flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
-            >
-              <Truck className="w-3.5 h-3.5 text-[#271310]" />
-              <span>Track Shipping Status</span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleTrackClick}
+            className="px-4 py-2 rounded-lg bg-[#feca4d] hover:bg-[#ffda7a] text-[#271310] font-bold text-xs flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+          >
+            <Truck className="w-3.5 h-3.5 text-[#271310]" />
+            <span>Track Your Order</span>
+          </button>
 
           <button
+            type="button"
             onClick={onClose}
-            className="flex-1 py-2 px-3 rounded-lg bg-[#785a00] hover:bg-[#8e6b00] text-white font-bold text-xs uppercase tracking-wide transition-all shadow-xs text-center"
+            className="flex-1 py-2 px-3 rounded-lg bg-[#271310] hover:bg-[#3d201c] text-white font-bold text-xs uppercase tracking-wide transition-all shadow-xs text-center cursor-pointer"
           >
             Continue Shopping
           </button>

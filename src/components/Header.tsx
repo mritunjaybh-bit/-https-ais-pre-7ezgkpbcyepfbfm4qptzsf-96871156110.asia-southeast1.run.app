@@ -71,13 +71,13 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="mx-auto flex items-center gap-2 text-[11px] md:text-xs">
           <span className="text-[#feca4d] font-semibold flex items-center gap-1">
             <Mail className="w-3.5 h-3.5" />
-            Order Updates & Inquiries:
+            Customer Care & Order Support:
           </span>
           <a
-            href="mailto:Mritunjay.Bhardwaj@caphevietnam.in"
+            href="mailto:support@caphevietnam.in"
             className="text-white hover:text-[#feca4d] underline font-medium transition-colors"
           >
-            Mritunjay.Bhardwaj@caphevietnam.in
+            support@caphevietnam.in
           </a>
         </div>
         <div className="hidden md:flex items-center gap-4 text-[11px] text-[#ae8d87]">

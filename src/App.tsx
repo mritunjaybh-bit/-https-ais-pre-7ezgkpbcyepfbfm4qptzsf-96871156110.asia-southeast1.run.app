@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ActiveTab,
   Currency,
@@ -190,6 +190,59 @@ export default function App() {
     }
   };
 
+  // Listen to browser URL routing (e.g. /order/{order_id}, /track/{order_id}, or ?order={order_id})
+  useEffect(() => {
+    const handleUrlRoute = () => {
+      try {
+        const path = window.location.pathname;
+        const search = new URLSearchParams(window.location.search);
+        let targetOrderId = search.get('order') || search.get('orderId');
+
+        if (!targetOrderId) {
+          const match = path.match(/^\/(?:order|track)\/([^/]+)/i);
+          if (match && match[1]) {
+            targetOrderId = decodeURIComponent(match[1]);
+          }
+        }
+
+        if (targetOrderId) {
+          setTrackingOrderId(targetOrderId);
+          setIsTrackerOpen(true);
+        }
+      } catch (e) {
+        console.error('Error parsing route URL:', e);
+      }
+    };
+
+    handleUrlRoute();
+    window.addEventListener('popstate', handleUrlRoute);
+    return () => window.removeEventListener('popstate', handleUrlRoute);
+  }, []);
+
+  const handleTrackOrder = (orderId: string) => {
+    setTrackingOrderId(orderId);
+    setIsTrackerOpen(true);
+    try {
+      window.history.pushState({}, '', `/order/${encodeURIComponent(orderId)}`);
+    } catch {
+      // Ignore if pushState fails in preview sandbox
+    }
+  };
+
+  const handleCloseTracker = () => {
+    setIsTrackerOpen(false);
+    try {
+      if (
+        window.location.pathname.startsWith('/order/') ||
+        window.location.pathname.startsWith('/track/')
+      ) {
+        window.history.pushState({}, '', '/');
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   // Update status from Tracker
   const handleUpdateOrderStatus = (orderId: string, newStatus: OrderState) => {
     updateStoredOrderStatus(orderId, newStatus);
@@ -211,13 +264,12 @@ export default function App() {
         onOpenCart={() => setIsCartOpen(true)}
         onOpenMatcher={() => setActiveTab('flavor-matcher')}
         onOpenTracker={() => {
-          setTrackingOrderId(confirmedOrder?.orderId || (orders[0]?.orderId ?? undefined));
-          setIsTrackerOpen(true);
+          handleTrackOrder(confirmedOrder?.orderId || (orders[0]?.orderId ?? ''));
         }}
         activeOrdersCount={activeOrdersCount}
       />
 
-      {/* On-Page Success Banner: Confirmation Emails Sent */}
+      {/* On-Page Success Banner: Customer-Friendly Confirmation */}
       {emailAlert?.show && (
         <div className="bg-emerald-800 text-white px-4 py-3 border-b border-emerald-900 shadow-md relative z-30 transition-all">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
@@ -227,29 +279,28 @@ export default function App() {
               </div>
               <div className="text-xs">
                 <p className="font-bold text-white flex items-center gap-1.5">
-                  <span>Order Placed & Confirmation Emails Dispatched!</span>
+                  <span>Your order has been placed successfully!</span>
                   <span className="bg-emerald-900/80 px-2 py-0.5 rounded text-[10px] font-mono text-emerald-200">
                     {emailAlert.orderId}
                   </span>
                 </p>
                 <p className="text-[11px] text-emerald-100">
-                  Notification sent to <span className="underline font-mono">mritunjay.bhardwaj@caphevietnam.in</span> and customer confirmation to <span className="underline font-mono">{emailAlert.customerEmail}</span> via EmailJS.
+                  A confirmation email with your order summary has been sent to <span className="underline font-mono">{emailAlert.customerEmail}</span>.
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 self-end sm:self-auto">
               <button
-                onClick={() => {
-                  setTrackingOrderId(emailAlert.orderId);
-                  setIsTrackerOpen(true);
-                }}
-                className="text-[11px] font-bold bg-white text-emerald-900 px-3 py-1 rounded-md hover:bg-emerald-50 transition-colors shadow-2xs"
+                type="button"
+                onClick={() => handleTrackOrder(emailAlert.orderId)}
+                className="text-[11px] font-bold bg-white text-emerald-900 px-3 py-1 rounded-md hover:bg-emerald-50 transition-colors shadow-2xs cursor-pointer"
               >
-                Track Status
+                Track Your Order
               </button>
               <button
+                type="button"
                 onClick={() => setEmailAlert(null)}
-                className="text-emerald-300 hover:text-white p-1 transition-colors"
+                className="text-emerald-300 hover:text-white p-1 transition-colors cursor-pointer"
                 title="Dismiss"
               >
                 <X className="w-4 h-4" />
@@ -352,15 +403,14 @@ export default function App() {
         orderDetails={confirmedOrder}
         currency={currency}
         onTrackOrder={(orderId) => {
-          setTrackingOrderId(orderId);
-          setIsTrackerOpen(true);
+          handleTrackOrder(orderId);
         }}
       />
 
       {/* Real-time Courier & Roastery Status Tracker Component */}
       <OrderStatusTracker
         isOpen={isTrackerOpen}
-        onClose={() => setIsTrackerOpen(false)}
+        onClose={handleCloseTracker}
         orders={orders}
         currency={currency}
         initialOrderId={trackingOrderId}
@@ -371,8 +421,7 @@ export default function App() {
       <Footer
         onSelectTab={setActiveTab}
         onOpenTracker={() => {
-          setTrackingOrderId(confirmedOrder?.orderId || (orders[0]?.orderId ?? undefined));
-          setIsTrackerOpen(true);
+          handleTrackOrder(confirmedOrder?.orderId || (orders[0]?.orderId ?? ''));
         }}
       />
     </div>

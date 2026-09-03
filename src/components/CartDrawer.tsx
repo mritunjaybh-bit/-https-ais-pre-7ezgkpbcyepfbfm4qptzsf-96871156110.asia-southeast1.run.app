@@ -644,12 +644,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     </div>
                   </div>
 
-                  {/* Order Updates Email Notice */}
+                  {/* Order Updates Notice */}
                   <div className="bg-[#f5ecea] p-2.5 rounded-lg border border-[#d3c3c0]/60 text-[11px] text-[#504442] flex items-start gap-2">
                     <Package className="w-3.5 h-3.5 text-[#785a00] flex-shrink-0 mt-0.5" />
                     <span>
-                      Order notifications & dispatch updates are tracked with your email and our roastery operations desk:{' '}
-                      <strong className="text-[#271310]">Mritunjay.Bhardwaj@caphevietnam.in</strong>
+                      A digital invoice, roasting status, and air express tracking number will be dispatched to your email address once your order is confirmed.
                     </span>
                   </div>
 
