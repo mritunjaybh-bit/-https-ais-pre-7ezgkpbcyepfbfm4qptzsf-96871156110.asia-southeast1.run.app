@@ -20,8 +20,8 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab, onOpenTracker }) =>
   };
 
   return (
-    <footer className="bg-[#271310] text-[#f4eceb] pt-14 pb-10 border-t border-[#3e2723]">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+    <footer className="w-full max-w-full overflow-hidden bg-[#271310] text-[#f4eceb] pt-14 pb-10 border-t border-[#3e2723]">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-[#3e2723]">
           {/* Brand Identity & Mission (5 cols) */}

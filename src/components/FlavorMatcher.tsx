@@ -269,7 +269,7 @@ export const FlavorMatcher: React.FC<FlavorMatcherProps> = ({
   const currentQ = questions[currentQuestion];
 
   return (
-    <section id="flavor-matcher-section" className="py-12 max-w-[900px] mx-auto px-4 sm:px-6">
+    <section id="flavor-matcher-section" className="w-full max-w-[900px] mx-auto py-12 px-4 sm:px-6">
       {/* Quiz Section Header */}
       <div className="text-center max-w-xl mx-auto mb-10">
         <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#785a00] bg-[#feca4d]/20 px-3 py-1 rounded-full border border-[#feca4d]/40 inline-flex items-center gap-1.5 mb-3">

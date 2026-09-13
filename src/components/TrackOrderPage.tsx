@@ -103,7 +103,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
   ];
 
   return (
-    <div className="max-w-[1000px] mx-auto px-4 sm:px-6 py-8">
+    <div className="w-full max-w-[1000px] mx-auto px-4 sm:px-6 py-8">
       {/* Header Bar */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#d3c3c0]/60 pb-4">
         <div>

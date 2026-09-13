@@ -332,7 +332,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
 
   if (items.length === 0) {
     return (
-      <div className="max-w-[900px] mx-auto px-4 py-16 text-center space-y-5">
+      <div className="w-full max-w-[900px] mx-auto px-4 py-16 text-center space-y-5">
         <div className="w-16 h-16 rounded-full bg-[#f4ecea] flex items-center justify-center text-[#785a00] mx-auto shadow-xs">
           <ShoppingBag className="w-8 h-8" />
         </div>
@@ -357,7 +357,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8">
+    <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-8">
       {/* Top Header & Back Link */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#d3c3c0]/60 pb-4">
         <div>

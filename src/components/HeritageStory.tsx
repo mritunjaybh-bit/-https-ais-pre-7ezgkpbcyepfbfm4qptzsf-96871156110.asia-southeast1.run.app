@@ -40,7 +40,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
     REGIONAL_COFFEE_TRADITIONS[0];
 
   return (
-    <section id="heritage-story-section" className="py-10 max-w-[1200px] mx-auto px-4 sm:px-6">
+    <section id="heritage-story-section" className="w-full max-w-[1200px] mx-auto py-10 px-4 sm:px-6">
       {/* Editorial Header */}
       <div className="text-center max-w-3xl mx-auto mb-14">
         <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#785a00] bg-[#feca4d]/15 px-3 py-1 rounded-full border border-[#feca4d]/30 inline-block mb-3">

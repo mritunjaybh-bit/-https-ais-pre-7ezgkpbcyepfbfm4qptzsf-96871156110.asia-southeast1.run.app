@@ -29,7 +29,7 @@ export const BackgroundMusicPlayer: React.FC = () => {
       {/* Floating Bottom-Left Audio Control Widget */}
       <div
         id="ambient-music-floating-widget"
-        className="fixed bottom-4 left-4 z-40 flex items-center select-none"
+        className="fixed bottom-4 left-4 z-40 flex items-center select-none max-w-[calc(100vw-2rem)]"
       >
         <div className="bg-[#271310]/95 text-[#f4eceb] backdrop-blur-md border border-[#d3c3c0]/30 shadow-xl rounded-full px-3 py-2 flex items-center gap-2.5 transition-all duration-300 hover:border-[#feca4d]/60">
           {/* Main Mute / Unmute Speaker Toggle Button */}

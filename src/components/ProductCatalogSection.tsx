@@ -140,7 +140,7 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
   };
 
   return (
-    <section id="product-catalog-section" className="py-10 max-w-[1200px] mx-auto px-4 sm:px-6">
+    <section id="product-catalog-section" className="w-full max-w-[1200px] mx-auto py-10 px-4 sm:px-6">
       {/* Editorial Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-10">
         <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#785a00] bg-[#feca4d]/15 px-3 py-1 rounded-full border border-[#feca4d]/30 inline-block mb-3">

@@ -190,7 +190,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // View 1: Password-Protected Login Screen
   if (!isAuthenticated) {
     return (
-      <div className="max-w-[480px] mx-auto px-4 py-16">
+      <div className="w-full max-w-[480px] mx-auto px-4 py-16">
         <div className="bg-white rounded-2xl border border-[#d3c3c0]/80 p-6 sm:p-8 shadow-md space-y-6">
           <div className="text-center space-y-2">
             <div className="w-14 h-14 rounded-2xl bg-[#271310] text-[#feca4d] flex items-center justify-center mx-auto shadow-sm">
@@ -293,7 +293,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   // View 2: Authenticated Owner Dashboard
   return (
-    <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-8 space-y-6">
+    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 py-8 space-y-6">
       {/* Toast Notification Banner */}
       {actionSuccessMsg && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#271310] text-[#feca4d] px-4 py-3 rounded-xl border border-[#feca4d]/40 shadow-xl text-xs font-semibold flex items-center gap-2 animate-bounce">

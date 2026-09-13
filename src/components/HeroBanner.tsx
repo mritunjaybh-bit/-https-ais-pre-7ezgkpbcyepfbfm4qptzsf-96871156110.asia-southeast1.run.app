@@ -48,7 +48,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[#180b09] text-white border-b border-[#3e2723] py-14 sm:py-20 md:py-24 transition-all duration-300">
+    <section className="relative w-full max-w-full overflow-hidden bg-[#180b09] text-white border-b border-[#3e2723] py-14 sm:py-20 md:py-24 transition-all duration-300">
       {/* Background Video Layer */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <video
@@ -72,7 +72,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       </div>
 
       {/* Main Content Container */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10">
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           {/* Left Column: Brand Story & CTA (7 cols) */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
