@@ -15,10 +15,13 @@ import {
   Clock,
   Package,
   Truck,
-  Mail
+  Mail,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatCurrency';
 import { CURRENCY_RATES } from '../data/coffeeData';
+import { useMusic } from '../context/MusicContext';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -45,6 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenTracker,
   activeOrdersCount = 0,
 }) => {
+  const { isMuted, toggleMute } = useMusic();
   const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
   const currencyMenuRef = useRef<HTMLDivElement>(null);
 
@@ -250,6 +254,32 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden sm:inline">Track Package</span>
             {activeOrdersCount > 0 && (
               <span className="w-2 h-2 rounded-full bg-[#feca4d] animate-ping absolute -top-0.5 -right-0.5" />
+            )}
+          </button>
+
+          {/* Vietnamese Background Ambient Music Mute/Unmute Toggle Button */}
+          <button
+            id="header-music-toggle-btn"
+            type="button"
+            onClick={toggleMute}
+            title={!isMuted ? 'Mute traditional Vietnamese instrumental music' : 'Play traditional Vietnamese music (Đàn Tranh & Đàn Bầu)'}
+            aria-label={!isMuted ? 'Mute background music' : 'Play background music'}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-200 ${
+              !isMuted
+                ? 'bg-[#feca4d] text-[#271310] border-[#feca4d] shadow-xs hover:bg-[#ffc02e] active:scale-95'
+                : 'bg-[#faf2f0] text-[#504442] hover:text-[#271310] hover:bg-[#eee3e1] border-[#d3c3c0] active:scale-95'
+            }`}
+          >
+            {!isMuted ? (
+              <>
+                <Volume2 className="w-3.5 h-3.5 animate-pulse text-[#271310]" />
+                <span className="hidden sm:inline text-[11px] font-bold">♫ Music</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-[#827472]" />
+                <span className="hidden sm:inline text-[11px]">Music</span>
+              </>
             )}
           </button>
 

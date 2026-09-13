@@ -24,6 +24,8 @@ import { CartDrawer } from './components/CartDrawer';
 import { OrderConfirmationModal } from './components/OrderConfirmationModal';
 import { OrderStatusTracker } from './components/OrderStatusTracker';
 import { Footer } from './components/Footer';
+import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
+import { MusicProvider } from './context/MusicContext';
 import { CheckCircle2, MailCheck, X } from 'lucide-react';
 import { getAllOrders, saveOrder, updateOrderStatus as updateStoredOrderStatus } from './utils/orderStorage';
 
@@ -252,22 +254,23 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fff8f6] text-[#271310]">
-      {/* Top Header */}
-      <Header
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        currency={currency}
-        setCurrency={setCurrency}
-        cartCount={cartCount}
-        cartTotalINR={cartTotalINR}
-        onOpenCart={() => setIsCartOpen(true)}
-        onOpenMatcher={() => setActiveTab('flavor-matcher')}
-        onOpenTracker={() => {
-          handleTrackOrder(confirmedOrder?.orderId || (orders[0]?.orderId ?? ''));
-        }}
-        activeOrdersCount={activeOrdersCount}
-      />
+    <MusicProvider>
+      <div className="min-h-screen flex flex-col bg-[#fff8f6] text-[#271310]">
+        {/* Top Header */}
+        <Header
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          currency={currency}
+          setCurrency={setCurrency}
+          cartCount={cartCount}
+          cartTotalINR={cartTotalINR}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenMatcher={() => setActiveTab('flavor-matcher')}
+          onOpenTracker={() => {
+            handleTrackOrder(confirmedOrder?.orderId || (orders[0]?.orderId ?? ''));
+          }}
+          activeOrdersCount={activeOrdersCount}
+        />
 
       {/* On-Page Success Banner: Customer-Friendly Confirmation */}
       {emailAlert?.show && (
@@ -424,6 +427,10 @@ export default function App() {
           handleTrackOrder(confirmedOrder?.orderId || (orders[0]?.orderId ?? ''));
         }}
       />
+
+      {/* Traditional Vietnamese Ambient Background Music Player */}
+      <BackgroundMusicPlayer />
     </div>
+  </MusicProvider>
   );
 }
