@@ -20,6 +20,7 @@ export interface SendOrderEmailsPayload {
   finalTotalINR: number;
   paymentMethod?: string;
   paymentStatus?: string;
+  paymentId?: string;
 }
 
 export interface EmailSendResult {

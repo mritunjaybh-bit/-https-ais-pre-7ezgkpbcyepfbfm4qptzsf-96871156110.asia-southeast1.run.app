@@ -41,7 +41,7 @@ interface OrderConfirmationModalProps {
     emailMessage?: string;
   } | null;
   currency: Currency;
-  onTrackOrder?: (orderId: string) => void;
+  onTrackOrder?: (orderId: string, contact?: string) => void;
 }
 
 export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
@@ -83,7 +83,7 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
 
   const handleTrackClick = () => {
     if (onTrackOrder) {
-      onTrackOrder(orderDetails.orderId);
+      onTrackOrder(orderDetails.orderId, orderDetails.customerEmail || orderDetails.customerPhone);
     }
     onClose();
   };

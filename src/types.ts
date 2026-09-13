@@ -79,9 +79,25 @@ export interface CartItem {
   category: 'flavoured-coffee' | 'coffee-powder' | 'instant-coffee' | 'whole-bean' | 'brewing-gear';
 }
 
-export type ActiveTab = 'shop' | 'flavoured' | 'instant' | 'brew-studio' | 'flavor-matcher' | 'heritage';
+export type ActiveTab =
+  | 'shop'
+  | 'flavoured'
+  | 'instant'
+  | 'brew-studio'
+  | 'flavor-matcher'
+  | 'heritage'
+  | 'checkout'
+  | 'track-order'
+  | 'admin';
 
-export type OrderState = 'Order Placed & Roasting' | 'Packaged & Sealed' | 'In Transit' | 'Delivered';
+export type OrderState =
+  | 'Order Placed'
+  | 'Confirmed'
+  | 'In Transit'
+  | 'Delivered'
+  | 'Cancelled'
+  | 'Order Placed & Roasting'
+  | 'Packaged & Sealed';
 
 export interface PlacedOrder {
   orderId: string;

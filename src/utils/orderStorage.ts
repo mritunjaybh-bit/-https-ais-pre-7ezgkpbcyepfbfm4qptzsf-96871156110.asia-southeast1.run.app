@@ -63,6 +63,43 @@ export function updateOrderStatus(orderId: string, newStatus: OrderState): void 
   }
 }
 
+/**
+ * Customer Access (View-Only, with Verification)
+ * Verifies that BOTH Order ID AND contact detail (email or phone number) match
+ * before returning the read-only order record.
+ */
+export function verifyAndGetOrder(orderId: string, contactInput: string): PlacedOrder | null {
+  const cleanId = orderId.trim().toLowerCase();
+  const cleanContact = contactInput.trim().toLowerCase();
+
+  if (!cleanId || !cleanContact) return null;
+
+  const order = getOrderById(cleanId);
+  if (!order) return null;
+
+  // Check email match (case-insensitive)
+  const storedEmail = (order.customerEmail || '').trim().toLowerCase();
+  if (storedEmail && storedEmail === cleanContact) {
+    return order;
+  }
+
+  // Check phone match (digits only comparison)
+  const cleanInputDigits = cleanContact.replace(/[^0-9]/g, '');
+  const storedPhoneDigits = (order.customerPhone || '').replace(/[^0-9]/g, '');
+
+  if (cleanInputDigits && storedPhoneDigits) {
+    if (
+      storedPhoneDigits === cleanInputDigits ||
+      (cleanInputDigits.length >= 10 && storedPhoneDigits.endsWith(cleanInputDigits)) ||
+      (storedPhoneDigits.length >= 10 && cleanInputDigits.endsWith(storedPhoneDigits))
+    ) {
+      return order;
+    }
+  }
+
+  return null;
+}
+
 export function exportOrdersJSON(): string {
   const orders = getAllOrders();
   return JSON.stringify(orders, null, 2);

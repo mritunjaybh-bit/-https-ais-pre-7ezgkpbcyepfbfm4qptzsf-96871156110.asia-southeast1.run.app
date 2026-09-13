@@ -20,13 +20,14 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { PhinBrewStudio } from './components/PhinBrewStudio';
 import { FlavorMatcher } from './components/FlavorMatcher';
 import { HeritageStory } from './components/HeritageStory';
-import { CartDrawer } from './components/CartDrawer';
+import { OnePageCheckout } from './components/OnePageCheckout';
+import { TrackOrderPage } from './components/TrackOrderPage';
+import { AdminPortal } from './components/AdminPortal';
 import { OrderConfirmationModal } from './components/OrderConfirmationModal';
-import { OrderStatusTracker } from './components/OrderStatusTracker';
 import { Footer } from './components/Footer';
 import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 import { MusicProvider } from './context/MusicContext';
-import { CheckCircle2, MailCheck, X } from 'lucide-react';
+import { CheckCircle2, X } from 'lucide-react';
 import { getAllOrders, saveOrder, updateOrderStatus as updateStoredOrderStatus } from './utils/orderStorage';
 
 export default function App() {
@@ -37,9 +38,8 @@ export default function App() {
   // Initial cart starts empty
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
-  const [isTrackerOpen, setIsTrackerOpen] = useState<boolean>(false);
   const [trackingOrderId, setTrackingOrderId] = useState<string | undefined>(undefined);
+  const [trackingContact, setTrackingContact] = useState<string | undefined>(undefined);
   const [orders, setOrders] = useState<PlacedOrder[]>(() => getAllOrders());
   const [emailAlert, setEmailAlert] = useState<{
     show: boolean;
@@ -111,7 +111,7 @@ export default function App() {
       category: item.category,
     };
     handleAddToCart(cartItem);
-    setIsCartOpen(true);
+    handleSelectTab('checkout');
   };
 
   // Update Item Quantity
@@ -181,7 +181,6 @@ export default function App() {
       emailMessage: details.emailMessage,
     });
     setCartItems([]);
-    setIsCartOpen(false);
 
     if (details.emailSentSuccess !== false) {
       setEmailAlert({
@@ -192,24 +191,57 @@ export default function App() {
     }
   };
 
-  // Listen to browser URL routing (e.g. /order/{order_id}, /track/{order_id}, or ?order={order_id})
+  // Tab navigation handler with URL pushState
+  const handleSelectTab = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    try {
+      if (tab === 'checkout') {
+        window.history.pushState({}, '', '/checkout');
+      } else if (tab === 'track-order') {
+        window.history.pushState({}, '', '/track');
+      } else if (tab === 'admin') {
+        window.history.pushState({}, '', '/admin');
+      } else {
+        window.history.pushState({}, '', '/');
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  // Listen to browser URL routing (e.g. /admin, /checkout, /order/{order_id}, /track, ?order={order_id})
   useEffect(() => {
     const handleUrlRoute = () => {
       try {
-        const path = window.location.pathname;
+        const path = window.location.pathname.toLowerCase();
         const search = new URLSearchParams(window.location.search);
         let targetOrderId = search.get('order') || search.get('orderId');
 
-        if (!targetOrderId) {
+        if (path === '/admin' || path.startsWith('/admin')) {
+          setActiveTab('admin');
+          return;
+        }
+
+        if (path === '/checkout' || path.startsWith('/checkout')) {
+          setActiveTab('checkout');
+          return;
+        }
+
+        if (path === '/track' || path.startsWith('/track') || path.startsWith('/order')) {
           const match = path.match(/^\/(?:order|track)\/([^/]+)/i);
           if (match && match[1]) {
             targetOrderId = decodeURIComponent(match[1]);
           }
+          if (targetOrderId) {
+            setTrackingOrderId(targetOrderId);
+          }
+          setActiveTab('track-order');
+          return;
         }
 
         if (targetOrderId) {
           setTrackingOrderId(targetOrderId);
-          setIsTrackerOpen(true);
+          setActiveTab('track-order');
         }
       } catch (e) {
         console.error('Error parsing route URL:', e);
@@ -221,31 +253,22 @@ export default function App() {
     return () => window.removeEventListener('popstate', handleUrlRoute);
   }, []);
 
-  const handleTrackOrder = (orderId: string) => {
-    setTrackingOrderId(orderId);
-    setIsTrackerOpen(true);
+  const handleTrackOrder = (orderId?: string, contact?: string) => {
+    if (orderId) setTrackingOrderId(orderId);
+    if (contact) setTrackingContact(contact);
+    setActiveTab('track-order');
     try {
-      window.history.pushState({}, '', `/order/${encodeURIComponent(orderId)}`);
+      if (orderId) {
+        window.history.pushState({}, '', `/order/${encodeURIComponent(orderId)}`);
+      } else {
+        window.history.pushState({}, '', '/track');
+      }
     } catch {
       // Ignore if pushState fails in preview sandbox
     }
   };
 
-  const handleCloseTracker = () => {
-    setIsTrackerOpen(false);
-    try {
-      if (
-        window.location.pathname.startsWith('/order/') ||
-        window.location.pathname.startsWith('/track/')
-      ) {
-        window.history.pushState({}, '', '/');
-      }
-    } catch {
-      // ignore
-    }
-  };
-
-  // Update status from Tracker
+  // Update status (Admin / Roastery Owner only)
   const handleUpdateOrderStatus = (orderId: string, newStatus: OrderState) => {
     updateStoredOrderStatus(orderId, newStatus);
     setOrders((prev) =>
@@ -259,16 +282,14 @@ export default function App() {
         {/* Top Header */}
         <Header
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleSelectTab}
           currency={currency}
           setCurrency={setCurrency}
           cartCount={cartCount}
           cartTotalINR={cartTotalINR}
-          onOpenCart={() => setIsCartOpen(true)}
-          onOpenMatcher={() => setActiveTab('flavor-matcher')}
-          onOpenTracker={() => {
-            handleTrackOrder(confirmedOrder?.orderId || (orders[0]?.orderId ?? ''));
-          }}
+          onOpenCart={() => handleSelectTab('checkout')}
+          onOpenMatcher={() => handleSelectTab('flavor-matcher')}
+          onOpenTracker={() => handleTrackOrder()}
           activeOrdersCount={activeOrdersCount}
         />
 
@@ -295,7 +316,7 @@ export default function App() {
             <div className="flex items-center gap-2 self-end sm:self-auto">
               <button
                 type="button"
-                onClick={() => handleTrackOrder(emailAlert.orderId)}
+                onClick={() => handleTrackOrder(emailAlert.orderId, emailAlert.customerEmail)}
                 className="text-[11px] font-bold bg-white text-emerald-900 px-3 py-1 rounded-md hover:bg-emerald-50 transition-colors shadow-2xs cursor-pointer"
               >
                 Track Your Order
@@ -318,8 +339,8 @@ export default function App() {
         {/* Hero Banner displayed on Shop / Flavoured / Instant Tabs */}
         {(activeTab === 'shop' || activeTab === 'flavoured' || activeTab === 'instant') && (
           <HeroBanner
-            onSelectTab={setActiveTab}
-            onOpenMatcher={() => setActiveTab('flavor-matcher')}
+            onSelectTab={handleSelectTab}
+            onOpenMatcher={() => handleSelectTab('flavor-matcher')}
           />
         )}
 
@@ -352,7 +373,7 @@ export default function App() {
           />
         )}
 
-        {/* Tab 3: Interactive Phin Brewing Studio */}
+        {/* Tab 4: Interactive Phin Brewing Studio */}
         {activeTab === 'brew-studio' && (
           <PhinBrewStudio
             currency={currency}
@@ -361,7 +382,7 @@ export default function App() {
           />
         )}
 
-        {/* Tab 4: Taste Matcher Quiz */}
+        {/* Tab 5: Taste Matcher Quiz */}
         {activeTab === 'flavor-matcher' && (
           <FlavorMatcher
             currency={currency}
@@ -370,12 +391,43 @@ export default function App() {
           />
         )}
 
-        {/* Tab 5: Origin Heritage, Brewing Guides & Direct Trade */}
+        {/* Tab 6: Origin Heritage, Brewing Guides & Direct Trade */}
         {activeTab === 'heritage' && (
           <HeritageStory
             currency={currency}
             onAddToCart={handleAddToCart}
             onOpenProductModal={(item) => setSelectedProduct(item)}
+          />
+        )}
+
+        {/* Tab 7: Continuous One-Page Checkout */}
+        {activeTab === 'checkout' && (
+          <OnePageCheckout
+            items={cartItems}
+            currency={currency}
+            onUpdateQuantity={handleUpdateQuantity}
+            onRemoveItem={handleRemoveItem}
+            onBackToShop={() => handleSelectTab('shop')}
+            onOrderPlaced={handleCheckout}
+          />
+        )}
+
+        {/* Tab 8: Customer Read-Only Tracking Page (Requires Order ID + Contact Verification) */}
+        {activeTab === 'track-order' && (
+          <TrackOrderPage
+            currency={currency}
+            initialOrderId={trackingOrderId}
+            initialContact={trackingContact}
+            onBackToShop={() => handleSelectTab('shop')}
+          />
+        )}
+
+        {/* Tab 9: Password-Protected Roastery Owner / Admin Portal */}
+        {activeTab === 'admin' && (
+          <AdminPortal
+            currency={currency}
+            onBackToShop={() => handleSelectTab('shop')}
+            onOrderUpdated={handleUpdateOrderStatus}
           />
         )}
       </main>
@@ -388,44 +440,21 @@ export default function App() {
         onAddToCart={handleAddToCart}
       />
 
-      {/* Cart Drawer */}
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        items={cartItems}
-        currency={currency}
-        onUpdateQuantity={handleUpdateQuantity}
-        onRemoveItem={handleRemoveItem}
-        onCheckout={handleCheckout}
-      />
-
       {/* Order Confirmation Modal */}
       <OrderConfirmationModal
         isOpen={!!confirmedOrder}
         onClose={() => setConfirmedOrder(null)}
         orderDetails={confirmedOrder}
         currency={currency}
-        onTrackOrder={(orderId) => {
-          handleTrackOrder(orderId);
+        onTrackOrder={(orderId, contact) => {
+          handleTrackOrder(orderId, contact);
         }}
-      />
-
-      {/* Real-time Courier & Roastery Status Tracker Component */}
-      <OrderStatusTracker
-        isOpen={isTrackerOpen}
-        onClose={handleCloseTracker}
-        orders={orders}
-        currency={currency}
-        initialOrderId={trackingOrderId}
-        onStatusChange={handleUpdateOrderStatus}
       />
 
       {/* Footer */}
       <Footer
-        onSelectTab={setActiveTab}
-        onOpenTracker={() => {
-          handleTrackOrder(confirmedOrder?.orderId || (orders[0]?.orderId ?? ''));
-        }}
+        onSelectTab={handleSelectTab}
+        onOpenTracker={() => handleTrackOrder()}
       />
 
       {/* Traditional Vietnamese Ambient Background Music Player */}

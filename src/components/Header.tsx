@@ -248,10 +248,14 @@ export const Header: React.FC<HeaderProps> = ({
             id="header-track-order-btn"
             onClick={onOpenTracker}
             title="Track real-time coffee delivery status"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-[#271310] bg-[#faf2f0] hover:bg-[#eee3e1] border border-[#d3c3c0] rounded-lg transition-colors relative"
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors relative cursor-pointer border ${
+              activeTab === 'track-order'
+                ? 'bg-[#271310] text-white border-[#271310] shadow-xs'
+                : 'text-[#271310] bg-[#faf2f0] hover:bg-[#eee3e1] border-[#d3c3c0]'
+            }`}
           >
-            <Clock className="w-3.5 h-3.5 text-[#785a00]" />
-            <span className="hidden sm:inline">Track Package</span>
+            <Clock className={`w-3.5 h-3.5 ${activeTab === 'track-order' ? 'text-[#feca4d]' : 'text-[#785a00]'}`} />
+            <span className="hidden sm:inline">Track Your Order</span>
             {activeOrdersCount > 0 && (
               <span className="w-2 h-2 rounded-full bg-[#feca4d] animate-ping absolute -top-0.5 -right-0.5" />
             )}

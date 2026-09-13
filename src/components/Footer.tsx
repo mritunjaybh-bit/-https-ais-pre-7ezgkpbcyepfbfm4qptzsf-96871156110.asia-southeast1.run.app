@@ -104,17 +104,23 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab, onOpenTracker }) =>
                   Central Highlands Origins
                 </button>
               </li>
-              {onOpenTracker && (
-                <li>
-                  <button
-                    onClick={onOpenTracker}
-                    className="hover:text-[#feca4d] transition-colors text-white/90 font-medium flex items-center gap-1"
-                  >
-                    <Truck className="w-3.5 h-3.5 text-[#feca4d]" />
-                    <span>Track Courier Package</span>
-                  </button>
-                </li>
-              )}
+              <li>
+                <button
+                  onClick={() => onSelectTab('track-order')}
+                  className="hover:text-[#feca4d] transition-colors text-white/90 font-medium flex items-center gap-1"
+                >
+                  <Truck className="w-3.5 h-3.5 text-[#feca4d]" />
+                  <span>Track Your Order</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onSelectTab('admin')}
+                  className="hover:text-[#feca4d] transition-colors text-[#ae8d87] flex items-center gap-1"
+                >
+                  <span>Owner Admin Portal</span>
+                </button>
+              </li>
             </ul>
           </div>
 

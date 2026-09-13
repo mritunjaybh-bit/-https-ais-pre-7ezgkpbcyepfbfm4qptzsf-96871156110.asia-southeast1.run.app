@@ -45,6 +45,7 @@ export interface PaymentOptions {
   customerEmail: string;
   customerPhone: string;
   shippingAddress: string;
+  description?: string;
 }
 
 export interface BackendOrderResponse {
