@@ -770,3 +770,10 @@ export const CURRENCY_RATES: Record<
   SGD: { symbol: 'S$', rate: 0.016, label: 'SGD (S$)', name: 'Singapore Dollar' },
   VND: { symbol: '₫', rate: 300, label: 'VND (₫)', name: 'Vietnamese Dong' }
 };
+
+export function getProductById(id: string): ProductItem | undefined {
+  if (!id) return undefined;
+  const clean = id.toLowerCase().trim();
+  return PRODUCT_ITEMS.find((p) => p.id.toLowerCase() === clean);
+}
+

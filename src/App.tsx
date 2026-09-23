@@ -23,6 +23,7 @@ import { FlavorMatcher } from './components/FlavorMatcher';
 import { HeritageStory } from './components/HeritageStory';
 import { BlogListingPage } from './components/BlogListingPage';
 import { BlogPostPage } from './components/BlogPostPage';
+import { ProductDetailPage } from './components/ProductDetailPage';
 import { OnePageCheckout } from './components/OnePageCheckout';
 import { TrackOrderPage } from './components/TrackOrderPage';
 import { AdminPortal } from './components/AdminPortal';
@@ -33,6 +34,7 @@ import { MusicProvider } from './context/MusicContext';
 import { CheckCircle2, X } from 'lucide-react';
 import { getAllOrders, saveOrder, updateOrderStatus as updateStoredOrderStatus } from './utils/orderStorage';
 import { getBlogPostBySlug } from './data/blogPosts';
+import { getProductById } from './data/coffeeData';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('shop');
@@ -205,15 +207,31 @@ export default function App() {
       } else if (tab === 'track-order') {
         window.history.pushState({}, '', '/track');
       } else if (tab === 'admin') {
-        window.history.pushState({}, '', '/admin');
+        window.history.pushState({}, '', '/mritunjay-admin-orders');
       } else if (tab === 'blog') {
         setSelectedBlogPost(null);
         window.history.pushState({}, '', '/blog');
+      } else if (tab === 'product-detail' && selectedProduct) {
+        window.history.pushState({}, '', `/product/${selectedProduct.id}`);
       } else {
         window.history.pushState({}, '', '/');
       }
     } catch {
       // ignore
+    }
+  };
+
+  // Dedicated product page navigation with clean URL
+  const handleSelectProduct = (product: ProductItem) => {
+    setSelectedProduct(product);
+    setActiveTab('product-detail');
+    try {
+      window.history.pushState({}, '', `/product/${product.id}`);
+    } catch {
+      // ignore
+    }
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -231,7 +249,7 @@ export default function App() {
     }
   };
 
-  // Listen to browser URL routing (e.g. /admin, /checkout, /blog, /blog/{slug}, /order/{order_id}, /track, ?order={order_id})
+  // Listen to browser URL routing (e.g. /mritunjay-admin-orders, /product/{id}, /checkout, /blog, /blog/{slug}, /order/{order_id}, /track)
   useEffect(() => {
     const handleUrlRoute = () => {
       try {
@@ -239,8 +257,34 @@ export default function App() {
         const search = new URLSearchParams(window.location.search);
         let targetOrderId = search.get('order') || search.get('orderId');
 
-        if (path === '/admin' || path.startsWith('/admin')) {
+        // Private unlisted URL for Roastery Owner Admin Portal
+        if (path === '/mritunjay-admin-orders' || path.startsWith('/mritunjay-admin-orders')) {
           setActiveTab('admin');
+          return;
+        }
+
+        // Dissuade random visitors trying /admin - redirect to home
+        if (path === '/admin' || path.startsWith('/admin')) {
+          setActiveTab('shop');
+          window.history.replaceState({}, '', '/');
+          return;
+        }
+
+        // Dedicated product page route (/product/{id} or /item/{id})
+        if (path.startsWith('/product/') || path.startsWith('/item/')) {
+          const match = path.match(/^\/(?:product|item)\/([^/]+)/i);
+          if (match && match[1]) {
+            const prodId = decodeURIComponent(match[1]);
+            const foundProduct = getProductById(prodId);
+            if (foundProduct) {
+              setSelectedProduct(foundProduct);
+              setActiveTab('product-detail');
+              return;
+            }
+          }
+          // Fallback to shop if product not found
+          setSelectedProduct(null);
+          setActiveTab('shop');
           return;
         }
 
@@ -282,6 +326,16 @@ export default function App() {
           }
           setActiveTab('track-order');
           return;
+        }
+
+        const targetProductId = search.get('product') || search.get('item');
+        if (targetProductId) {
+          const found = getProductById(targetProductId);
+          if (found) {
+            setSelectedProduct(found);
+            setActiveTab('product-detail');
+            return;
+          }
         }
 
         if (targetOrderId) {
@@ -393,7 +447,7 @@ export default function App() {
         {activeTab === 'shop' && (
           <ProductCatalogSection
             currency={currency}
-            onOpenProductModal={(item) => setSelectedProduct(item)}
+            onOpenProductModal={handleSelectProduct}
             onAddToCart={handleAddToCart}
           />
         )}
@@ -403,7 +457,7 @@ export default function App() {
           <ProductCatalogSection
             currency={currency}
             initialCategory="flavoured-coffee"
-            onOpenProductModal={(item) => setSelectedProduct(item)}
+            onOpenProductModal={handleSelectProduct}
             onAddToCart={handleAddToCart}
           />
         )}
@@ -413,8 +467,23 @@ export default function App() {
           <ProductCatalogSection
             currency={currency}
             initialCategory="instant-coffee"
-            onOpenProductModal={(item) => setSelectedProduct(item)}
+            onOpenProductModal={handleSelectProduct}
             onAddToCart={handleAddToCart}
+          />
+        )}
+
+        {/* Dedicated Product Detail Page */}
+        {activeTab === 'product-detail' && selectedProduct && (
+          <ProductDetailPage
+            product={selectedProduct}
+            currency={currency}
+            onAddToCart={handleAddToCart}
+            onBuyNow={(cartItem) => {
+              handleAddToCart(cartItem);
+              handleSelectTab('checkout');
+            }}
+            onBackToShop={() => handleSelectTab('shop')}
+            onSelectRelatedProduct={handleSelectProduct}
           />
         )}
 
@@ -423,7 +492,7 @@ export default function App() {
           <PhinBrewStudio
             currency={currency}
             onAddToCart={handleAddToCart}
-            onOpenProductModal={(item) => setSelectedProduct(item)}
+            onOpenProductModal={handleSelectProduct}
           />
         )}
 
@@ -431,7 +500,7 @@ export default function App() {
         {activeTab === 'flavor-matcher' && (
           <FlavorMatcher
             currency={currency}
-            onOpenProductModal={(item) => setSelectedProduct(item)}
+            onOpenProductModal={handleSelectProduct}
             onQuickAddToCart={handleQuickAddProduct}
           />
         )}
@@ -441,7 +510,7 @@ export default function App() {
           <HeritageStory
             currency={currency}
             onAddToCart={handleAddToCart}
-            onOpenProductModal={(item) => setSelectedProduct(item)}
+            onOpenProductModal={handleSelectProduct}
           />
         )}
 
@@ -495,13 +564,15 @@ export default function App() {
         )}
       </main>
 
-      {/* Product Detail & Grind/Size Selector Modal */}
-      <ProductDetailModal
-        item={selectedProduct}
-        currency={currency}
-        onClose={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
-      />
+      {/* Product Detail & Grind/Size Selector Modal (Only active if not on dedicated product-detail page) */}
+      {activeTab !== 'product-detail' && (
+        <ProductDetailModal
+          item={selectedProduct}
+          currency={currency}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={handleAddToCart}
+        />
+      )}
 
       {/* Order Confirmation Modal */}
       <OrderConfirmationModal

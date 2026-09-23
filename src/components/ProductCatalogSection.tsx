@@ -41,12 +41,6 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFlavor, setSelectedFlavor] = useState<string>('all');
   const [roastFilter, setRoastFilter] = useState<'all' | 'Dark' | 'Medium' | 'French Butter Roast'>('all');
-  const [addedItemNotice, setAddedItemNotice] = useState<string | null>(null);
-
-  // Per-card selected size state
-  const [cardSizes, setCardSizes] = useState<Record<string, PackageSize>>({});
-  // Per-card selected grind state
-  const [cardGrinds, setCardGrinds] = useState<Record<string, GrindOption>>({});
 
   const categories: { key: ProductCategory; label: string; sub: string; icon: typeof Coffee; badge?: string }[] = [
     { key: 'all', label: 'All Products', sub: 'Complete Collection', icon: Coffee },
@@ -98,46 +92,6 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
       return true;
     });
   }, [selectedCategory, selectedFlavor, searchQuery, roastFilter]);
-
-  const handleSizeChange = (productId: string, size: PackageSize) => {
-    setCardSizes((prev) => ({ ...prev, [productId]: size }));
-  };
-
-  const handleGrindChange = (productId: string, grind: GrindOption) => {
-    setCardGrinds((prev) => ({ ...prev, [productId]: grind }));
-  };
-
-  const handleCardAdd = (product: ProductItem) => {
-    const chosenSize = cardSizes[product.id] || product.availableSizes[0].size;
-    const chosenSizeObj = product.availableSizes.find((s) => s.size === chosenSize) || product.availableSizes[0];
-    const chosenGrind =
-      product.availableGrinds && product.availableGrinds.length > 0
-        ? cardGrinds[product.id] || product.availableGrinds[0]
-        : undefined;
-
-    if (onQuickAddToCart) {
-      onQuickAddToCart(product, chosenSize, chosenGrind);
-    } else if (onAddToCart) {
-      const calculatedPrice = Math.round(product.basePriceINR * (chosenSizeObj?.priceMultiplier || 1));
-      onAddToCart({
-        id: `${product.id}-${Date.now()}`,
-        productId: product.id,
-        name: product.name,
-        vietnameseName: product.vietnameseName,
-        unitPriceINR: calculatedPrice,
-        quantity: 1,
-        imageUrl: product.imageUrl,
-        selectedSize: chosenSize,
-        selectedGrind: chosenGrind,
-        category: product.category,
-      });
-    }
-
-    setAddedItemNotice(product.id);
-    setTimeout(() => {
-      setAddedItemNotice((prev) => (prev === product.id ? null : prev));
-    }, 2000);
-  };
 
   return (
     <section id="product-catalog-section" className="w-full max-w-[1200px] mx-auto py-10 px-4 sm:px-6">
@@ -272,21 +226,17 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
       {/* Product Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
         {filteredProducts.map((product) => {
-          const currentSizeName = cardSizes[product.id] || product.availableSizes[0].size;
-          const currentSizeObj =
-            product.availableSizes.find((s) => s.size === currentSizeName) ||
-            product.availableSizes[0];
-          const calculatedPriceINR = Math.round(product.basePriceINR * currentSizeObj.priceMultiplier);
-          const currentGrind =
-            cardGrinds[product.id] ||
-            (product.availableGrinds ? product.availableGrinds[0] : undefined);
-          const isAdded = addedItemNotice === product.id;
-
           return (
-            <div
+            <a
               key={product.id}
               id={`product-card-${product.id}`}
-              className="bg-[#faf2f0] rounded-2xl border border-[#d3c3c0]/50 overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group"
+              href={`/product/${product.id}`}
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                e.preventDefault();
+                onOpenProductModal(product);
+              }}
+              className="bg-[#faf2f0] rounded-2xl border border-[#d3c3c0]/50 overflow-hidden shadow-xs hover:shadow-md hover:border-[#785a00]/40 transition-all duration-300 flex flex-col justify-between group cursor-pointer block text-inherit no-underline"
             >
               {/* Product Visual Container */}
               <div className="relative aspect-[16/11] bg-[#eee6e5] overflow-hidden">
@@ -341,9 +291,8 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
 
                   {/* Title & Vietnamese Name */}
                   <h3
-                    className="text-lg font-bold text-[#271310] font-serif leading-snug group-hover:text-[#785a00] transition-colors cursor-pointer"
+                    className="text-lg font-bold text-[#271310] font-serif leading-snug group-hover:text-[#785a00] transition-colors"
                     style={{ fontFamily: 'Playfair Display, serif' }}
-                    onClick={() => onOpenProductModal(product)}
                   >
                     {product.name}
                   </h3>
@@ -369,100 +318,38 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
                   </div>
                 </div>
 
-                {/* Package Size Selector Pills */}
-                {product.availableSizes.length > 1 && (
-                  <div className="space-y-1.5 pt-2 border-t border-[#d3c3c0]/40">
-                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#827472]">
-                      <span>Select Size:</span>
-                      <span className="text-[#785a00] font-semibold">{currentSizeName}</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                      {product.availableSizes.map((s) => {
-                        const isSizeActive = currentSizeName === s.size;
-                        return (
-                          <button
-                            key={s.size}
-                            type="button"
-                            onClick={() => handleSizeChange(product.id, s.size)}
-                            className={`px-2 py-1.5 rounded-md text-[10px] font-bold text-center border transition-all ${
-                              isSizeActive
-                                ? 'bg-[#271310] text-white border-[#271310] shadow-2xs'
-                                : 'bg-white text-[#504442] border-[#d3c3c0] hover:bg-[#eee3e1]'
-                            }`}
-                          >
-                            {s.size.replace(' (Value Pack)', '').replace(' Valve Pouch', '').replace(' Fresh Pack', '')}
-                          </button>
-                        );
-                      })}
-                    </div>
+                {/* Available Sizes */}
+                {product.availableSizes.length > 0 && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#827472] pt-1">
+                    <span className="font-semibold text-[#504442]">Sizes:</span>
+                    <span className="truncate">
+                      {product.availableSizes.map((s) => s.size.replace(' Valve Pouch', '').replace(' Fresh Pack', '')).join(' • ')}
+                    </span>
                   </div>
                 )}
 
-                {/* Grind Selector (If applicable) */}
-                {product.availableGrinds && product.availableGrinds.length > 0 && (
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#827472] block">
-                      Grind Preference:
-                    </label>
-                    <select
-                      value={currentGrind}
-                      onChange={(e) => handleGrindChange(product.id, e.target.value as GrindOption)}
-                      className="w-full bg-white border border-[#d3c3c0] rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-[#271310] focus:outline-none focus:border-[#785a00]"
-                    >
-                      {product.availableGrinds.map((g) => (
-                        <option key={g} value={g}>
-                          {g}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* Price and Add to Cart Action */}
+                {/* Price and Dedicated Page CTA */}
                 <div className="pt-3 border-t border-[#d3c3c0]/50 flex items-center justify-between gap-2">
                   <div>
                     <span className="text-[10px] text-[#827472] uppercase block font-semibold">
-                      Pack Price
+                      Starting From
                     </span>
                     <span className="text-lg font-bold text-[#271310] font-serif">
-                      {formatPrice(calculatedPriceINR, currency)}
+                      {formatPrice(product.basePriceINR, currency)}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => onOpenProductModal(product)}
-                      className="p-2 rounded-lg border border-[#d3c3c0] text-[#504442] hover:bg-white transition-colors"
-                      title="View Details & Origin Notes"
+                    <span
+                      className="px-3.5 py-2 rounded-lg font-bold text-xs bg-[#785a00] group-hover:bg-[#8e6b00] text-white flex items-center gap-1.5 transition-all shadow-xs"
                     >
-                      <Sliders className="w-4 h-4" />
-                    </button>
-
-                    <button
-                      id={`quick-add-btn-${product.id}`}
-                      onClick={() => handleCardAdd(product)}
-                      className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs ${
-                        isAdded
-                          ? 'bg-emerald-700 text-white'
-                          : 'bg-[#785a00] hover:bg-[#8e6b00] text-white active:scale-95'
-                      }`}
-                    >
-                      {isAdded ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Added!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Add to Cart</span>
-                        </>
-                      )}
-                    </button>
+                      <span>View Details & Options</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
                   </div>
                 </div>
               </div>
-            </div>
+            </a>
           );
         })}
       </div>

@@ -121,14 +121,6 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab, onOpenTracker }) =>
                   <span>Track Your Order</span>
                 </button>
               </li>
-              <li>
-                <button
-                  onClick={() => onSelectTab('admin')}
-                  className="hover:text-[#feca4d] transition-colors text-[#ae8d87] flex items-center gap-1"
-                >
-                  <span>Owner Admin Portal</span>
-                </button>
-              </li>
             </ul>
           </div>
 

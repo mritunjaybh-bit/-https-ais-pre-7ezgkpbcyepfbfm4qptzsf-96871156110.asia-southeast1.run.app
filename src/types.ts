@@ -88,6 +88,7 @@ export type ActiveTab =
   | 'heritage'
   | 'blog'
   | 'blog-post'
+  | 'product-detail'
   | 'checkout'
   | 'track-order'
   | 'admin';
