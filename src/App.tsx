@@ -11,7 +11,8 @@ import {
   CartItem,
   PlacedOrder,
   OrderState,
-  ProductCategory
+  ProductCategory,
+  BlogPost
 } from './types';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
@@ -20,6 +21,8 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { PhinBrewStudio } from './components/PhinBrewStudio';
 import { FlavorMatcher } from './components/FlavorMatcher';
 import { HeritageStory } from './components/HeritageStory';
+import { BlogListingPage } from './components/BlogListingPage';
+import { BlogPostPage } from './components/BlogPostPage';
 import { OnePageCheckout } from './components/OnePageCheckout';
 import { TrackOrderPage } from './components/TrackOrderPage';
 import { AdminPortal } from './components/AdminPortal';
@@ -29,11 +32,13 @@ import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 import { MusicProvider } from './context/MusicContext';
 import { CheckCircle2, X } from 'lucide-react';
 import { getAllOrders, saveOrder, updateOrderStatus as updateStoredOrderStatus } from './utils/orderStorage';
+import { getBlogPostBySlug } from './data/blogPosts';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('shop');
   const [currency, setCurrency] = useState<Currency>('INR');
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
+  const [selectedBlogPost, setSelectedBlogPost] = useState<BlogPost | null>(null);
 
   // Initial cart starts empty
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -201,6 +206,9 @@ export default function App() {
         window.history.pushState({}, '', '/track');
       } else if (tab === 'admin') {
         window.history.pushState({}, '', '/admin');
+      } else if (tab === 'blog') {
+        setSelectedBlogPost(null);
+        window.history.pushState({}, '', '/blog');
       } else {
         window.history.pushState({}, '', '/');
       }
@@ -209,7 +217,21 @@ export default function App() {
     }
   };
 
-  // Listen to browser URL routing (e.g. /admin, /checkout, /order/{order_id}, /track, ?order={order_id})
+  // Dedicated blog post navigation with clean slug URL
+  const handleSelectBlogPost = (post: BlogPost) => {
+    setSelectedBlogPost(post);
+    setActiveTab('blog-post');
+    try {
+      window.history.pushState({}, '', `/blog/${post.slug}`);
+    } catch {
+      // ignore
+    }
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Listen to browser URL routing (e.g. /admin, /checkout, /blog, /blog/{slug}, /order/{order_id}, /track, ?order={order_id})
   useEffect(() => {
     const handleUrlRoute = () => {
       try {
@@ -224,6 +246,29 @@ export default function App() {
 
         if (path === '/checkout' || path.startsWith('/checkout')) {
           setActiveTab('checkout');
+          return;
+        }
+
+        if (path === '/blog' || path === '/journal') {
+          setSelectedBlogPost(null);
+          setActiveTab('blog');
+          return;
+        }
+
+        if (path.startsWith('/blog/') || path.startsWith('/journal/')) {
+          const match = path.match(/^\/(?:blog|journal)\/([^/]+)/i);
+          if (match && match[1]) {
+            const slug = decodeURIComponent(match[1]);
+            const foundPost = getBlogPostBySlug(slug);
+            if (foundPost) {
+              setSelectedBlogPost(foundPost);
+              setActiveTab('blog-post');
+              return;
+            }
+          }
+          // Fallback to blog listing if slug not matched
+          setSelectedBlogPost(null);
+          setActiveTab('blog');
           return;
         }
 
@@ -400,7 +445,25 @@ export default function App() {
           />
         )}
 
-        {/* Tab 7: Continuous One-Page Checkout */}
+        {/* Tab 7: The Cà Phê Journal - Blog Articles Listing */}
+        {activeTab === 'blog' && (
+          <BlogListingPage
+            onSelectPost={handleSelectBlogPost}
+            onNavigateToShop={() => handleSelectTab('shop')}
+          />
+        )}
+
+        {/* Tab 8: Individual Blog Post Page Template */}
+        {activeTab === 'blog-post' && selectedBlogPost && (
+          <BlogPostPage
+            post={selectedBlogPost}
+            onBackToBlog={() => handleSelectTab('blog')}
+            onNavigateToShop={() => handleSelectTab('shop')}
+            onSelectRelatedPost={handleSelectBlogPost}
+          />
+        )}
+
+        {/* Tab 9: Continuous One-Page Checkout */}
         {activeTab === 'checkout' && (
           <OnePageCheckout
             items={cartItems}

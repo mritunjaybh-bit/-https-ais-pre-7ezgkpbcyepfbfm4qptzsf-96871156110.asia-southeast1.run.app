@@ -106,6 +106,14 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab, onOpenTracker }) =>
               </li>
               <li>
                 <button
+                  onClick={() => onSelectTab('blog')}
+                  className="hover:text-[#feca4d] transition-colors text-[#feca4d]/90 font-medium"
+                >
+                  The Coffee Journal & Guides
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => onSelectTab('track-order')}
                   className="hover:text-[#feca4d] transition-colors text-white/90 font-medium flex items-center gap-1"
                 >

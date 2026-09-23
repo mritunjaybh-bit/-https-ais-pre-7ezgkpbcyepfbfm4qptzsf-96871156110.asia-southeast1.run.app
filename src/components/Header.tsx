@@ -17,7 +17,8 @@ import {
   Truck,
   Mail,
   Volume2,
-  VolumeX
+  VolumeX,
+  BookOpen
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatCurrency';
 import { CURRENCY_RATES } from '../data/coffeeData';
@@ -324,6 +325,19 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Compass className="w-3.5 h-3.5 shrink-0" />
             <span>Heritage & Guides</span>
+          </button>
+
+          <button
+            id="nav-tab-blog"
+            onClick={() => setActiveTab('blog')}
+            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer ${
+              activeTab === 'blog' || activeTab === 'blog-post'
+                ? 'bg-[#271310] text-white shadow-xs'
+                : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5 shrink-0" />
+            <span>Journal</span>
           </button>
         </nav>
       </div>

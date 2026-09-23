@@ -86,9 +86,41 @@ export type ActiveTab =
   | 'brew-studio'
   | 'flavor-matcher'
   | 'heritage'
+  | 'blog'
+  | 'blog-post'
   | 'checkout'
   | 'track-order'
   | 'admin';
+
+export type BlogContentBlock =
+  | { type: 'paragraph'; text: string }
+  | { type: 'heading'; level: 2 | 3; text: string }
+  | { type: 'image'; url: string; alt: string; caption?: string }
+  | { type: 'quote'; text: string; author?: string }
+  | { type: 'callout'; title?: string; text: string; icon?: string }
+  | { type: 'list'; items: string[]; ordered?: boolean };
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  publishDate: string;
+  dateISO: string;
+  readTime: string;
+  category: 'Brewing Guides' | 'Coffee Knowledge' | 'Heritage & Culture' | string;
+  featuredImage: string;
+  imageCaption?: string;
+  author: {
+    name: string;
+    role: string;
+    avatar?: string;
+  };
+  metaTitle: string;
+  metaDescription: string;
+  tags: string[];
+  content: BlogContentBlock[];
+}
 
 export type OrderState =
   | 'Order Placed'
