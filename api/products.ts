@@ -2,30 +2,66 @@ import { Request, Response } from 'express';
 import { getDbProducts, updateDbProducts } from './db';
 import { isValidSession } from './admin-auth';
 import { ProductItem } from '../src/types';
+import { PRODUCT_ITEMS } from '../src/data/coffeeData';
 
-export function publicProductsHandler(req: Request, res: Response) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+export default async function handler(req: any, res: any) {
+  // CORS Headers
+  const origin = req.headers?.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  if (origin !== '*') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const products = getDbProducts();
-  // Filter for customer storefront: only active products
-  const activeProducts = products
-    .filter((p) => p.isActive !== false)
-    .map((p) => ({
-      ...p,
-      isOutOfStock: (p.stockQuantity ?? 0) <= 0,
-    }));
+  try {
+    let products: ProductItem[] = [];
+    try {
+      products = getDbProducts();
+    } catch (dbErr) {
+      console.warn('[api/products] Error retrieving from db, falling back to static seed:', dbErr);
+      products = PRODUCT_ITEMS;
+    }
 
-  return res.status(200).json({
-    products: activeProducts,
-    count: activeProducts.length,
-    timestamp: new Date().toISOString(),
-  });
+    if (!Array.isArray(products) || products.length === 0) {
+      products = PRODUCT_ITEMS;
+    }
+
+    // Filter for customer storefront: only active products
+    const activeProducts = products
+      .filter((p) => p.isActive !== false)
+      .map((p) => ({
+        ...p,
+        isOutOfStock: (p.stockQuantity ?? 0) <= 0,
+      }));
+
+    return res.status(200).json({
+      products: activeProducts,
+      count: activeProducts.length,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    console.error('[api/products] Fatal error in handler:', err);
+    // Absolute fallback: Return default catalog with HTTP 200
+    const fallbackProducts = PRODUCT_ITEMS.map((p) => ({
+      ...p,
+      isOutOfStock: false,
+    }));
+    return res.status(200).json({
+      products: fallbackProducts,
+      count: fallbackProducts.length,
+      fallback: true,
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
+
+export function publicProductsHandler(req: Request, res: Response) {
+  return handler(req, res);
 }
 
 export function adminProductsHandler(req: Request, res: Response) {

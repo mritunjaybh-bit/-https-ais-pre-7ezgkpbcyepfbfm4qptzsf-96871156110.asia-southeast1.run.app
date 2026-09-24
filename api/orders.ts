@@ -3,6 +3,10 @@ import { getDbOrders, updateDbOrders, getDbProducts, updateDbProducts } from './
 import { isValidSession } from './admin-auth';
 import { PlacedOrder, OrderState } from '../src/types';
 
+export default async function handler(req: any, res: any) {
+  return ordersHandler(req, res);
+}
+
 export function ordersHandler(req: Request, res: Response) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
