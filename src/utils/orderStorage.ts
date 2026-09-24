@@ -33,7 +33,16 @@ export function saveOrder(order: PlacedOrder): void {
     );
     const updated = [order, ...filtered];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    console.log(`[OrderDB] Successfully stored order ${order.orderId} in database.`);
+    console.log(`[OrderDB] Stored order ${order.orderId} in local storage.`);
+
+    // Also persist directly to server database
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order),
+    }).catch((err) => {
+      console.warn('[OrderDB] Server sync deferred:', err);
+    });
   } catch (err) {
     console.error('Failed to save order to storage database:', err);
   }
@@ -97,6 +106,30 @@ export function verifyAndGetOrder(orderId: string, contactInput: string): Placed
     }
   }
 
+  return null;
+}
+
+export async function fetchOrderFromServer(
+  orderId: string,
+  contactInput: string
+): Promise<PlacedOrder | null> {
+  const local = verifyAndGetOrder(orderId, contactInput);
+  if (local) return local;
+
+  try {
+    const res = await fetch(
+      `/api/orders?orderId=${encodeURIComponent(orderId)}&contact=${encodeURIComponent(contactInput)}`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data.order) {
+        saveOrder(data.order);
+        return data.order;
+      }
+    }
+  } catch (err) {
+    console.warn('[OrderDB] Server fetch failed:', err);
+  }
   return null;
 }
 

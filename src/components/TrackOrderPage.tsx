@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Currency, PlacedOrder, OrderState } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
-import { verifyAndGetOrder } from '../utils/orderStorage';
+import { verifyAndGetOrder, fetchOrderFromServer } from '../utils/orderStorage';
 import {
   Search,
   Package,
@@ -72,8 +72,16 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
       setVerifiedOrder(order);
       setSearchError(null);
     } else {
-      setVerifiedOrder(null);
-      setSearchError("Order ID and contact details don't match — please check and try again.");
+      // Try fetching from server database
+      fetchOrderFromServer(cleanId, cleanContact).then((serverOrder) => {
+        if (serverOrder) {
+          setVerifiedOrder(serverOrder);
+          setSearchError(null);
+        } else {
+          setVerifiedOrder(null);
+          setSearchError("Order ID and contact details don't match — please check and try again.");
+        }
+      });
     }
   };
 

@@ -415,6 +415,19 @@ export default function App() {
     );
   };
 
+  // Dedicated, Pure Roastery Owner Portal Interface (100% separate from customer storefront)
+  if (activeTab === 'admin') {
+    return (
+      <div className="min-h-screen bg-[#180e0c] text-[#f5ebe6] w-full flex flex-col font-sans selection:bg-[#feca4d] selection:text-[#271310]">
+        <AdminPortal
+          currency={currency}
+          onBackToShop={() => handleSelectTab('shop')}
+          onOrderUpdated={handleUpdateOrderStatus}
+        />
+      </div>
+    );
+  }
+
   return (
     <MusicProvider>
       <div className="min-h-screen flex flex-col bg-[#fff8f6] text-[#271310] w-full max-w-full overflow-x-hidden">
@@ -591,15 +604,6 @@ export default function App() {
             initialOrderId={trackingOrderId}
             initialContact={trackingContact}
             onBackToShop={() => handleSelectTab('shop')}
-          />
-        )}
-
-        {/* Tab 9: Password-Protected Roastery Owner / Admin Portal */}
-        {activeTab === 'admin' && (
-          <AdminPortal
-            currency={currency}
-            onBackToShop={() => handleSelectTab('shop')}
-            onOrderUpdated={handleUpdateOrderStatus}
           />
         )}
       </main>

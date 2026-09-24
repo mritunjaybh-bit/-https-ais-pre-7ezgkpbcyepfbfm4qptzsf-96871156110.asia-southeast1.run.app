@@ -771,9 +771,56 @@ export const CURRENCY_RATES: Record<
   VND: { symbol: '₫', rate: 300, label: 'VND (₫)', name: 'Vietnamese Dong' }
 };
 
+let liveProductsCache: ProductItem[] = [...PRODUCT_ITEMS];
+
+export function syncLiveProducts(newProducts: ProductItem[]) {
+  if (!Array.isArray(newProducts) || newProducts.length === 0) return;
+  liveProductsCache = newProducts;
+  
+  // Mutate PRODUCT_ITEMS in-place for backwards compatibility
+  newProducts.forEach((newP) => {
+    const idx = PRODUCT_ITEMS.findIndex((p) => p.id === newP.id);
+    if (idx !== -1) {
+      PRODUCT_ITEMS[idx] = { ...PRODUCT_ITEMS[idx], ...newP };
+    } else {
+      PRODUCT_ITEMS.push(newP);
+    }
+  });
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('caphe_products_updated', { detail: newProducts }));
+  }
+}
+
+export async function fetchLiveProducts(): Promise<ProductItem[]> {
+  try {
+    const res = await fetch('/api/products');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.products)) {
+        syncLiveProducts(data.products);
+        return data.products;
+      }
+    }
+  } catch (err) {
+    console.warn('[Products] Using bundled products fallback:', err);
+  }
+  return liveProductsCache;
+}
+
 export function getProductById(id: string): ProductItem | undefined {
   if (!id) return undefined;
   const clean = id.toLowerCase().trim();
+  const foundLive = liveProductsCache.find((p) => p.id.toLowerCase() === clean);
+  if (foundLive) return foundLive;
   return PRODUCT_ITEMS.find((p) => p.id.toLowerCase() === clean);
 }
+
+// Auto-trigger live fetch on browser load
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    fetchLiveProducts();
+  }, 100);
+}
+
 

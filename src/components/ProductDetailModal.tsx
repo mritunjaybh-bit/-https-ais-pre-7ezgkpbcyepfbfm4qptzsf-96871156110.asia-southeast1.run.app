@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProductItem, Currency, PackageSize, GrindOption, CartItem } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
+import { getProductById } from '../data/coffeeData';
 import {
   X,
   Plus,
@@ -34,12 +35,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   currency,
   onAddToCart,
 }) => {
-  const currentProduct = productProp || itemProp;
-  const isVisible = isOpen !== undefined ? isOpen : !!currentProduct;
+  const rawProduct = productProp || itemProp;
+  const isVisible = isOpen !== undefined ? isOpen : !!rawProduct;
 
-  if (!isVisible || !currentProduct) return null;
+  if (!isVisible || !rawProduct) return null;
 
-  const product = currentProduct;
+  const product = getProductById(rawProduct.id) || rawProduct;
+  const isOutOfStock = (product.stockQuantity ?? 50) <= 0 || product.isOutOfStock;
 
   const [selectedSize, setSelectedSize] = useState<PackageSize>(
     product.availableSizes[0]?.size || '250g Valve Pouch'
@@ -65,6 +67,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const totalPrice = unitPrice * quantity;
 
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     const cartItem: CartItem = {
       id: `${product.id}-${selectedSize}-${selectedGrind || 'none'}-${Date.now()}`,
       productId: product.id,
@@ -286,26 +289,35 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               </span>
             </div>
 
-            <button
-              onClick={handleAddToCart}
-              className={`px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wide flex items-center gap-2 transition-all shadow-md ${
-                addedNotice
-                  ? 'bg-emerald-700 text-white'
-                  : 'bg-[#785a00] hover:bg-[#8e6b00] text-white active:scale-95'
-              }`}
-            >
-              {addedNotice ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span>Added to Cart!</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  <span>Add to Cart</span>
-                </>
-              )}
-            </button>
+            {isOutOfStock ? (
+              <button
+                disabled
+                className="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wide bg-stone-200 text-stone-500 cursor-not-allowed border border-stone-300"
+              >
+                Out of Stock
+              </button>
+            ) : (
+              <button
+                onClick={handleAddToCart}
+                className={`px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wide flex items-center gap-2 transition-all shadow-md ${
+                  addedNotice
+                    ? 'bg-emerald-700 text-white'
+                    : 'bg-[#785a00] hover:bg-[#8e6b00] text-white active:scale-95'
+                }`}
+              >
+                {addedNotice ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Added to Cart!</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    <span>Add to Cart</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

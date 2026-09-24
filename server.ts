@@ -8,6 +8,9 @@ import createOrderHandler from './api/create-order.ts';
 import verifyPaymentHandler from './api/verify-payment.ts';
 import healthHandler from './api/health.ts';
 import coffeeMasterHandler from './api/coffee-master.ts';
+import { adminAuthHandler } from './api/admin-auth.ts';
+import { publicProductsHandler, adminProductsHandler } from './api/products.ts';
+import { ordersHandler } from './api/orders.ts';
 
 // Load environment variables from .env with override
 dotenv.config({ override: true });
@@ -51,6 +54,44 @@ async function startServer() {
    * Endpoint: POST /api/coffee-master
    */
   app.all(['/api/coffee-master', '/api/coffee-master/'], coffeeMasterHandler);
+
+  /**
+   * Public Products & Live Stock/Pricing Catalog
+   * Endpoint: GET /api/products
+   */
+  app.all(['/api/products', '/api/products/'], publicProductsHandler);
+
+  /**
+   * Admin Authentication & Account Security (Server-Side Verification Only)
+   * Endpoints: POST /api/admin/login, verify, logout, change-password, setup-status, setup, forgot-password
+   */
+  app.all([
+    '/api/admin/login',
+    '/api/admin/verify',
+    '/api/admin/logout',
+    '/api/admin/change-password',
+    '/api/admin/setup-status',
+    '/api/admin/setup',
+    '/api/admin/forgot-password/request',
+    '/api/admin/forgot-password/verify-reset',
+  ], adminAuthHandler);
+
+  /**
+   * Admin Product, Inventory Control & Price Management
+   * Endpoints: /api/admin/products, /api/admin/inventory, /api/admin/prices
+   */
+  app.all([
+    '/api/admin/products',
+    '/api/admin/products/:id',
+    '/api/admin/inventory',
+    '/api/admin/prices',
+  ], adminProductsHandler);
+
+  /**
+   * Orders Database
+   * Endpoints: GET/POST/PATCH /api/orders
+   */
+  app.all(['/api/orders', '/api/orders/:id'], ordersHandler);
 
   // Guard API routes so missing endpoints never fall through to HTML
   app.all('/api/*', (req, res) => {

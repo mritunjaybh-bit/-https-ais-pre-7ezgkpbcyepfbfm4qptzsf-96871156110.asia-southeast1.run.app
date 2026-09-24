@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProductItem, Currency, PackageSize, GrindOption, CartItem } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
-import { PRODUCT_ITEMS } from '../data/coffeeData';
+import { PRODUCT_ITEMS, getProductById } from '../data/coffeeData';
 import {
   ArrowLeft,
   ShoppingBag,
@@ -21,6 +21,7 @@ import {
   Plus,
   Minus,
   Share2,
+  AlertCircle,
 } from 'lucide-react';
 
 interface ProductDetailPageProps {
@@ -68,25 +69,30 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     }
   }, [product.id]);
 
+  // Read latest live product data (for dynamic admin price/stock edits)
+  const liveProduct = getProductById(product.id) || product;
+  const isOutOfStock = (liveProduct.stockQuantity ?? 50) <= 0 || liveProduct.isOutOfStock;
+
   const currentSizeObj =
-    product.availableSizes.find((s) => s.size === selectedSize) || product.availableSizes[0];
-  const unitPrice = Math.round(product.basePriceINR * (currentSizeObj?.priceMultiplier || 1));
+    liveProduct.availableSizes.find((s) => s.size === selectedSize) || liveProduct.availableSizes[0];
+  const unitPrice = Math.round(liveProduct.basePriceINR * (currentSizeObj?.priceMultiplier || 1));
   const totalPrice = unitPrice * quantity;
 
   const buildCartItem = (): CartItem => ({
-    id: `${product.id}-${selectedSize}-${selectedGrind || 'none'}-${Date.now()}`,
-    productId: product.id,
-    name: product.name,
-    vietnameseName: product.vietnameseName,
+    id: `${liveProduct.id}-${selectedSize}-${selectedGrind || 'none'}-${Date.now()}`,
+    productId: liveProduct.id,
+    name: liveProduct.name,
+    vietnameseName: liveProduct.vietnameseName,
     unitPriceINR: unitPrice,
     quantity,
-    imageUrl: product.imageUrl,
+    imageUrl: liveProduct.imageUrl,
     selectedSize,
     selectedGrind,
-    category: product.category,
+    category: liveProduct.category,
   });
 
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     const item = buildCartItem();
     onAddToCart(item);
     setAddedNotice(true);
@@ -96,6 +102,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   };
 
   const handleBuyNow = () => {
+    if (isOutOfStock) return;
     const item = buildCartItem();
     onBuyNow(item);
   };
@@ -263,9 +270,15 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               </div>
 
               <div className="text-right">
-                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full inline-block">
-                  In Stock • Freshly Packed
-                </span>
+                {isOutOfStock ? (
+                  <span className="text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-300 px-2.5 py-1 rounded-full inline-block">
+                    Out of Stock • Roasting Next Batch
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full inline-block">
+                    In Stock • Freshly Packed
+                  </span>
+                )}
               </div>
             </div>
 
@@ -361,40 +374,57 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 </div>
 
                 {/* Add to Cart Button */}
-                <button
-                  type="button"
-                  id="detail-add-to-cart-btn"
-                  onClick={handleAddToCart}
-                  className={`flex-1 py-3 px-5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer active:scale-98 ${
-                    addedNotice
-                      ? 'bg-emerald-700 text-white'
-                      : 'bg-[#785a00] hover:bg-[#8e6b00] text-white'
-                  }`}
-                >
-                  {addedNotice ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>Added to Cart!</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag className="w-4 h-4" />
-                      <span>Add to Cart ({formatPrice(totalPrice, currency)})</span>
-                    </>
-                  )}
-                </button>
+                {isOutOfStock ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="flex-1 py-3 px-5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 bg-stone-200 text-stone-500 border border-stone-300 cursor-not-allowed"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Out of Stock</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    id="detail-add-to-cart-btn"
+                    onClick={handleAddToCart}
+                    className={`flex-1 py-3 px-5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer active:scale-98 ${
+                      addedNotice
+                        ? 'bg-emerald-700 text-white'
+                        : 'bg-[#785a00] hover:bg-[#8e6b00] text-white'
+                    }`}
+                  >
+                    {addedNotice ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>Added to Cart!</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>Add to Cart ({formatPrice(totalPrice, currency)})</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
 
-              {/* Buy Now Button */}
-              <button
-                type="button"
-                id="detail-buy-now-btn"
-                onClick={handleBuyNow}
-                className="w-full py-3 px-5 rounded-xl font-bold text-xs bg-[#271310] hover:bg-[#3e2723] active:scale-98 text-[#feca4d] border border-[#feca4d]/30 flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer"
-              >
-                <Zap className="w-4 h-4 fill-[#feca4d]" />
-                <span>Buy Now with Instant Express Checkout →</span>
-              </button>
+              {/* Buy Now Button or Out of Stock Notice */}
+              {isOutOfStock ? (
+                <div className="w-full py-2.5 px-4 rounded-xl text-xs bg-amber-50 border border-amber-200 text-amber-900 text-center font-medium">
+                  🌿 This roast is currently sold out. Our master roasters in Dak Lak are preparing the next harvest batch!
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  id="detail-buy-now-btn"
+                  onClick={handleBuyNow}
+                  className="w-full py-3 px-5 rounded-xl font-bold text-xs bg-[#271310] hover:bg-[#3e2723] active:scale-98 text-[#feca4d] border border-[#feca4d]/30 flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer"
+                >
+                  <Zap className="w-4 h-4 fill-[#feca4d]" />
+                  <span>Buy Now with Instant Express Checkout →</span>
+                </button>
+              )}
             </div>
 
             {/* Tasting Notes Chips */}

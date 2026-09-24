@@ -64,6 +64,9 @@ export interface ProductItem {
   rating: number;
   reviewsCount: number;
   brewingRecommendation?: string;
+  stockQuantity?: number;
+  isActive?: boolean;
+  isOutOfStock?: boolean;
 }
 
 export interface CartItem {

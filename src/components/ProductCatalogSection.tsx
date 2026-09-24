@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ProductItem, ProductCategory, Currency, PackageSize, GrindOption, CartItem } from '../types';
-import { PRODUCT_ITEMS } from '../data/coffeeData';
+import { PRODUCT_ITEMS, fetchLiveProducts } from '../data/coffeeData';
 import { formatPrice } from '../utils/formatCurrency';
 import { HeritageDivider } from './HeritageDivider';
 import {
@@ -41,6 +41,26 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFlavor, setSelectedFlavor] = useState<string>('all');
   const [roastFilter, setRoastFilter] = useState<'all' | 'Dark' | 'Medium' | 'French Butter Roast'>('all');
+  const [productsList, setProductsList] = useState<ProductItem[]>(PRODUCT_ITEMS);
+
+  useEffect(() => {
+    fetchLiveProducts().then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        setProductsList(data);
+      }
+    });
+
+    const handleUpdate = (e: CustomEvent<ProductItem[]>) => {
+      if (Array.isArray(e.detail)) {
+        setProductsList(e.detail);
+      }
+    };
+
+    window.addEventListener('caphe_products_updated', handleUpdate as EventListener);
+    return () => {
+      window.removeEventListener('caphe_products_updated', handleUpdate as EventListener);
+    };
+  }, []);
 
   const categories: { key: ProductCategory; label: string; sub: string; icon: typeof Coffee; badge?: string }[] = [
     { key: 'all', label: 'All Products', sub: 'Complete Collection', icon: Coffee },
@@ -64,7 +84,11 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
   ];
 
   const filteredProducts = useMemo(() => {
-    return PRODUCT_ITEMS.filter((item) => {
+    return productsList.filter((item) => {
+      // Exclude inactive / hidden products from storefront
+      if (item.isActive === false) {
+        return false;
+      }
       // Category filter
       if (selectedCategory !== 'all' && item.category !== selectedCategory) {
         return false;
@@ -226,6 +250,8 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
       {/* Product Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
         {filteredProducts.map((product) => {
+          const isOutOfStock = (product.stockQuantity ?? 50) <= 0 || product.isOutOfStock;
+
           return (
             <a
               key={product.id}
@@ -244,15 +270,21 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
                   src={product.imageUrl}
                   alt={product.name}
                   loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                    isOutOfStock ? 'grayscale-[40%] opacity-90' : ''
+                  }`}
                 />
 
-                {/* Top Badge */}
-                {product.badge && (
+                {/* Top Badge or Out of Stock */}
+                {isOutOfStock ? (
+                  <div className="absolute top-3 left-3 bg-rose-700 text-white text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md shadow-md border border-rose-500/40">
+                    Out of Stock
+                  </div>
+                ) : product.badge ? (
                   <div className="absolute top-3 left-3 bg-[#271310]/90 backdrop-blur-xs text-[#feca4d] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border border-[#feca4d]/30 shadow-sm">
                     {product.badge}
                   </div>
-                )}
+                ) : null}
 
                 {/* Caffeine Strength Meter */}
                 <div className="absolute bottom-3 left-3 bg-[#180b09]/80 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 border border-white/15">
@@ -340,12 +372,16 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <span
-                      className="px-3.5 py-2 rounded-lg font-bold text-xs bg-[#785a00] group-hover:bg-[#8e6b00] text-white flex items-center gap-1.5 transition-all shadow-xs"
-                    >
-                      <span>View Details & Options</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </span>
+                    {isOutOfStock ? (
+                      <span className="px-3.5 py-2 rounded-lg font-bold text-xs bg-stone-300 text-stone-700 flex items-center gap-1.5 shadow-2xs">
+                        <span>Out of Stock</span>
+                      </span>
+                    ) : (
+                      <span className="px-3.5 py-2 rounded-lg font-bold text-xs bg-[#785a00] group-hover:bg-[#8e6b00] text-white flex items-center gap-1.5 transition-all shadow-xs">
+                        <span>View Details & Options</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
