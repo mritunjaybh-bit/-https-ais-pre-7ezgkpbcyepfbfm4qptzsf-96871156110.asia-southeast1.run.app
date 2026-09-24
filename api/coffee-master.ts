@@ -30,6 +30,30 @@ Catalog Products:
 function fallbackSommelier(userText: string): { reply: string; recommendedProductIds: string[] } {
   const text = userText.toLowerCase();
 
+  // Hazelnut substitution
+  if (text.includes('hazelnut') || text.includes('nutty')) {
+    return {
+      reply: "We don't have Hazelnut yet, but you might love our **Đà Lạt Salted Butter-Caramel** or our **Saigon Artisan Chocolate Phin Powder**, which is slow-roasted with French clarified butter and Bến Tre cacao nibs that impart natural toasted hazelnut notes!",
+      recommendedProductIds: ['da-lat-salted-caramel-phin-powder', 'saigon-artisan-dark-chocolate-cacao-powder']
+    };
+  }
+
+  // Vanilla substitution
+  if (text.includes('vanilla')) {
+    return {
+      reply: "We don't have a standalone Vanilla roast yet, but you might love our **Hà Nội Heritage Egg Custard Coffee Powder** (rich vanilla-sabayon tiramisu notes) or our **Đà Lạt Butter-Caramel Coffee**!",
+      recommendedProductIds: ['hanoi-egg-coffee-heritage-ground-powder', 'da-lat-salted-caramel-phin-powder']
+    };
+  }
+
+  // Caramel preference
+  if (text.includes('caramel') || text.includes('butter') || text.includes('toffee')) {
+    return {
+      reply: "Our **Đà Lạt Butter-Caramel & Fleur de Sel Coffee Powder** is slow-caramelized with brown sugar and Vietnamese sea salt, brewing a luscious butterscotch crema profile that melts in your mouth!",
+      recommendedProductIds: ['da-lat-salted-caramel-phin-powder', 'culi-highland-dark-roast-powder']
+    };
+  }
+
   // Chocolate / Cocoa preference
   if (text.includes('choc') || text.includes('cocoa') || text.includes('fudge') || text.includes('mocha')) {
     if (text.includes('instant') || text.includes('quick') || text.includes('sachet')) {
