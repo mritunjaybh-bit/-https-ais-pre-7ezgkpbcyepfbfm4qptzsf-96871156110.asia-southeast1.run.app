@@ -243,10 +243,16 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label="Main Navigation"
           className="w-full max-w-[1200px] mx-auto px-3 sm:px-6 py-1.5 flex items-center justify-start lg:justify-center gap-1.5 sm:gap-2 overflow-x-auto max-w-full no-scrollbar min-w-0"
         >
-          <button
+          <a
             id="nav-tab-shop"
-            onClick={() => setActiveTab('shop')}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer ${
+            href="/"
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.button === 1) return;
+              e.preventDefault();
+              setActiveTab('shop');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
               activeTab === 'shop'
                 ? 'bg-[#271310] text-white shadow-xs'
                 : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
@@ -254,12 +260,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Layers className="w-3.5 h-3.5 shrink-0" />
             <span>Coffee Powders & Shop</span>
-          </button>
+          </a>
 
-          <button
+          <a
             id="nav-tab-flavoured"
-            onClick={() => setActiveTab('flavoured')}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer ${
+            href="/flavoured"
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.button === 1) return;
+              e.preventDefault();
+              setActiveTab('flavoured');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
               activeTab === 'flavoured'
                 ? 'bg-[#785a00] text-white shadow-xs'
                 : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
@@ -270,12 +282,18 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="bg-[#feca4d] text-[#271310] text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded-full tracking-wider">
               Egg & Chocolate
             </span>
-          </button>
+          </a>
 
-          <button
+          <a
             id="nav-tab-instant"
-            onClick={() => setActiveTab('instant')}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer ${
+            href="/instant"
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.button === 1) return;
+              e.preventDefault();
+              setActiveTab('instant');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
               activeTab === 'instant'
                 ? 'bg-[#271310] text-white shadow-xs'
                 : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
@@ -283,12 +301,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Coffee className="w-3.5 h-3.5 text-[#785a00] shrink-0" />
             <span>Instant & 3-in-1</span>
-          </button>
+          </a>
 
-          <button
+          <a
             id="nav-tab-brew-studio"
-            onClick={() => setActiveTab('brew-studio')}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer ${
+            href="/brew-studio"
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.button === 1) return;
+              e.preventDefault();
+              setActiveTab('brew-studio');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
               activeTab === 'brew-studio'
                 ? 'bg-[#785a00] text-white shadow-xs font-bold'
                 : 'bg-[#feca4d]/20 text-[#785a00] hover:bg-[#feca4d]/30 border border-[#feca4d]/40'
@@ -299,12 +323,18 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="bg-[#feca4d] text-[#271310] text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded-full tracking-wider">
               Interactive
             </span>
-          </button>
+          </a>
 
-          <button
+          <a
             id="nav-tab-flavor-matcher"
-            onClick={() => setActiveTab('flavor-matcher')}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer ${
+            href="/taste-matcher"
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.button === 1) return;
+              e.preventDefault();
+              setActiveTab('flavor-matcher');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
               activeTab === 'flavor-matcher'
                 ? 'bg-[#271310] text-white shadow-xs'
                 : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
@@ -312,12 +342,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Sparkles className="w-3.5 h-3.5 shrink-0" />
             <span>Taste Matcher</span>
-          </button>
+          </a>
 
-          <button
+          <a
             id="nav-tab-heritage"
-            onClick={() => setActiveTab('heritage')}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer ${
+            href="/heritage"
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.button === 1) return;
+              e.preventDefault();
+              setActiveTab('heritage');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
               activeTab === 'heritage'
                 ? 'bg-[#271310] text-white shadow-xs'
                 : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
@@ -325,12 +361,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Compass className="w-3.5 h-3.5 shrink-0" />
             <span>Heritage & Guides</span>
-          </button>
+          </a>
 
-          <button
+          <a
             id="nav-tab-blog"
-            onClick={() => setActiveTab('blog')}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer ${
+            href="/blog"
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.button === 1) return;
+              e.preventDefault();
+              setActiveTab('blog');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
               activeTab === 'blog' || activeTab === 'blog-post'
                 ? 'bg-[#271310] text-white shadow-xs'
                 : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
@@ -338,7 +380,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <BookOpen className="w-3.5 h-3.5 shrink-0" />
             <span>Journal</span>
-          </button>
+          </a>
         </nav>
       </div>
     </header>

@@ -30,6 +30,7 @@ import { AdminPortal } from './components/AdminPortal';
 import { OrderConfirmationModal } from './components/OrderConfirmationModal';
 import { Footer } from './components/Footer';
 import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
+import { CoffeeMasterChat } from './components/CoffeeMasterChat';
 import { MusicProvider } from './context/MusicContext';
 import { CheckCircle2, X } from 'lucide-react';
 import { getAllOrders, saveOrder, updateOrderStatus as updateStoredOrderStatus } from './utils/orderStorage';
@@ -211,6 +212,16 @@ export default function App() {
       } else if (tab === 'blog') {
         setSelectedBlogPost(null);
         window.history.pushState({}, '', '/blog');
+      } else if (tab === 'flavoured') {
+        window.history.pushState({}, '', '/flavoured');
+      } else if (tab === 'instant') {
+        window.history.pushState({}, '', '/instant');
+      } else if (tab === 'brew-studio') {
+        window.history.pushState({}, '', '/brew-studio');
+      } else if (tab === 'flavor-matcher') {
+        window.history.pushState({}, '', '/taste-matcher');
+      } else if (tab === 'heritage') {
+        window.history.pushState({}, '', '/heritage');
       } else if (tab === 'product-detail' && selectedProduct) {
         window.history.pushState({}, '', `/product/${selectedProduct.id}`);
       } else {
@@ -218,6 +229,9 @@ export default function App() {
       }
     } catch {
       // ignore
+    }
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -249,7 +263,7 @@ export default function App() {
     }
   };
 
-  // Listen to browser URL routing (e.g. /mritunjay-admin-orders, /product/{id}, /checkout, /blog, /blog/{slug}, /order/{order_id}, /track)
+  // Listen to browser URL routing (e.g. /mritunjay-admin-orders, /product/{id}, /checkout, /blog, /blog/{slug}, /instant, /brew-studio, /taste-matcher, /heritage, /order/{order_id}, /track)
   useEffect(() => {
     const handleUrlRoute = () => {
       try {
@@ -285,6 +299,32 @@ export default function App() {
           // Fallback to shop if product not found
           setSelectedProduct(null);
           setActiveTab('shop');
+          return;
+        }
+
+        // Shop Catalog Categories & Views
+        if (path === '/instant' || path.startsWith('/instant')) {
+          setActiveTab('instant');
+          return;
+        }
+
+        if (path === '/flavoured' || path === '/flavored' || path.startsWith('/flavoured') || path.startsWith('/flavored')) {
+          setActiveTab('flavoured');
+          return;
+        }
+
+        if (path === '/brew-studio' || path === '/brew' || path.startsWith('/brew')) {
+          setActiveTab('brew-studio');
+          return;
+        }
+
+        if (path === '/taste-matcher' || path === '/flavor-matcher' || path === '/matcher' || path.startsWith('/taste-matcher') || path.startsWith('/flavor-matcher')) {
+          setActiveTab('flavor-matcher');
+          return;
+        }
+
+        if (path === '/heritage' || path === '/origins' || path.startsWith('/heritage') || path.startsWith('/origins')) {
+          setActiveTab('heritage');
           return;
         }
 
@@ -593,6 +633,15 @@ export default function App() {
 
       {/* Traditional Vietnamese Ambient Background Music Player */}
       <BackgroundMusicPlayer />
+
+      {/* AI Shopping Assistant: Coffee Master */}
+      {activeTab !== 'admin' && (
+        <CoffeeMasterChat
+          currency={currency}
+          onSelectProduct={handleSelectProduct}
+          onAddToCart={handleAddToCart}
+        />
+      )}
     </div>
   </MusicProvider>
   );

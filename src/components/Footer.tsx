@@ -65,61 +65,103 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab, onOpenTracker }) =>
             </h4>
             <ul className="space-y-2 text-[#ae8d87]">
               <li>
-                <button
-                  onClick={() => onSelectTab('shop')}
-                  className="hover:text-[#feca4d] transition-colors"
+                <a
+                  href="/"
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                    e.preventDefault();
+                    onSelectTab('shop');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-[#feca4d] transition-colors cursor-pointer inline-block"
                 >
                   All Coffee Powders & Beans
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onSelectTab('instant')}
-                  className="hover:text-[#feca4d] transition-colors"
+                <a
+                  href="/instant"
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                    e.preventDefault();
+                    onSelectTab('instant');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-[#feca4d] transition-colors cursor-pointer inline-block"
                 >
                   Instant Coffee Sachets & Jars
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onSelectTab('brew-studio')}
-                  className="hover:text-[#feca4d] transition-colors font-semibold text-[#feca4d]"
+                <a
+                  href="/brew-studio"
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                    e.preventDefault();
+                    onSelectTab('brew-studio');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-[#feca4d] transition-colors font-semibold text-[#feca4d] cursor-pointer inline-block"
                 >
                   Live Phin Brew Studio
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onSelectTab('flavor-matcher')}
-                  className="hover:text-[#feca4d] transition-colors"
+                <a
+                  href="/taste-matcher"
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                    e.preventDefault();
+                    onSelectTab('flavor-matcher');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-[#feca4d] transition-colors cursor-pointer inline-block"
                 >
                   Coffee Taste Matcher
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onSelectTab('heritage')}
-                  className="hover:text-[#feca4d] transition-colors"
+                <a
+                  href="/heritage"
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                    e.preventDefault();
+                    onSelectTab('heritage');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-[#feca4d] transition-colors cursor-pointer inline-block"
                 >
                   Central Highlands Origins
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onSelectTab('blog')}
-                  className="hover:text-[#feca4d] transition-colors text-[#feca4d]/90 font-medium"
+                <a
+                  href="/blog"
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                    e.preventDefault();
+                    onSelectTab('blog');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-[#feca4d] transition-colors text-[#feca4d]/90 font-medium cursor-pointer inline-block"
                 >
                   The Coffee Journal & Guides
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onSelectTab('track-order')}
-                  className="hover:text-[#feca4d] transition-colors text-white/90 font-medium flex items-center gap-1"
+                <a
+                  href="/track"
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                    e.preventDefault();
+                    onSelectTab('track-order');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-[#feca4d] transition-colors text-white/90 font-medium flex items-center gap-1 cursor-pointer"
                 >
                   <Truck className="w-3.5 h-3.5 text-[#feca4d]" />
                   <span>Track Your Order</span>
-                </button>
+                </a>
               </li>
             </ul>
           </div>

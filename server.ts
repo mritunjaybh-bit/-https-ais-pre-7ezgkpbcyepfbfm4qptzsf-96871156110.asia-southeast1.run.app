@@ -7,6 +7,7 @@ import { createServer as createViteServer } from 'vite';
 import createOrderHandler from './api/create-order.ts';
 import verifyPaymentHandler from './api/verify-payment.ts';
 import healthHandler from './api/health.ts';
+import coffeeMasterHandler from './api/coffee-master.ts';
 
 // Load environment variables from .env with override
 dotenv.config({ override: true });
@@ -44,6 +45,12 @@ async function startServer() {
    * Endpoint: POST /api/verify-payment
    */
   app.all(['/api/verify-payment', '/api/verify-payment/'], verifyPaymentHandler);
+
+  /**
+   * AI Shopping Assistant: "Coffee Master"
+   * Endpoint: POST /api/coffee-master
+   */
+  app.all(['/api/coffee-master', '/api/coffee-master/'], coffeeMasterHandler);
 
   // Guard API routes so missing endpoints never fall through to HTML
   app.all('/api/*', (req, res) => {
