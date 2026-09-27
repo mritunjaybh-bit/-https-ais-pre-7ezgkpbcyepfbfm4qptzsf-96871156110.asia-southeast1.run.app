@@ -138,7 +138,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // Check setup status and existing session token on mount
   useEffect(() => {
     // 1. Query setup status from database
-    fetch('/api/admin/setup-status')
+    fetch('/api/admin?action=setup-status')
       .then((r) => r.json())
       .then((data) => {
         setIsSetupComplete(Boolean(data.isSetupComplete));
@@ -160,12 +160,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     // 2. Verify stored session token if present
     const savedToken = sessionStorage.getItem('caphe_admin_token');
     if (savedToken) {
-      fetch('/api/admin/verify', {
+      fetch('/api/admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${savedToken}`,
         },
+        body: JSON.stringify({ action: 'verify' }),
       })
         .then((res) => res.json())
         .then((data) => {
@@ -211,7 +212,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const loadAdminProducts = async () => {
     setIsLoadingProducts(true);
     try {
-      const res = await fetch('/api/admin/products', {
+      const res = await fetch('/api/admin?action=products', {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (res.ok) {
@@ -246,10 +247,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     setIsLoggingIn(true);
 
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'login',
           username: usernameInput,
           password: passwordInput,
         }),
@@ -310,10 +312,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
     setIsSubmittingSetup(true);
     try {
-      const res = await fetch('/api/admin/setup', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'setup',
+          username: cleanId,
           ownerId: cleanId,
           email: cleanEmail,
           password: cleanPass,
@@ -355,10 +359,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
     setIsSendingOtp(true);
     try {
-      const res = await fetch('/api/admin/forgot-password/request', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail }),
+        body: JSON.stringify({
+          action: 'forgot-password-request',
+          email: cleanEmail,
+        }),
       });
 
       const data = await res.json();
@@ -419,10 +426,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
     setIsVerifyingOtp(true);
     try {
-      const res = await fetch('/api/admin/forgot-password/verify-reset', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'forgot-password-verify-reset',
           resetToken: forgotResetToken,
           otp: cleanOtp,
           newPassword: cleanPass,
@@ -457,9 +465,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const handleLogout = async () => {
     if (authToken) {
       try {
-        await fetch('/api/admin/logout', {
+        await fetch('/api/admin', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${authToken}` },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ action: 'logout' }),
         });
       } catch {
         // ignore
@@ -482,13 +494,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     }
 
     try {
-      const res = await fetch('/api/admin/change-password', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ newPassword: newPasswordInput.trim() }),
+        body: JSON.stringify({
+          action: 'change-password',
+          newPassword: newPasswordInput.trim(),
+        }),
       });
 
       const data = await res.json();
@@ -510,7 +525,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // 2. Order Management
   const handleOrderStatusChange = async (orderId: string, newStatus: OrderState) => {
     try {
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const res = await fetch('/api/orders', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -535,7 +550,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   const handleSaveCourierDetails = async (orderId: string) => {
     try {
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const res = await fetch('/api/orders', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -582,14 +597,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
     setSavingRows((prev) => ({ ...prev, [productId]: true }));
     try {
-      const res = await fetch('/api/admin/inventory', {
-        method: 'PATCH',
+      const res = await fetch('/api/admin', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
-          updates: [{ id: productId, stockQuantity: newStock }],
+          action: 'update-inventory',
+          stockDrafts: { [productId]: newStock },
         }),
       });
 
@@ -612,19 +628,17 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   // Bulk save all modified stock levels
   const handleSaveAllStock = async () => {
-    const updates = Object.entries(stockDrafts).map(([id, stockQuantity]) => ({
-      id,
-      stockQuantity,
-    }));
-
     try {
-      const res = await fetch('/api/admin/inventory', {
-        method: 'PATCH',
+      const res = await fetch('/api/admin', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ updates }),
+        body: JSON.stringify({
+          action: 'update-inventory',
+          stockDrafts,
+        }),
       });
 
       if (res.ok) {
@@ -645,14 +659,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
     setSavingRows((prev) => ({ ...prev, [productId]: true }));
     try {
-      const res = await fetch('/api/admin/prices', {
-        method: 'PATCH',
+      const res = await fetch('/api/admin', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
-          updates: [{ id: productId, basePriceINR: newPrice }],
+          action: 'update-prices',
+          priceDrafts: { [productId]: newPrice },
         }),
       });
 
@@ -671,19 +686,17 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   // Bulk save all modified prices
   const handleSaveAllPrices = async () => {
-    const updates = Object.entries(priceDrafts).map(([id, basePriceINR]) => ({
-      id,
-      basePriceINR,
-    }));
-
     try {
-      const res = await fetch('/api/admin/prices', {
-        method: 'PATCH',
+      const res = await fetch('/api/admin', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ updates }),
+        body: JSON.stringify({
+          action: 'update-prices',
+          priceDrafts,
+        }),
       });
 
       if (res.ok) {
@@ -701,13 +714,17 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const handleToggleProductActive = async (product: ProductItem) => {
     const newActiveState = product.isActive === false ? true : false;
     try {
-      const res = await fetch(`/api/admin/products/${product.id}`, {
-        method: 'PUT',
+      const res = await fetch('/api/admin', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ id: product.id, isActive: newActiveState }),
+        body: JSON.stringify({
+          action: 'update-product',
+          id: product.id,
+          updates: { isActive: newActiveState },
+        }),
       });
 
       if (res.ok) {
@@ -733,19 +750,24 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     e.preventDefault();
 
     const isEdit = !!editingProduct;
-    const url = isEdit ? `/api/admin/products/${editingProduct.id}` : '/api/admin/products';
-    const method = isEdit ? 'PUT' : 'POST';
 
     try {
-      const payload = {
+      const productData = {
         ...productFormState,
         id: isEdit ? editingProduct.id : undefined,
         basePriceINR: Number(productFormState.basePriceINR) || 350,
         stockQuantity: Number(productFormState.stockQuantity) || 50,
       };
 
-      const res = await fetch(url, {
-        method,
+      const payload = {
+        action: isEdit ? 'update-product' : 'create-product',
+        id: isEdit ? editingProduct.id : undefined,
+        product: productData,
+        updates: productData,
+      };
+
+      const res = await fetch('/api/admin', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
@@ -780,13 +802,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     }
 
     try {
-      const res = await fetch(`/api/admin/products/${productId}`, {
-        method: 'DELETE',
+      const res = await fetch('/api/admin', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ id: productId }),
+        body: JSON.stringify({
+          action: 'delete-product',
+          id: productId,
+        }),
       });
 
       if (res.ok) {

@@ -2,6 +2,22 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/admin/(.*)",
+      "destination": "/api/admin?subpath=$1"
+    },
+    {
+      "source": "/api/create-order",
+      "destination": "/api/payments?action=create-order"
+    },
+    {
+      "source": "/api/verify-payment",
+      "destination": "/api/payments?action=verify-payment"
+    },
+    {
+      "source": "/api/orders/(.*)",
+      "destination": "/api/orders?id=$1"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

@@ -65,7 +65,7 @@ export interface VerificationResponse {
 
 /**
  * Step 1: Create Order on Backend
- * Calls POST /api/create-order to initiate an order in Razorpay
+ * Calls POST /api/payments with action: 'create-order' to initiate an order in Razorpay
  */
 export async function createRazorpayOrder(
   amountPaise: number,
@@ -74,7 +74,7 @@ export async function createRazorpayOrder(
 ): Promise<BackendOrderResponse> {
   let response: Response;
   try {
-    response = await fetch('/api/create-order', {
+    response = await fetch('/api/payments', {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -82,6 +82,7 @@ export async function createRazorpayOrder(
         Accept: 'application/json',
       },
       body: JSON.stringify({
+        action: 'create-order',
         amount: amountPaise,
         currency,
         receipt,
@@ -121,7 +122,7 @@ export async function createRazorpayOrder(
 
 /**
  * Step 3: Verify Signature on Backend
- * Calls POST /api/verify-payment to check HMAC-SHA256 signature
+ * Calls POST /api/payments with action: 'verify-payment' to check HMAC-SHA256 signature
  */
 export async function verifyRazorpayPayment(payload: {
   razorpay_order_id: string;
@@ -130,14 +131,17 @@ export async function verifyRazorpayPayment(payload: {
 }): Promise<VerificationResponse> {
   let response: Response;
   try {
-    response = await fetch('/api/verify-payment', {
+    response = await fetch('/api/payments', {
       method: 'POST',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        action: 'verify-payment',
+        ...payload,
+      }),
     });
   } catch (networkErr: any) {
     throw new Error(`Network error connecting to payment verification: ${networkErr?.message || 'Failed to connect'}`);

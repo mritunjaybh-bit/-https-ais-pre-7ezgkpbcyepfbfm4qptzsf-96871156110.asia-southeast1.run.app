@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import crypto from 'crypto';
-import { ProductItem, PlacedOrder } from '../src/types';
-import { PRODUCT_ITEMS } from '../src/data/coffeeData';
+import { ProductItem, PlacedOrder } from '../../src/types';
+import { PRODUCT_ITEMS } from '../../src/data/coffeeData';
 
 export interface AdminConfig {
   username: string; // Owner ID

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { getDbOrders, updateDbOrders, getDbProducts, updateDbProducts } from './db';
-import { isValidSession } from './admin-auth';
+import { getDbOrders, updateDbOrders, getDbProducts, updateDbProducts } from './_lib/db';
+import { isValidSession } from './_lib/auth-util';
 import { PlacedOrder, OrderState } from '../src/types';
 
 export default async function handler(req: any, res: any) {
@@ -9,18 +9,31 @@ export default async function handler(req: any, res: any) {
 
 export function ordersHandler(req: Request, res: Response) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const orders = getDbOrders();
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      body = {};
+    }
+  }
+  req.body = body || {};
 
-  // 1. GET /api/orders (or with tracking filter)
+  const orders = getDbOrders();
+  const pathParts = (req.path || req.url || '').split('?')[0].split('/').filter(Boolean);
+  const pathId = pathParts.length > 2 && pathParts[1] === 'orders' ? pathParts[2] : undefined;
+
+  // 1. GET /api/orders (or single order tracking)
   if (req.method === 'GET') {
-    const { orderId, contact } = req.query;
+    const orderId = req.query.orderId || req.query.id || pathId;
+    const contact = req.query.contact;
 
     if (orderId) {
       const target = orders.find(
@@ -49,7 +62,7 @@ export function ordersHandler(req: Request, res: Response) {
     const authHeader = req.headers.authorization || '';
     const token = authHeader.replace(/^Bearer\s+/i, '');
 
-    // Allow fetching orders if admin session valid or return active public count
+    // Allow fetching orders if admin session valid or return active public list
     if (isValidSession(token)) {
       return res.status(200).json({ orders });
     }
@@ -58,9 +71,52 @@ export function ordersHandler(req: Request, res: Response) {
     return res.status(200).json({ orders });
   }
 
-  // 2. POST /api/orders - Record new placed order and decrement inventory
+  // 2. PATCH or POST with action='update-status' -> Update status and tracking
+  if (req.method === 'PATCH' || (req.method === 'POST' && req.body?.action === 'update-status')) {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+
+    if (!isValidSession(token)) {
+      return res.status(401).json({ error: 'Unauthorized: Admin session required' });
+    }
+
+    const orderId = req.body.orderId || req.query.id || pathId;
+    const { status, trackingNumber, courierPartner } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ error: 'Missing orderId' });
+    }
+
+    const index = orders.findIndex(
+      (o) => o.orderId.toLowerCase() === String(orderId).trim().toLowerCase()
+    );
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Order ${orderId} not found` });
+    }
+
+    if (status) {
+      orders[index].status = status as OrderState;
+    }
+    if (trackingNumber !== undefined) {
+      orders[index].trackingNumber = trackingNumber;
+    }
+    if (courierPartner !== undefined) {
+      orders[index].courierPartner = courierPartner;
+    }
+
+    updateDbOrders(orders);
+
+    return res.status(200).json({
+      success: true,
+      message: `Order ${orderId} updated`,
+      order: orders[index],
+    });
+  }
+
+  // 3. POST /api/orders - Record new placed order and decrement inventory
   if (req.method === 'POST') {
-    const newOrder = req.body as PlacedOrder;
+    const newOrder = (req.body.order || req.body) as PlacedOrder;
     if (!newOrder || !newOrder.orderId || !newOrder.items) {
       return res.status(400).json({ error: 'Invalid order structure' });
     }
@@ -96,47 +152,6 @@ export function ordersHandler(req: Request, res: Response) {
       success: true,
       message: `Order ${newOrder.orderId} recorded successfully`,
       order: newOrder,
-    });
-  }
-
-  // 3. PATCH /api/orders/:id - Update status and courier tracking
-  if (req.method === 'PATCH') {
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.replace(/^Bearer\s+/i, '');
-
-    if (!isValidSession(token)) {
-      return res.status(401).json({ error: 'Unauthorized: Admin session required' });
-    }
-
-    const { orderId, status, trackingNumber, courierPartner } = req.body;
-    if (!orderId) {
-      return res.status(400).json({ error: 'Missing orderId' });
-    }
-
-    const index = orders.findIndex(
-      (o) => o.orderId.toLowerCase() === String(orderId).trim().toLowerCase()
-    );
-
-    if (index === -1) {
-      return res.status(404).json({ error: `Order ${orderId} not found` });
-    }
-
-    if (status) {
-      orders[index].status = status as OrderState;
-    }
-    if (trackingNumber !== undefined) {
-      orders[index].trackingNumber = trackingNumber;
-    }
-    if (courierPartner !== undefined) {
-      orders[index].courierPartner = courierPartner;
-    }
-
-    updateDbOrders(orders);
-
-    return res.status(200).json({
-      success: true,
-      message: `Order ${orderId} updated`,
-      order: orders[index],
     });
   }
 

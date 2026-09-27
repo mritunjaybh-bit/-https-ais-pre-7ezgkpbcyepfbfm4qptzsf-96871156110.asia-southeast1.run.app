@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { getDbProducts, updateDbProducts } from './db';
-import { isValidSession } from './admin-auth';
+import { getDbProducts, updateDbProducts } from './_lib/db';
+import { isValidSession } from './_lib/auth-util';
 import { ProductItem } from '../src/types';
 import { PRODUCT_ITEMS } from '../src/data/coffeeData';
 
