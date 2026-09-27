@@ -74,6 +74,8 @@ async function startServer() {
     '/api/admin/setup',
     '/api/admin/forgot-password/request',
     '/api/admin/forgot-password/verify-reset',
+    '/api/setup',
+    '/api/setup/',
   ], adminAuthHandler);
 
   /**

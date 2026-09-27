@@ -207,3 +207,52 @@ export function updateDbAdminPassword(newPasswordPlain: string): void {
     password: undefined, // remove any plaintext
   });
 }
+
+export function getDbSessions(): string[] {
+  const db = loadDatabase();
+  return db.sessions || [];
+}
+
+export function addDbSession(token: string): void {
+  const db = loadDatabase();
+  const sessions = db.sessions || [];
+  if (!sessions.includes(token)) {
+    db.sessions = [token, ...sessions].slice(0, 100);
+    saveDatabase(db);
+  }
+}
+
+export function removeDbSession(token: string): void {
+  const db = loadDatabase();
+  if (db.sessions) {
+    db.sessions = db.sessions.filter((s) => s !== token);
+    saveDatabase(db);
+  }
+}
+
+export function saveDbOtp(resetToken: string, record: OtpRecord): void {
+  const db = loadDatabase();
+  db.otps = db.otps || {};
+  db.otps[resetToken] = record;
+  saveDatabase(db);
+}
+
+export function getDbOtp(resetToken: string): OtpRecord | null {
+  const db = loadDatabase();
+  if (!db.otps || !db.otps[resetToken]) return null;
+  const record = db.otps[resetToken];
+  if (Date.now() > record.expiresAt) {
+    delete db.otps[resetToken];
+    saveDatabase(db);
+    return null;
+  }
+  return record;
+}
+
+export function deleteDbOtp(resetToken: string): void {
+  const db = loadDatabase();
+  if (db.otps && db.otps[resetToken]) {
+    delete db.otps[resetToken];
+    saveDatabase(db);
+  }
+}

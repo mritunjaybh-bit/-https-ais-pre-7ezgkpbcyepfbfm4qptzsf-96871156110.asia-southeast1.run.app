@@ -150,8 +150,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         if (data.username) {
           setCurrentAdminUser(data.username);
         }
-        // If owner setup has never been performed, open Setup view automatically
-        if (data.isSetupComplete === false) {
+        // If owner setup has never been performed or URL is /setup, open Setup view automatically
+        if (data.isSetupComplete === false || (typeof window !== 'undefined' && window.location.pathname.toLowerCase().includes('setup'))) {
           setAuthView('setup');
         }
       })

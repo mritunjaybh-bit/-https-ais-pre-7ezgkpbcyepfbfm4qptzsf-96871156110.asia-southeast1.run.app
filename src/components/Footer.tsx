@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Logo } from './Logo';
 import { ActiveTab } from '../types';
-import { Mail, Phone, MapPin, Heart, Send, Check, ShieldCheck, Truck, Package } from 'lucide-react';
+import { Mail, Phone, MapPin, Heart, Send, Check, ShieldCheck, Truck, Package, Lock } from 'lucide-react';
 
 interface FooterProps {
   onSelectTab: (tab: ActiveTab) => void;
@@ -217,6 +217,26 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab, onOpenTracker }) =>
             <span>Degassing Valve Sealed</span>
             <span>•</span>
             <span>100% Robusta & Arabica</span>
+            <span>•</span>
+            <a
+              href="/admin"
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                e.preventDefault();
+                onSelectTab('admin');
+                try {
+                  window.history.pushState({}, '', '/admin');
+                } catch {
+                  // Ignore pushState error
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="hover:text-[#feca4d] transition-colors flex items-center gap-1 text-[#ae8d87]/60 hover:text-[#feca4d] cursor-pointer"
+              title="Roastery Owner Admin Portal"
+            >
+              <Lock className="w-3 h-3" />
+              <span>Admin Log In</span>
+            </a>
           </div>
         </div>
       </div>

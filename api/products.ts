@@ -74,15 +74,26 @@ export function adminProductsHandler(req: Request, res: Response) {
   }
 
   // Verify Admin Session Token
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.replace(/^Bearer\s+/i, '') || (req.query.token as string);
+  const authHeader = req.headers?.authorization || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '') || (req.query?.token as string);
 
   if (!isValidSession(token)) {
     return res.status(401).json({ error: 'Unauthorized: Admin session invalid or expired' });
   }
 
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      body = {};
+    }
+  }
+  req.body = body || {};
+
   const products = getDbProducts();
-  const pathParts = req.path.split('/').filter(Boolean);
+  const requestPath = req.path || req.url || '';
+  const pathParts = requestPath.split('?')[0].split('/').filter(Boolean);
   // e.g. /api/admin/products or /api/admin/inventory or /api/admin/prices
 
   // 1. GET /api/admin/products - List all products including inactive & raw stock

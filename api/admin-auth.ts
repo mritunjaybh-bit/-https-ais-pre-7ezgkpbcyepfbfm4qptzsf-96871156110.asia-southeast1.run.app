@@ -6,10 +6,33 @@ import {
   updateDbAdminPassword,
   hashPassword,
   verifyPassword,
+  getDbSessions,
+  addDbSession,
+  removeDbSession,
+  saveDbOtp,
+  getDbOtp,
+  deleteDbOtp,
 } from './db';
 
 // In-memory active session tokens
 const activeSessions = new Set<string>();
+
+const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'caphe_vietnam_secret_roastery_2026';
+
+export function generateSessionToken(username: string): string {
+  const timestamp = Date.now().toString();
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const payload = `${username}:${timestamp}:${nonce}`;
+  const sig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  const token = `${payload}:${sig}`;
+  activeSessions.add(token);
+  try {
+    addDbSession(token);
+  } catch (e) {
+    // ignore
+  }
+  return token;
+}
 
 // In-memory active OTP requests (ResetToken -> OTP Record)
 interface OtpRecord {
@@ -21,7 +44,38 @@ const activeOtps = new Map<string, OtpRecord>();
 
 export function isValidSession(token?: string): boolean {
   if (!token) return false;
-  return activeSessions.has(token);
+
+  // 1. In-memory check
+  if (activeSessions.has(token)) return true;
+
+  // 2. Persistent store check
+  try {
+    const dbSessions = getDbSessions();
+    if (dbSessions.includes(token)) {
+      activeSessions.add(token);
+      return true;
+    }
+  } catch {}
+
+  // 3. Stateless cryptographic verification across serverless lambdas
+  try {
+    const parts = token.split(':');
+    if (parts.length === 4) {
+      const [username, timestampStr, nonce, sig] = parts;
+      const timestamp = parseInt(timestampStr, 10);
+      const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+      if (!isNaN(timestamp) && Date.now() - timestamp < SEVEN_DAYS) {
+        const payload = `${username}:${timestampStr}:${nonce}`;
+        const expectedSig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+        if (crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+          activeSessions.add(token);
+          return true;
+        }
+      }
+    }
+  } catch {}
+
+  return false;
 }
 
 function maskEmail(email: string): string {
@@ -69,14 +123,33 @@ async function sendOtpEmail(email: string, otp: string): Promise<boolean> {
   return false;
 }
 
+export default async function handler(req: any, res: any) {
+  return adminAuthHandler(req, res);
+}
+
 export async function adminAuthHandler(req: Request, res: Response) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS Headers
+  const origin = req.headers?.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  if (origin !== '*') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      body = {};
+    }
+  }
+  body = body || {};
 
   const pathParts = req.path.split('/').filter(Boolean);
   const action = pathParts[pathParts.length - 1] || 'login';
@@ -106,7 +179,7 @@ export async function adminAuthHandler(req: Request, res: Response) {
       });
     }
 
-    const { ownerId, email, password } = req.body || {};
+    const { ownerId, email, password } = body;
     const cleanId = String(ownerId || '').trim();
     const cleanEmail = String(email || '').trim().toLowerCase();
     const cleanPass = String(password || '').trim();
@@ -133,9 +206,8 @@ export async function adminAuthHandler(req: Request, res: Response) {
       setupAt: new Date().toISOString(),
     });
 
-    // Create session token immediately
-    const sessionToken = crypto.randomBytes(32).toString('hex');
-    activeSessions.add(sessionToken);
+    // Create persistent & stateless HMAC session token immediately
+    const sessionToken = generateSessionToken(cleanId);
 
     return res.status(200).json({
       success: true,
@@ -147,7 +219,7 @@ export async function adminAuthHandler(req: Request, res: Response) {
 
   // 3. POST /api/admin/forgot-password/request - Send OTP to registered email
   if (subAction === 'forgot-password/request' || action === 'request') {
-    const { email } = req.body || {};
+    const { email } = body;
     const inputEmail = String(email || '').trim().toLowerCase();
 
     const config = getDbAdminConfig();
@@ -170,11 +242,15 @@ export async function adminAuthHandler(req: Request, res: Response) {
     const resetToken = crypto.randomBytes(24).toString('hex');
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    activeOtps.set(resetToken, {
+    const otpRecord = {
       otp,
       email: registeredEmail,
       expiresAt,
-    });
+    };
+    activeOtps.set(resetToken, otpRecord);
+    try {
+      saveDbOtp(resetToken, otpRecord);
+    } catch {}
 
     console.log(`[AdminAuth] Password reset OTP generated for ${registeredEmail}: ${otp}`);
 
@@ -188,25 +264,28 @@ export async function adminAuthHandler(req: Request, res: Response) {
       resetToken,
       emailMasked: maskEmail(registeredEmail),
       message: `A 6-digit verification code has been dispatched to ${maskEmail(registeredEmail)}. Code expires in 10 minutes.`,
-      // Expose for testing if EmailJS has network restrictions in preview sandbox
       expiresInMinutes: 10,
     });
   }
 
   // 4. POST /api/admin/forgot-password/verify-reset - Verify OTP & update password
   if (subAction === 'forgot-password/verify-reset' || action === 'verify-reset') {
-    const { resetToken, otp, newPassword } = req.body || {};
+    const { resetToken, otp, newPassword } = body;
 
-    if (!resetToken || !activeOtps.has(resetToken)) {
+    let record = resetToken ? activeOtps.get(resetToken) : null;
+    if (!record && resetToken) {
+      record = getDbOtp(resetToken);
+    }
+
+    if (!resetToken || !record) {
       return res.status(400).json({
         error: 'Invalid or expired password reset session. Please request a new OTP.',
       });
     }
 
-    const record = activeOtps.get(resetToken)!;
-
     if (Date.now() > record.expiresAt) {
       activeOtps.delete(resetToken);
+      try { deleteDbOtp(resetToken); } catch {}
       return res.status(400).json({
         error: 'This verification code has expired (10-minute limit exceeded). Please request a fresh OTP.',
       });
@@ -229,12 +308,10 @@ export async function adminAuthHandler(req: Request, res: Response) {
     // Hash and persist new password
     updateDbAdminPassword(cleanPass);
     activeOtps.delete(resetToken);
-
-    // Create fresh session token
-    const sessionToken = crypto.randomBytes(32).toString('hex');
-    activeSessions.add(sessionToken);
+    try { deleteDbOtp(resetToken); } catch {}
 
     const config = getDbAdminConfig();
+    const sessionToken = generateSessionToken(config.username || 'owner');
 
     return res.status(200).json({
       success: true,
@@ -247,7 +324,7 @@ export async function adminAuthHandler(req: Request, res: Response) {
   // 5. POST /api/admin/verify - Verify existing active session
   if (action === 'verify') {
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.replace(/^Bearer\s+/i, '') || req.body?.token;
+    const token = authHeader.replace(/^Bearer\s+/i, '') || body?.token;
 
     if (isValidSession(token)) {
       const config = getDbAdminConfig();
@@ -263,9 +340,10 @@ export async function adminAuthHandler(req: Request, res: Response) {
   // 6. POST /api/admin/logout
   if (action === 'logout') {
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.replace(/^Bearer\s+/i, '') || req.body?.token;
+    const token = authHeader.replace(/^Bearer\s+/i, '') || body?.token;
     if (token) {
       activeSessions.delete(token);
+      try { removeDbSession(token); } catch {}
     }
     return res.status(200).json({ success: true });
   }
@@ -273,13 +351,13 @@ export async function adminAuthHandler(req: Request, res: Response) {
   // 7. POST /api/admin/change-password (Authenticated)
   if (action === 'change-password') {
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.replace(/^Bearer\s+/i, '') || req.body?.token;
+    const token = authHeader.replace(/^Bearer\s+/i, '') || body?.token;
 
     if (!isValidSession(token)) {
       return res.status(401).json({ error: 'Unauthorized: Admin session required' });
     }
 
-    const { newPassword } = req.body || {};
+    const { newPassword } = body;
     if (!newPassword || typeof newPassword !== 'string' || newPassword.trim().length < 6) {
       return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
     }
@@ -290,7 +368,7 @@ export async function adminAuthHandler(req: Request, res: Response) {
 
   // 8. POST /api/admin/login
   if (action === 'login') {
-    const { username, password } = req.body || {};
+    const { username, password } = body;
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Please enter both Owner ID and password.' });
@@ -321,8 +399,7 @@ export async function adminAuthHandler(req: Request, res: Response) {
     }
 
     // Success: Generate cryptographically random session token
-    const sessionToken = crypto.randomBytes(32).toString('hex');
-    activeSessions.add(sessionToken);
+    const sessionToken = generateSessionToken(config.username || 'owner');
 
     updateDbAdminConfig({ lastLoginAt: new Date().toISOString() });
 

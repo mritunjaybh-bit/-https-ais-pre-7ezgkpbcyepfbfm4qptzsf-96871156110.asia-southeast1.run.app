@@ -271,16 +271,18 @@ export default function App() {
         const search = new URLSearchParams(window.location.search);
         let targetOrderId = search.get('order') || search.get('orderId');
 
-        // Private unlisted URL for Roastery Owner Admin Portal
-        if (path === '/mritunjay-admin-orders' || path.startsWith('/mritunjay-admin-orders')) {
+        // Roastery Owner Admin Portal & Setup Routes
+        if (
+          path === '/admin' ||
+          path.startsWith('/admin') ||
+          path === '/mritunjay-admin-orders' ||
+          path.startsWith('/mritunjay-admin-orders') ||
+          path === '/setup' ||
+          path.startsWith('/setup') ||
+          path === '/login' ||
+          path.startsWith('/login')
+        ) {
           setActiveTab('admin');
-          return;
-        }
-
-        // Dissuade random visitors trying /admin - redirect to home
-        if (path === '/admin' || path.startsWith('/admin')) {
-          setActiveTab('shop');
-          window.history.replaceState({}, '', '/');
           return;
         }
 
