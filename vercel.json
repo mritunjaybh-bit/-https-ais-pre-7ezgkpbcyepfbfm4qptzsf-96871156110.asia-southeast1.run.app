@@ -1,10 +1,5 @@
 {
-  "cleanUrls": true,
   "rewrites": [
-    {
-      "source": "/api/admin/(.*)",
-      "destination": "/api/admin?subpath=$1"
-    },
     {
       "source": "/api/create-order",
       "destination": "/api/payments?action=create-order"
@@ -14,16 +9,12 @@
       "destination": "/api/payments?action=verify-payment"
     },
     {
+      "source": "/api/admin/(.*)",
+      "destination": "/api/admin?subpath=$1"
+    },
+    {
       "source": "/api/orders/(.*)",
       "destination": "/api/orders?id=$1"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/setup",
-      "destination": "/index.html"
     },
     {
       "source": "/((?!api/).*)",
