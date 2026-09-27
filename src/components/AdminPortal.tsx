@@ -41,6 +41,10 @@ import {
   Mail,
   KeyRound,
   ShieldAlert,
+  Users,
+  UserPlus,
+  UserCheck,
+  UserX,
 } from 'lucide-react';
 
 interface AdminPortalProps {
@@ -49,7 +53,20 @@ interface AdminPortalProps {
   onOrderUpdated?: (orderId: string, newStatus: OrderState) => void;
 }
 
-type AdminTab = 'overview' | 'orders' | 'inventory' | 'prices' | 'products';
+export type AdminRole = 'owner' | 'staff';
+
+export interface StaffAccount {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  role: AdminRole;
+  status: 'active' | 'deactivated';
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+type AdminTab = 'overview' | 'orders' | 'inventory' | 'prices' | 'products' | 'staff';
 
 export const AdminPortal: React.FC<AdminPortalProps> = ({
   currency,
@@ -59,8 +76,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
-  const [currentAdminUser, setCurrentAdminUser] = useState<string>('owner');
-  const [currentAdminEmail, setCurrentAdminEmail] = useState<string>('mritunjaybh@gmail.com');
+  const [currentUserRole, setCurrentUserRole] = useState<AdminRole>('owner');
+  const [currentAdminUser, setCurrentAdminUser] = useState<string>('');
+  const [currentAdminName, setCurrentAdminName] = useState<string>('');
+  const [currentAdminEmail, setCurrentAdminEmail] = useState<string>('');
 
   // Auth View State: 'login' | 'setup' | 'forgot'
   const [authView, setAuthView] = useState<'login' | 'setup' | 'forgot'>('login');
@@ -75,14 +94,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   // Setup Form Inputs (One-Time Owner Account Creation)
   const [setupOwnerId, setSetupOwnerId] = useState<string>('');
-  const [setupEmail, setSetupEmail] = useState<string>('mritunjaybh@gmail.com');
+  const [setupName, setSetupName] = useState<string>('');
+  const [setupEmail, setSetupEmail] = useState<string>('');
   const [setupPassword, setSetupPassword] = useState<string>('');
   const [setupConfirmPassword, setSetupConfirmPassword] = useState<string>('');
   const [setupError, setSetupError] = useState<string | null>(null);
   const [isSubmittingSetup, setIsSubmittingSetup] = useState<boolean>(false);
 
   // Forgot Password Form Inputs (Email OTP Flow)
-  const [forgotEmail, setForgotEmail] = useState<string>('mritunjaybh@gmail.com');
+  const [forgotEmail, setForgotEmail] = useState<string>('');
   const [forgotStep, setForgotStep] = useState<1 | 2>(1); // 1 = request OTP, 2 = verify OTP & set password
   const [forgotOtp, setForgotOtp] = useState<string>('');
   const [forgotNewPass, setForgotNewPass] = useState<string>('');
@@ -95,6 +115,17 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   // Active Dashboard Tab
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+
+  // Staff Management State (Owner Only)
+  const [staffMembers, setStaffMembers] = useState<StaffAccount[]>([]);
+  const [isLoadingStaff, setIsLoadingStaff] = useState<boolean>(false);
+  const [isNewStaffModalOpen, setIsNewStaffModalOpen] = useState<boolean>(false);
+  const [newStaffName, setNewStaffName] = useState<string>('');
+  const [newStaffUsername, setNewStaffUsername] = useState<string>('');
+  const [newStaffEmail, setNewStaffEmail] = useState<string>('');
+  const [newStaffPassword, setNewStaffPassword] = useState<string>('');
+  const [staffError, setStaffError] = useState<string | null>(null);
+  const [isSubmittingStaff, setIsSubmittingStaff] = useState<boolean>(false);
 
   // Orders State
   const [orders, setOrders] = useState<PlacedOrder[]>([]);
@@ -141,18 +172,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     fetch('/api/admin?action=setup-status')
       .then((r) => r.json())
       .then((data) => {
-        setIsSetupComplete(Boolean(data.isSetupComplete));
-        if (data.registeredEmail) {
-          setCurrentAdminEmail(data.registeredEmail);
-          setForgotEmail(data.registeredEmail);
-          setSetupEmail(data.registeredEmail);
-        }
-        if (data.username) {
-          setCurrentAdminUser(data.username);
-        }
-        // If owner setup has never been performed or URL is /setup, open Setup view automatically
-        if (data.isSetupComplete === false || (typeof window !== 'undefined' && window.location.pathname.toLowerCase().includes('setup'))) {
+        const setupDone = Boolean(data.isSetupComplete);
+        setIsSetupComplete(setupDone);
+        if (!setupDone || (typeof window !== 'undefined' && window.location.pathname.toLowerCase().includes('setup'))) {
           setAuthView('setup');
+        } else {
+          setAuthView('login');
         }
       })
       .catch((err) => console.warn('Could not query admin setup status:', err));
@@ -170,11 +195,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       })
         .then((res) => res.json())
         .then((data) => {
-          if (data.valid) {
+          if (data.valid && data.user) {
             setAuthToken(savedToken);
             setIsAuthenticated(true);
-            if (data.username) setCurrentAdminUser(data.username);
-            if (data.email) setCurrentAdminEmail(data.email);
+            setCurrentAdminUser(data.user.username);
+            setCurrentAdminEmail(data.user.email);
+            setCurrentAdminName(data.user.name || data.user.username);
+            setCurrentUserRole(data.user.role || 'owner');
+            if (data.user.role === 'staff') {
+              setActiveTab('orders');
+            }
           } else {
             sessionStorage.removeItem('caphe_admin_token');
           }
@@ -190,8 +220,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     if (isAuthenticated && authToken) {
       loadOrders();
       loadAdminProducts();
+      if (currentUserRole === 'owner') {
+        loadStaffMembers();
+      }
     }
-  }, [isAuthenticated, authToken]);
+  }, [isAuthenticated, authToken, currentUserRole]);
 
   const loadOrders = async () => {
     try {
@@ -252,14 +285,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'login',
-          username: usernameInput,
+          username: usernameInput.trim(),
           password: passwordInput,
         }),
       });
 
       const data = await res.json();
 
-      if (data.requireSetup) {
+      if (data.requiresSetup) {
+        setIsSetupComplete(false);
         setAuthView('setup');
         setSetupError('Initial Roastery Owner setup is required. Please create your Owner account.');
         return;
@@ -269,12 +303,23 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         sessionStorage.setItem('caphe_admin_token', data.token);
         setAuthToken(data.token);
         setIsAuthenticated(true);
-        if (data.username) setCurrentAdminUser(data.username);
+        if (data.user) {
+          setCurrentAdminUser(data.user.username);
+          setCurrentAdminName(data.user.name || data.user.username);
+          setCurrentAdminEmail(data.user.email);
+          setCurrentUserRole(data.user.role || 'owner');
+          if (data.user.role === 'staff') {
+            setActiveTab('orders');
+          } else {
+            setActiveTab('overview');
+            loadStaffMembers();
+          }
+        }
         setUsernameInput('');
         setPasswordInput('');
-        showToast('Authenticated securely as Roastery Owner.');
+        showToast(`Authenticated securely as ${data.user?.role === 'owner' ? 'Roastery Owner' : 'Staff Member'}.`);
       } else {
-        setLoginError(data.error || 'Authentication failed. Please verify your Owner credentials.');
+        setLoginError(data.error || 'Authentication failed. Please verify your credentials.');
       }
     } catch (err) {
       console.error('Admin login network error:', err);
@@ -290,6 +335,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     setSetupError(null);
 
     const cleanId = setupOwnerId.trim();
+    const cleanName = setupName.trim() || cleanId;
     const cleanEmail = setupEmail.trim().toLowerCase();
     const cleanPass = setupPassword.trim();
 
@@ -318,7 +364,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         body: JSON.stringify({
           action: 'setup',
           username: cleanId,
-          ownerId: cleanId,
+          name: cleanName,
           email: cleanEmail,
           password: cleanPass,
         }),
@@ -330,10 +376,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         setAuthToken(data.token);
         setIsAuthenticated(true);
         setIsSetupComplete(true);
-        setCurrentAdminUser(data.username || cleanId);
-        setCurrentAdminEmail(cleanEmail);
-        setAuthView('login');
-        showToast('Owner Account created securely! Default credentials disabled.');
+        setCurrentAdminUser(data.user?.username || cleanId);
+        setCurrentAdminName(data.user?.name || cleanName);
+        setCurrentAdminEmail(data.user?.email || cleanEmail);
+        setCurrentUserRole('owner');
+        setActiveTab('overview');
+        showToast('Owner Account created securely! Welcome to your Roastery Console.');
       } else {
         setSetupError(data.error || 'Failed to complete owner setup.');
       }
@@ -345,15 +393,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     }
   };
 
-  // 3. Forgot Password: Request OTP to Registered Email
+  // 3. Forgot Password: Request OTP to Registered Email or Username
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError(null);
     setForgotSuccessNotice(null);
 
-    const cleanEmail = forgotEmail.trim().toLowerCase();
-    if (!cleanEmail || !cleanEmail.includes('@')) {
-      setForgotError('Please enter your registered owner email address.');
+    const cleanIdentifier = forgotEmail.trim();
+    if (!cleanIdentifier) {
+      setForgotError('Please enter your registered email address or username.');
       return;
     }
 
@@ -364,7 +412,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'forgot-password-request',
-          email: cleanEmail,
+          identifier: cleanIdentifier,
         }),
       });
 
@@ -372,26 +420,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       if (res.ok && data.success) {
         setForgotResetToken(data.resetToken);
         setForgotStep(2);
-        setForgotSuccessNotice(data.message || `Verification OTP code dispatched to ${data.emailMasked || cleanEmail}. Valid for 10 minutes.`);
-        
-        // Also dispatch directly via client-side EmailJS for redundancy
-        try {
-          await emailjs.send(
-            EMAILJS_CREDENTIALS.SERVICE_ID,
-            EMAILJS_CREDENTIALS.CUSTOMER_TEMPLATE_ID,
-            {
-              to_email: cleanEmail,
-              customer_email: cleanEmail,
-              customer_name: 'Cà Phê Vietnam Roastery Owner',
-              order_id: 'PASSWORD-RESET-OTP',
-              order_items: `Roastery Owner Portal Password Reset Request.\nPlease enter the 6-digit OTP code sent to your email. Expires in 10 minutes.`,
-              order_total: 'Owner Portal Security Code',
-            },
-            EMAILJS_CREDENTIALS.PUBLIC_KEY
-          );
-        } catch {
-          // Client-side dispatch redundancy failure is non-fatal since backend already dispatches
-        }
+        setForgotSuccessNotice(data.message || `Verification OTP code dispatched to ${data.maskedEmail || cleanIdentifier}. Valid for 10 minutes.`);
       } else {
         setForgotError(data.error || 'Could not initiate OTP reset request.');
       }
@@ -443,6 +472,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           sessionStorage.setItem('caphe_admin_token', data.token);
           setAuthToken(data.token);
           setIsAuthenticated(true);
+          if (data.user) {
+            setCurrentAdminUser(data.user.username);
+            setCurrentAdminName(data.user.name || data.user.username);
+            setCurrentAdminEmail(data.user.email);
+            setCurrentUserRole(data.user.role || 'owner');
+            if (data.user.role === 'staff') {
+              setActiveTab('orders');
+            } else {
+              setActiveTab('overview');
+              loadStaffMembers();
+            }
+          }
         }
         showToast('Password reset successfully! Logged in with new credentials.');
         setAuthView('login');
@@ -459,6 +500,142 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       setForgotError('Network error during password reset.');
     } finally {
       setIsVerifyingOtp(false);
+    }
+  };
+
+  // Staff Management Handlers (Owner Only)
+  const loadStaffMembers = async () => {
+    if (!authToken) return;
+    setIsLoadingStaff(true);
+    try {
+      const res = await fetch('/api/admin?action=staff-list', {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.staff)) {
+          setStaffMembers(data.staff);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load staff list:', err);
+    } finally {
+      setIsLoadingStaff(false);
+    }
+  };
+
+  const handleCreateStaffSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStaffError(null);
+
+    const name = newStaffName.trim();
+    const username = newStaffUsername.trim();
+    const email = newStaffEmail.trim().toLowerCase();
+    const password = newStaffPassword.trim();
+
+    if (!name || !username || !email || !password) {
+      setStaffError('All fields are required.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setStaffError('Password must be at least 6 characters.');
+      return;
+    }
+
+    setIsSubmittingStaff(true);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          action: 'create-staff',
+          name,
+          username,
+          email,
+          password,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`Staff account created for ${name}!`);
+        setIsNewStaffModalOpen(false);
+        setNewStaffName('');
+        setNewStaffUsername('');
+        setNewStaffEmail('');
+        setNewStaffPassword('');
+        loadStaffMembers();
+      } else {
+        setStaffError(data.error || 'Failed to create staff account.');
+      }
+    } catch {
+      setStaffError('Server connection error.');
+    } finally {
+      setIsSubmittingStaff(false);
+    }
+  };
+
+  const handleToggleStaffStatus = async (staffId: string, currentStatus: string) => {
+    const nextStatus = currentStatus === 'active' ? 'deactivated' : 'active';
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          action: 'toggle-staff',
+          id: staffId,
+          status: nextStatus,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStaffMembers((prev) =>
+          prev.map((s) => (s.id === staffId ? { ...s, status: nextStatus as any } : s))
+        );
+        showToast(`Staff account ${nextStatus === 'active' ? 'activated' : 'deactivated'}.`);
+      } else {
+        alert(data.error || 'Failed to update staff status.');
+      }
+    } catch {
+      alert('Network error updating staff status.');
+    }
+  };
+
+  const handleDeleteStaff = async (staffId: string, staffName: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete staff account "${staffName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          action: 'delete-staff',
+          id: staffId,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStaffMembers((prev) => prev.filter((s) => s.id !== staffId));
+        showToast(`Staff account "${staffName}" deleted.`);
+      } else {
+        alert(data.error || 'Failed to delete staff account.');
+      }
+    } catch {
+      alert('Network error deleting staff account.');
     }
   };
 
@@ -908,7 +1085,24 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               <form onSubmit={handleSetupSubmit} className="space-y-4">
                 <div>
                   <label className="text-[10px] font-bold text-[#b8a09b] uppercase block mb-1 tracking-wider">
-                    Desired Owner ID
+                    Full Name / Owner Name
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#827472]" />
+                    <input
+                      type="text"
+                      required
+                      value={setupName}
+                      onChange={(e) => setSetupName(e.target.value)}
+                      placeholder="e.g. Mritunjay"
+                      className="w-full bg-[#140b09] border border-[#3e2723] rounded-xl pl-10 pr-3 py-2.5 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#feca4d] focus:ring-1 focus:ring-[#feca4d]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-[#b8a09b] uppercase block mb-1 tracking-wider">
+                    Desired Owner Login ID / Username
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#827472]" />
@@ -1037,12 +1231,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   className="font-serif font-bold text-2xl text-white tracking-wide"
                   style={{ fontFamily: 'Playfair Display, serif' }}
                 >
-                  Reset Owner Password
+                  Reset Account Password
                 </h1>
                 <p className="text-xs text-[#b8a09b] leading-relaxed">
                   {forgotStep === 1
-                    ? 'Enter your registered email address to receive a secure 6-digit OTP verification code via EmailJS (valid 10 minutes).'
-                    : `Enter the 6-digit verification code sent to ${forgotEmail} and set your new secure password.`}
+                    ? 'Enter your registered email address or username to receive a secure 6-digit OTP verification code (valid 10 minutes).'
+                    : `Enter the 6-digit verification code sent to your email and set your new secure password.`}
                 </p>
               </div>
 
@@ -1050,16 +1244,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 <form onSubmit={handleRequestOtp} className="space-y-4">
                   <div>
                     <label className="text-[10px] font-bold text-[#b8a09b] uppercase block mb-1 tracking-wider">
-                      Registered Owner Email
+                      Registered Email or Username
                     </label>
                     <div className="relative">
                       <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#827472]" />
                       <input
-                        type="email"
+                        type="text"
                         required
                         value={forgotEmail}
                         onChange={(e) => setForgotEmail(e.target.value)}
-                        placeholder="owner@domain.com"
+                        placeholder="e.g. username or email@domain.com"
                         className="w-full bg-[#140b09] border border-[#3e2723] rounded-xl pl-10 pr-3 py-2.5 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#feca4d] focus:ring-1 focus:ring-[#feca4d]"
                       />
                     </div>
@@ -1201,7 +1395,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </div>
           )}
 
-          {/* 1.3 CLEAN OWNER SIGN-IN (Zero hints, empty inputs, no hardcoded credentials) */}
+          {/* 1.3 CLEAN ROASTERY SIGN-IN (Owner & Staff) */}
           {authView === 'login' && (
             <div className="space-y-5">
               <div className="text-center space-y-2">
@@ -1212,17 +1406,17 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   className="font-serif font-bold text-2xl text-white tracking-wide"
                   style={{ fontFamily: 'Playfair Display, serif' }}
                 >
-                  Roastery Owner Portal
+                  Roastery Portal Sign In
                 </h1>
                 <p className="text-xs text-[#b8a09b] leading-relaxed">
-                  Enter your Owner ID and password to access store management.
+                  Enter your Owner or Staff credentials to access the store management console.
                 </p>
               </div>
 
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="adminUsername" className="text-[10px] font-bold text-[#b8a09b] uppercase block mb-1 tracking-wider">
-                    Owner ID
+                    Username or Email
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#827472]" />
@@ -1233,7 +1427,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       autoComplete="username"
                       value={usernameInput}
                       onChange={(e) => setUsernameInput(e.target.value)}
-                      placeholder="Enter your Owner ID"
+                      placeholder="Enter your username or registered email"
                       className="w-full bg-[#140b09] border border-[#3e2723] rounded-xl pl-10 pr-3 py-2.5 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#feca4d] focus:ring-1 focus:ring-[#feca4d]"
                     />
                   </div>
@@ -1344,7 +1538,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         </div>
       )}
 
-      {/* Top Bar / Dedicated Owner Console Header */}
+      {/* Top Bar / Dedicated Console Header */}
       <div className="bg-[#1f110f] text-white rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg border border-[#3e2723]">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#785a00] to-[#feca4d] p-0.5 flex items-center justify-center shadow-sm shrink-0">
@@ -1360,15 +1554,23 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               >
                 Cà Phê Vietnam Roastery
               </h1>
-              <span className="bg-[#feca4d]/20 text-[#feca4d] text-[9px] uppercase font-extrabold px-2.5 py-0.5 rounded-full tracking-wider border border-[#feca4d]/40">
-                Owner Portal
-              </span>
+              {currentUserRole === 'owner' ? (
+                <span className="bg-[#feca4d]/20 text-[#feca4d] text-[9px] uppercase font-extrabold px-2.5 py-0.5 rounded-full tracking-wider border border-[#feca4d]/40">
+                  Owner Portal
+                </span>
+              ) : (
+                <span className="bg-sky-500/20 text-sky-400 text-[9px] uppercase font-extrabold px-2.5 py-0.5 rounded-full tracking-wider border border-sky-500/40">
+                  Staff Console
+                </span>
+              )}
               <span className="text-xs text-[#a8928e] font-mono bg-black/40 px-2.5 py-0.5 rounded-full border border-white/10">
-                {currentAdminUser} • {currentAdminEmail}
+                {currentAdminName ? `${currentAdminName} (@${currentAdminUser})` : currentAdminUser} • {currentUserRole.toUpperCase()}
               </span>
             </div>
             <p className="text-xs text-[#b8a09b]">
-              Dedicated control console: Orders, Inventory, Pricing & Catalog
+              {currentUserRole === 'owner'
+                ? 'Dedicated roastery control console: Orders, Inventory, Pricing, Catalog & Staff'
+                : 'Fulfillment & Dispatch console: Order processing and live stock status'}
             </p>
           </div>
         </div>
@@ -1388,6 +1590,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             onClick={() => {
               loadOrders();
               loadAdminProducts();
+              if (currentUserRole === 'owner') loadStaffMembers();
               showToast('Refreshed data from database.');
             }}
             className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-white/10"
@@ -1416,23 +1619,25 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         </div>
       </div>
 
-      {/* DEDICATED OWNER NAVIGATION BAR (ONLY 6 OWNER-RELEVANT SECTIONS) */}
+      {/* DEDICATED NAVIGATION BAR (ROLE-RESTRICTED) */}
       <div className="bg-[#1d1210] p-1.5 rounded-2xl border border-[#3e2723] flex items-center overflow-x-auto no-scrollbar gap-1.5 shadow-md">
-        {/* Section 1: Dashboard Overview */}
-        <button
-          type="button"
-          onClick={() => setActiveTab('overview')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === 'overview'
-              ? 'bg-[#feca4d] text-[#271310] shadow-sm'
-              : 'text-[#d6c7c4] hover:bg-white/10'
-          }`}
-        >
-          <TrendingUp className="w-4 h-4" />
-          <span>Dashboard Overview</span>
-        </button>
+        {/* Section 1: Dashboard Overview (OWNER ONLY) */}
+        {currentUserRole === 'owner' && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('overview')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'overview'
+                ? 'bg-[#feca4d] text-[#271310] shadow-sm'
+                : 'text-[#d6c7c4] hover:bg-white/10'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>Dashboard Overview</span>
+          </button>
+        )}
 
-        {/* Section 2: Orders */}
+        {/* Section 2: Orders (BOTH OWNER & STAFF) */}
         <button
           type="button"
           onClick={() => setActiveTab('orders')}
@@ -1451,7 +1656,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           )}
         </button>
 
-        {/* Section 3: Inventory Control */}
+        {/* Section 3: Inventory Control (BOTH OWNER & STAFF) */}
         <button
           type="button"
           onClick={() => setActiveTab('inventory')}
@@ -1462,7 +1667,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           }`}
         >
           <Sliders className="w-4 h-4" />
-          <span>Inventory Control</span>
+          <span>{currentUserRole === 'owner' ? 'Inventory Control' : 'Warehouse Inventory'}</span>
           {outOfStockItems.length > 0 && (
             <span className="px-1.5 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-extrabold">
               {outOfStockItems.length} Out
@@ -1470,35 +1675,63 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           )}
         </button>
 
-        {/* Section 4: Price Control */}
-        <button
-          type="button"
-          onClick={() => setActiveTab('prices')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === 'prices'
-              ? 'bg-[#feca4d] text-[#271310] shadow-sm'
-              : 'text-[#d6c7c4] hover:bg-white/10'
-          }`}
-        >
-          <DollarSign className="w-4 h-4" />
-          <span>Price Control</span>
-        </button>
+        {/* Section 4: Price Control (OWNER ONLY) */}
+        {currentUserRole === 'owner' && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('prices')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'prices'
+                ? 'bg-[#feca4d] text-[#271310] shadow-sm'
+                : 'text-[#d6c7c4] hover:bg-white/10'
+            }`}
+          >
+            <DollarSign className="w-4 h-4" />
+            <span>Price Control</span>
+          </button>
+        )}
 
-        {/* Section 5: Product Management */}
-        <button
-          type="button"
-          onClick={() => setActiveTab('products')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-            activeTab === 'products'
-              ? 'bg-[#feca4d] text-[#271310] shadow-sm'
-              : 'text-[#d6c7c4] hover:bg-white/10'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          <span>Product Management</span>
-        </button>
+        {/* Section 5: Product Management (OWNER ONLY) */}
+        {currentUserRole === 'owner' && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('products')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'products'
+                ? 'bg-[#feca4d] text-[#271310] shadow-sm'
+                : 'text-[#d6c7c4] hover:bg-white/10'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span>Product Management</span>
+          </button>
+        )}
 
-        {/* Section 6: Direct Nav Logout */}
+        {/* Section 6: Manage Staff (OWNER ONLY) */}
+        {currentUserRole === 'owner' && (
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('staff');
+              loadStaffMembers();
+            }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'staff'
+                ? 'bg-[#feca4d] text-[#271310] shadow-sm'
+                : 'text-[#d6c7c4] hover:bg-white/10'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Manage Staff</span>
+            {staffMembers.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-white text-[9px] font-extrabold">
+                {staffMembers.length}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* Section 7: Direct Nav Logout */}
         <button
           type="button"
           onClick={handleLogout}
@@ -1999,22 +2232,36 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         <div className="space-y-4">
           <div className="bg-white p-4 rounded-2xl border border-[#d3c3c0]/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
             <div>
-              <h3 className="font-serif font-bold text-base text-[#271310]">Inventory Control</h3>
-              <p className="text-xs text-[#827472]">
-                Editable stock quantity for each product. Setting stock to <strong>0</strong> immediately marks it <strong>Out of Stock</strong> on the live customer storefront.
+              <div className="flex items-center gap-2">
+                <Sliders className="w-5 h-5 text-[#785a00]" />
+                <h3 className="font-serif font-bold text-base text-[#271310]">
+                  {currentUserRole === 'owner' ? 'Inventory Control' : 'Warehouse Inventory Status'}
+                </h3>
+                {currentUserRole === 'staff' && (
+                  <span className="bg-sky-50 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-sky-300">
+                    Read-Only Staff View
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-[#827472] mt-0.5">
+                {currentUserRole === 'owner'
+                  ? 'Editable stock quantity for each product. Setting stock to 0 immediately marks it Out of Stock on the live customer storefront.'
+                  : 'Real-time warehouse inventory quantities. Contact the Roastery Owner to modify stock numbers or restock products.'}
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleSaveAllStock}
-                className="px-4 py-2 rounded-xl bg-[#271310] hover:bg-[#3d201c] text-[#feca4d] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>Save All Inventory</span>
-              </button>
-            </div>
+            {currentUserRole === 'owner' && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveAllStock}
+                  className="px-4 py-2 rounded-xl bg-[#271310] hover:bg-[#3d201c] text-[#feca4d] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save All Inventory</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Search & Category Filter */}
@@ -2053,8 +2300,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     <th className="py-3 px-4">Category</th>
                     <th className="py-3 px-4">Live Status</th>
                     <th className="py-3 px-4">Stock Quantity</th>
-                    <th className="py-3 px-4">Quick Actions</th>
-                    <th className="py-3 px-4 text-right">Save</th>
+                    {currentUserRole === 'owner' && (
+                      <>
+                        <th className="py-3 px-4">Quick Actions</th>
+                        <th className="py-3 px-4 text-right">Save</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#d3c3c0]/40">
@@ -2101,74 +2352,84 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                         </td>
 
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              type="number"
-                              min="0"
-                              value={currentStock}
-                              onChange={(e) => {
-                                const val = Math.max(0, parseInt(e.target.value) || 0);
-                                setStockDrafts((prev) => ({ ...prev, [prod.id]: val }));
-                              }}
-                              className={`w-20 px-2.5 py-1.5 rounded-lg border text-xs font-bold text-center focus:outline-none ${
-                                isOut
-                                  ? 'bg-rose-50 border-rose-400 text-rose-900'
-                                  : 'bg-white border-[#d3c3c0] text-[#271310] focus:border-[#785a00]'
-                              }`}
-                            />
-                            <span className="text-[11px] text-[#827472]">units</span>
-                          </div>
+                          {currentUserRole === 'owner' ? (
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                type="number"
+                                min="0"
+                                value={currentStock}
+                                onChange={(e) => {
+                                  const val = Math.max(0, parseInt(e.target.value) || 0);
+                                  setStockDrafts((prev) => ({ ...prev, [prod.id]: val }));
+                                }}
+                                className={`w-20 px-2.5 py-1.5 rounded-lg border text-xs font-bold text-center focus:outline-none ${
+                                  isOut
+                                    ? 'bg-rose-50 border-rose-400 text-rose-900'
+                                    : 'bg-white border-[#d3c3c0] text-[#271310] focus:border-[#785a00]'
+                                }`}
+                              />
+                              <span className="text-[11px] text-[#827472]">units</span>
+                            </div>
+                          ) : (
+                            <span className="font-mono font-bold text-xs text-[#271310] bg-[#faf2f0] px-2.5 py-1 rounded-lg border border-[#d3c3c0]/60">
+                              {currentStock} units
+                            </span>
+                          )}
                         </td>
 
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-1 flex-wrap">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setStockDrafts((prev) => ({ ...prev, [prod.id]: 0 }));
-                              }}
-                              className="px-2 py-1 rounded-md bg-rose-100 hover:bg-rose-200 text-rose-800 text-[10px] font-bold transition-colors cursor-pointer"
-                              title="Set stock to 0 (Mark Out of Stock)"
-                            >
-                              Set 0 (Out)
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setStockDrafts((prev) => ({
-                                  ...prev,
-                                  [prod.id]: (prev[prod.id] || 0) + 25,
-                                }));
-                              }}
-                              className="px-2 py-1 rounded-md bg-[#faf2f0] hover:bg-[#eee3e1] text-[#271310] text-[10px] font-semibold border border-[#d3c3c0] transition-colors cursor-pointer"
-                            >
-                              +25
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setStockDrafts((prev) => ({
-                                  ...prev,
-                                  [prod.id]: (prev[prod.id] || 0) + 50,
-                                }));
-                              }}
-                              className="px-2 py-1 rounded-md bg-[#faf2f0] hover:bg-[#eee3e1] text-[#271310] text-[10px] font-semibold border border-[#d3c3c0] transition-colors cursor-pointer"
-                            >
-                              +50
-                            </button>
-                          </div>
-                        </td>
+                        {currentUserRole === 'owner' && (
+                          <>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStockDrafts((prev) => ({ ...prev, [prod.id]: 0 }));
+                                  }}
+                                  className="px-2 py-1 rounded-md bg-rose-100 hover:bg-rose-200 text-rose-800 text-[10px] font-bold transition-colors cursor-pointer"
+                                  title="Set stock to 0 (Mark Out of Stock)"
+                                >
+                                  Set 0 (Out)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStockDrafts((prev) => ({
+                                      ...prev,
+                                      [prod.id]: (prev[prod.id] || 0) + 25,
+                                    }));
+                                  }}
+                                  className="px-2 py-1 rounded-md bg-[#faf2f0] hover:bg-[#eee3e1] text-[#271310] text-[10px] font-semibold border border-[#d3c3c0] transition-colors cursor-pointer"
+                                >
+                                  +25
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStockDrafts((prev) => ({
+                                      ...prev,
+                                      [prod.id]: (prev[prod.id] || 0) + 50,
+                                    }));
+                                  }}
+                                  className="px-2 py-1 rounded-md bg-[#faf2f0] hover:bg-[#eee3e1] text-[#271310] text-[10px] font-semibold border border-[#d3c3c0] transition-colors cursor-pointer"
+                                >
+                                  +50
+                                </button>
+                              </div>
+                            </td>
 
-                        <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
-                            disabled={isSaving}
-                            onClick={() => handleSaveStock(prod.id)}
-                            className="px-3 py-1.5 rounded-lg bg-[#271310] hover:bg-[#785a00] disabled:opacity-50 text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs"
-                          >
-                            {isSaving ? 'Saving...' : 'Save'}
-                          </button>
-                        </td>
+                            <td className="py-3 px-4 text-right">
+                              <button
+                                type="button"
+                                disabled={isSaving}
+                                onClick={() => handleSaveStock(prod.id)}
+                                className="px-3 py-1.5 rounded-lg bg-[#271310] hover:bg-[#785a00] disabled:opacity-50 text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs"
+                              >
+                                {isSaving ? 'Saving...' : 'Save'}
+                              </button>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     );
                   })}
@@ -2445,6 +2706,270 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 6: MANAGE STAFF (OWNER ONLY) */}
+      {activeTab === 'staff' && currentUserRole === 'owner' && (
+        <div className="space-y-4">
+          <div className="bg-white p-5 rounded-2xl border border-[#d3c3c0]/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div>
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#785a00]" />
+                <h3 className="font-serif font-bold text-lg text-[#271310]">
+                  Manage Staff Accounts
+                </h3>
+                <span className="bg-[#feca4d]/20 text-[#785a00] text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-[#feca4d]/50">
+                  Owner Exclusive
+                </span>
+              </div>
+              <p className="text-xs text-[#827472] mt-1 max-w-2xl leading-relaxed">
+                Create and manage logins for your roastery baristas, warehouse crew, and dispatch staff. Staff accounts have access to process customer orders (status, courier, tracking) and inspect inventory stock levels. Staff accounts cannot access price control, product editing, or financial metrics.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setStaffError(null);
+                setNewStaffName('');
+                setNewStaffUsername('');
+                setNewStaffEmail('');
+                setNewStaffPassword('');
+                setIsNewStaffModalOpen(true);
+              }}
+              className="px-4 py-2.5 rounded-xl bg-[#271310] hover:bg-[#785a00] text-[#feca4d] text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-sm shrink-0"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>+ Add Staff Member</span>
+            </button>
+          </div>
+
+          {/* Staff Accounts Table / List */}
+          <div className="bg-white rounded-2xl border border-[#d3c3c0]/70 overflow-hidden shadow-xs">
+            {isLoadingStaff ? (
+              <div className="p-12 text-center text-xs text-[#827472]">
+                <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#785a00] mb-2" />
+                <span>Loading staff directory...</span>
+              </div>
+            ) : staffMembers.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-[#785a00] border border-amber-200 flex items-center justify-center mx-auto">
+                  <Users className="w-6 h-6" />
+                </div>
+                <h4 className="font-bold text-[#271310] text-sm">No Staff Accounts Yet</h4>
+                <p className="text-xs text-[#827472] max-w-md mx-auto">
+                  Click the <strong>"+ Add Staff Member"</strong> button above to invite your employees. They will receive limited access to manage order fulfillment and view live inventory.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-[#faf2f0] border-b border-[#d3c3c0]/60 text-[10px] uppercase tracking-wider text-[#827472]">
+                      <th className="py-3 px-4">Staff Member</th>
+                      <th className="py-3 px-4">Email</th>
+                      <th className="py-3 px-4">Role Access</th>
+                      <th className="py-3 px-4">Account Status</th>
+                      <th className="py-3 px-4">Created Date</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#d3c3c0]/40">
+                    {staffMembers.map((member) => {
+                      const isActive = member.status === 'active';
+
+                      return (
+                        <tr key={member.id} className="hover:bg-[#faf2f0]/50 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-[#faf2f0] border border-[#d3c3c0] text-[#785a00] flex items-center justify-center font-bold text-xs uppercase">
+                                {member.name ? member.name.charAt(0) : member.username.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-bold text-[#271310]">{member.name || member.username}</p>
+                                <p className="text-[11px] text-[#827472] font-mono">@{member.username}</p>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4 font-mono text-[11px] text-[#504442]">
+                            {member.email}
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <span className="bg-sky-50 text-sky-800 border border-sky-300 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
+                              Staff (Orders & Stock)
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            {isActive ? (
+                              <span className="bg-emerald-50 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3 text-emerald-600" />
+                                <span>Active</span>
+                              </span>
+                            ) : (
+                              <span className="bg-rose-50 text-rose-800 border border-rose-300 px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1">
+                                <XCircle className="w-3 h-3 text-rose-600" />
+                                <span>Deactivated</span>
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-[11px] text-[#827472]">
+                            {new Date(member.createdAt).toLocaleDateString()}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleStaffStatus(member.id, member.status)}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                                  isActive
+                                    ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300'
+                                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+                                }`}
+                                title={isActive ? 'Deactivate staff login' : 'Activate staff login'}
+                              >
+                                {isActive ? 'Deactivate' : 'Activate'}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteStaff(member.id, member.name || member.username)}
+                                className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors cursor-pointer"
+                                title="Delete staff member permanently"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD STAFF MEMBER */}
+      {isNewStaffModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-[#d3c3c0] animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-[#d3c3c0]/60">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-[#785a00]" />
+                <h3 className="font-serif font-bold text-base text-[#271310]">
+                  Create Staff Account
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewStaffModalOpen(false)}
+                className="text-[#827472] hover:text-[#271310] rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateStaffSubmit} className="space-y-3.5 text-xs">
+              <p className="text-[#504442] leading-relaxed">
+                Staff accounts can view and update customer orders (status changes and courier tracking) and view warehouse inventory, but cannot access pricing, products, or financial metrics.
+              </p>
+
+              <div>
+                <label className="font-bold text-[#827472] uppercase block mb-1">
+                  Staff Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newStaffName}
+                  onChange={(e) => setNewStaffName(e.target.value)}
+                  placeholder="e.g. Nguyen Van A"
+                  className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-xl px-3 py-2 text-[#271310] focus:outline-none focus:border-[#785a00]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[#827472] uppercase block mb-1">
+                  Login Username *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newStaffUsername}
+                  onChange={(e) => setNewStaffUsername(e.target.value)}
+                  placeholder="e.g. barista_an"
+                  className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-xl px-3 py-2 text-[#271310] focus:outline-none focus:border-[#785a00]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[#827472] uppercase block mb-1">
+                  Staff Email Address (For OTP Recovery) *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={newStaffEmail}
+                  onChange={(e) => setNewStaffEmail(e.target.value)}
+                  placeholder="e.g. staff@domain.com"
+                  className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-xl px-3 py-2 text-[#271310] focus:outline-none focus:border-[#785a00]"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[#827472] uppercase block mb-1">
+                  Initial Password (Min 6 Characters) *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={newStaffPassword}
+                  onChange={(e) => setNewStaffPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-xl px-3 py-2 text-[#271310] focus:outline-none focus:border-[#785a00]"
+                />
+              </div>
+
+              {staffError && (
+                <div className="p-2.5 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-300 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{staffError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#d3c3c0]/60">
+                <button
+                  type="button"
+                  onClick={() => setIsNewStaffModalOpen(false)}
+                  className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingStaff}
+                  className="px-4 py-2 rounded-xl bg-[#271310] hover:bg-[#785a00] text-[#feca4d] font-bold transition-colors cursor-pointer shadow-sm flex items-center gap-1.5 disabled:opacity-60"
+                >
+                  {isSubmittingStaff ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <span>Create Staff Account</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

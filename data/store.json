@@ -1004,11 +1004,9 @@
   ],
   "orders": [],
   "adminConfig": {
-    "username": "mritunjay",
-    "email": "mritunjaybh@gmail.com",
-    "isSetupComplete": true,
-    "passwordHash": "a82d24228779e5673bf0ec96bb2e0cfd:442667d977ee9804b23b4692f03658fe967d9bbd3d29b12eba73f3fe8375821a7f752fead76ad48e77e3dc9518c51f94059df6a360e37e4d4f9446226845c7cd",
-    "setupAt": "2026-09-24T00:36:30.571Z",
-    "lastLoginAt": "2026-09-24T00:37:11.287Z"
-  }
+    "isSetupComplete": false
+  },
+  "otps": {},
+  "users": [],
+  "sessions": []
 }

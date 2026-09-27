@@ -3,7 +3,13 @@ import crypto from 'crypto';
 import {
   getDbAdminConfig,
   updateDbAdminConfig,
-  updateDbAdminPassword,
+  getDbUsers,
+  findDbUserById,
+  findDbUserByIdentifier,
+  createDbUser,
+  updateDbUser,
+  deleteDbUser,
+  resetDatabaseAuth,
   hashPassword,
   verifyPassword,
   getDbProducts,
@@ -12,21 +18,36 @@ import {
   getDbOtp,
   deleteDbOtp,
   removeDbSession,
+  UserAccount,
 } from './_lib/db';
 import {
   generateSessionToken,
-  isValidSession,
+  verifySessionToken,
+  clearInMemorySessions,
   maskEmail,
   sendOtpEmail,
 } from './_lib/auth-util';
 import { ProductItem } from '../src/types';
+
+function sanitizeUser(u: UserAccount) {
+  return {
+    id: u.id,
+    username: u.username,
+    email: u.email,
+    name: u.name,
+    role: u.role,
+    status: u.status,
+    createdAt: u.createdAt,
+    lastLoginAt: u.lastLoginAt,
+  };
+}
 
 export default async function handler(req: any, res: any) {
   return adminHandler(req, res);
 }
 
 export async function adminHandler(req: Request, res: Response) {
-  // CORS
+  // CORS Headers
   const origin = req.headers?.origin || '*';
   res.setHeader('Access-Control-Allow-Origin', origin);
   if (origin !== '*') {
@@ -58,11 +79,7 @@ export async function adminHandler(req: Request, res: Response) {
     (req.query?.token as string) ||
     '';
 
-  // Determine Action from:
-  // 1. req.body.action
-  // 2. req.query.action
-  // 3. req.query.subpath
-  // 4. URL path suffix (e.g. /api/admin/login -> 'login')
+  // Determine Action
   const pathParts = (req.path || req.url || '').split('?')[0].split('/').filter(Boolean);
   const lastSegment = pathParts[pathParts.length - 1];
   const urlAction =
@@ -79,6 +96,9 @@ export async function adminHandler(req: Request, res: Response) {
     .toLowerCase();
 
   const config = getDbAdminConfig();
+  const users = getDbUsers();
+  const ownerUser = users.find((u) => u.role === 'owner' && u.status === 'active');
+  const isSetupDone = Boolean(config.isSetupComplete && ownerUser);
 
   try {
     // -------------------------------------------------------------
@@ -86,57 +106,84 @@ export async function adminHandler(req: Request, res: Response) {
     // -------------------------------------------------------------
     if (action === 'setup-status' || action === 'status') {
       return res.status(200).json({
-        isSetupComplete: Boolean(config.isSetupComplete),
-        registeredEmail: config.email || 'mritunjaybh@gmail.com',
-        username: config.username || 'owner',
+        isSetupComplete: isSetupDone,
+        hasOwner: Boolean(ownerUser),
+        ownerCount: users.filter((u) => u.role === 'owner').length,
+        staffCount: users.filter((u) => u.role === 'staff').length,
       });
     }
 
     // -------------------------------------------------------------
-    // ACTION: setup (Initial One-Time Roastery Owner Account Setup)
+    // ACTION: reset-setup (Wipes all accounts, clears sessions)
+    // -------------------------------------------------------------
+    if (action === 'reset-setup') {
+      resetDatabaseAuth();
+      clearInMemorySessions();
+      return res.status(200).json({
+        success: true,
+        message: 'All admin/owner/staff accounts deleted. Database reset to fresh setup.',
+        isSetupComplete: false,
+      });
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: setup (Initial One-Time Owner Account Setup)
     // -------------------------------------------------------------
     if (action === 'setup') {
       if (req.method !== 'POST') {
         return res.status(405).json({ error: 'POST required for setup' });
       }
 
-      if (config.isSetupComplete) {
+      if (isSetupDone) {
         return res.status(400).json({
-          error: 'Setup has already been completed. Please log in using your administrator password.',
+          error: 'Setup has already been completed. Please log in using your Owner credentials.',
         });
       }
 
-      const { username, email, password } = req.body;
+      const { username, email, password, name } = req.body;
       if (!username || !email || !password) {
         return res.status(400).json({ error: 'Username, email, and password are required.' });
       }
 
-      if (password.length < 6) {
+      const cleanUser = String(username).trim();
+      const cleanEmail = String(email).trim().toLowerCase();
+      const cleanPass = String(password);
+
+      if (cleanPass.length < 6) {
         return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
       }
 
-      const passwordHash = hashPassword(password);
-      updateDbAdminConfig({
-        username: username.trim(),
-        email: email.trim(),
-        passwordHash,
-        isSetupComplete: true,
-        setupAt: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
+      // Check uniqueness
+      if (findDbUserByIdentifier(cleanUser) || findDbUserByIdentifier(cleanEmail)) {
+        return res.status(400).json({ error: 'An account with that username or email already exists.' });
+      }
+
+      // Create primary Owner account
+      const newOwner = createDbUser({
+        username: cleanUser,
+        email: cleanEmail,
+        name: name ? String(name).trim() : cleanUser,
+        role: 'owner',
+        passwordHash: hashPassword(cleanPass),
+        status: 'active',
       });
 
-      const sessionToken = generateSessionToken(username.trim());
+      updateDbAdminConfig({
+        isSetupComplete: true,
+        setupAt: new Date().toISOString(),
+      });
+
+      const sessionToken = generateSessionToken(newOwner);
       return res.status(200).json({
         success: true,
         message: 'Owner account successfully initialized.',
         token: sessionToken,
-        username: username.trim(),
-        email: email.trim(),
+        user: sanitizeUser(newOwner),
       });
     }
 
     // -------------------------------------------------------------
-    // ACTION: login
+    // ACTION: login (Owner and Staff)
     // -------------------------------------------------------------
     if (action === 'login') {
       if (req.method !== 'POST') {
@@ -145,48 +192,44 @@ export async function adminHandler(req: Request, res: Response) {
 
       const { username, password } = req.body;
       if (!username || !password) {
-        return res.status(400).json({ error: 'Username and password are required.' });
+        return res.status(400).json({ error: 'Username/email and password are required.' });
       }
 
-      const cleanUser = String(username).trim();
-      const cleanPass = String(password);
-
-      // Check if setup was ever performed
-      if (!config.isSetupComplete && !config.passwordHash) {
+      // Check if setup is complete
+      if (!isSetupDone) {
         return res.status(403).json({
-          error: 'Setup is required. Please visit /setup to configure your admin account.',
+          error: 'Setup is required. Please visit /setup to create the Owner account.',
           requiresSetup: true,
         });
       }
 
-      const userMatches =
-        cleanUser.toLowerCase() === config.username.toLowerCase() ||
-        cleanUser.toLowerCase() === config.email.toLowerCase();
-
-      let passMatches = false;
-      if (config.passwordHash) {
-        passMatches = verifyPassword(cleanPass, config.passwordHash);
-      } else if (config.password) {
-        passMatches = cleanPass === config.password;
-        if (passMatches) {
-          updateDbAdminPassword(cleanPass);
-        }
-      }
-
-      if (!userMatches || !passMatches) {
+      const user = findDbUserByIdentifier(String(username));
+      if (!user) {
         return res.status(401).json({
           error: 'Invalid credentials. Please verify your username and password.',
         });
       }
 
-      updateDbAdminConfig({ lastLoginAt: new Date().toISOString() });
-      const sessionToken = generateSessionToken(config.username);
+      if (user.status !== 'active') {
+        return res.status(403).json({
+          error: 'This account has been deactivated. Please contact the Roastery Owner.',
+        });
+      }
+
+      const passMatches = verifyPassword(String(password), user.passwordHash);
+      if (!passMatches) {
+        return res.status(401).json({
+          error: 'Invalid credentials. Please verify your username and password.',
+        });
+      }
+
+      updateDbUser(user.id, { lastLoginAt: new Date().toISOString() });
+      const sessionToken = generateSessionToken(user);
 
       return res.status(200).json({
         success: true,
         token: sessionToken,
-        username: config.username,
-        email: config.email,
+        user: sanitizeUser(user),
       });
     }
 
@@ -194,15 +237,14 @@ export async function adminHandler(req: Request, res: Response) {
     // ACTION: verify (Session verification)
     // -------------------------------------------------------------
     if (action === 'verify') {
-      const valid = isValidSession(token);
-      if (valid) {
+      const auth = verifySessionToken(token);
+      if (auth.valid && auth.user) {
         return res.status(200).json({
           valid: true,
-          username: config.username,
-          email: config.email,
+          user: sanitizeUser(auth.user),
         });
       }
-      return res.status(401).json({ valid: false, error: 'Session expired or invalid' });
+      return res.status(401).json({ valid: false, error: auth.error || 'Session expired or invalid' });
     }
 
     // -------------------------------------------------------------
@@ -216,7 +258,7 @@ export async function adminHandler(req: Request, res: Response) {
     }
 
     // -------------------------------------------------------------
-    // ACTION: forgot-password-request (or 'request-otp')
+    // ACTION: forgot-password-request (OTP verification code)
     // -------------------------------------------------------------
     if (
       action === 'forgot-password-request' ||
@@ -227,12 +269,23 @@ export async function adminHandler(req: Request, res: Response) {
         return res.status(405).json({ error: 'POST required' });
       }
 
-      const { email } = req.body;
-      const targetEmail = (email || config.email || 'mritunjaybh@gmail.com').trim().toLowerCase();
+      const { email, username, identifier } = req.body;
+      const targetIdentifier = String(identifier || email || username || '').trim();
 
-      if (config.email && targetEmail !== config.email.toLowerCase()) {
-        return res.status(400).json({
-          error: `The email provided does not match the registered owner email.`,
+      if (!targetIdentifier) {
+        return res.status(400).json({ error: 'Username or registered email address is required.' });
+      }
+
+      const targetUser = findDbUserByIdentifier(targetIdentifier);
+      if (!targetUser) {
+        return res.status(404).json({
+          error: 'No active account found for that username or email.',
+        });
+      }
+
+      if (targetUser.status !== 'active') {
+        return res.status(403).json({
+          error: 'This account has been deactivated. Please contact the Roastery Owner.',
         });
       }
 
@@ -240,19 +293,25 @@ export async function adminHandler(req: Request, res: Response) {
       const resetToken = crypto.randomBytes(24).toString('hex');
       const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-      saveDbOtp(resetToken, { otp, email: targetEmail, expiresAt });
-      await sendOtpEmail(targetEmail, otp);
+      saveDbOtp(resetToken, {
+        otp,
+        email: targetUser.email,
+        userId: targetUser.id,
+        expiresAt,
+      });
+
+      await sendOtpEmail(targetUser.email, otp, targetUser.name);
 
       return res.status(200).json({
         success: true,
-        message: `A 6-digit verification code has been dispatched to ${maskEmail(targetEmail)}.`,
+        message: `A 6-digit verification code has been dispatched to ${maskEmail(targetUser.email)}.`,
         resetToken,
-        maskedEmail: maskEmail(targetEmail),
+        maskedEmail: maskEmail(targetUser.email),
       });
     }
 
     // -------------------------------------------------------------
-    // ACTION: forgot-password-verify-reset (or 'verify-reset')
+    // ACTION: forgot-password-verify-reset
     // -------------------------------------------------------------
     if (
       action === 'forgot-password-verify-reset' ||
@@ -285,38 +344,171 @@ export async function adminHandler(req: Request, res: Response) {
         return res.status(400).json({ error: 'Invalid verification code. Please check your email.' });
       }
 
-      updateDbAdminPassword(String(newPassword));
+      const targetUser = findDbUserById(record.userId);
+      if (!targetUser) {
+        deleteDbOtp(resetToken);
+        return res.status(404).json({ error: 'User account not found.' });
+      }
+
+      updateDbUser(targetUser.id, {
+        passwordHash: hashPassword(String(newPassword)),
+      });
       deleteDbOtp(resetToken);
 
-      const sessionToken = generateSessionToken(config.username);
+      const sessionToken = generateSessionToken(targetUser);
       return res.status(200).json({
         success: true,
         message: 'Password successfully reset.',
         token: sessionToken,
+        user: sanitizeUser(targetUser),
       });
     }
 
     // -------------------------------------------------------------
-    // ACTION: change-password (Authenticated Password Update)
+    // ACTION: change-password (Authenticated User)
     // -------------------------------------------------------------
     if (action === 'change-password') {
-      if (!isValidSession(token)) {
-        return res.status(401).json({ error: 'Unauthorized: Admin session required' });
+      const auth = verifySessionToken(token);
+      if (!auth.valid || !auth.user) {
+        return res.status(401).json({ error: 'Unauthorized: Session invalid or expired' });
       }
 
       const { newPassword } = req.body;
-      if (!newPassword || newPassword.length < 6) {
+      if (!newPassword || String(newPassword).length < 6) {
         return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
       }
 
-      updateDbAdminPassword(newPassword);
+      updateDbUser(auth.user.id, {
+        passwordHash: hashPassword(String(newPassword)),
+      });
       return res.status(200).json({ success: true, message: 'Password updated successfully' });
     }
 
     // -------------------------------------------------------------
-    // PROTECTED ADMIN ACTIONS: Products, Inventory, Prices
+    // MANAGE STAFF ACTIONS (STRICTLY OWNER ONLY)
     // -------------------------------------------------------------
-    // All following actions require valid session
+    if (
+      action === 'staff' ||
+      action === 'staff-list' ||
+      action === 'get-staff' ||
+      action === 'create-staff' ||
+      action === 'toggle-staff' ||
+      action === 'delete-staff'
+    ) {
+      const auth = verifySessionToken(token);
+      if (!auth.valid || !auth.user) {
+        return res.status(401).json({ error: 'Unauthorized: Session invalid or expired' });
+      }
+
+      if (auth.user.role !== 'owner') {
+        return res.status(403).json({
+          error: 'Forbidden: Only the Roastery Owner can manage staff accounts.',
+        });
+      }
+
+      // List Staff
+      if (action === 'staff' || action === 'staff-list' || action === 'get-staff') {
+        const allUsers = getDbUsers();
+        const staffList = allUsers.filter((u) => u.role === 'staff').map(sanitizeUser);
+        return res.status(200).json({ staff: staffList, count: staffList.length });
+      }
+
+      // Create Staff
+      if (action === 'create-staff') {
+        if (req.method !== 'POST') {
+          return res.status(405).json({ error: 'POST required to create staff' });
+        }
+
+        const { name, username, email, password } = req.body;
+        if (!name || !username || !email || !password) {
+          return res.status(400).json({
+            error: 'Staff full name, username, email, and password are all required.',
+          });
+        }
+
+        const cleanUser = String(username).trim();
+        const cleanEmail = String(email).trim().toLowerCase();
+        const cleanPass = String(password);
+
+        if (cleanPass.length < 6) {
+          return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+        }
+
+        if (findDbUserByIdentifier(cleanUser)) {
+          return res.status(400).json({ error: `Username "${cleanUser}" is already in use.` });
+        }
+
+        if (findDbUserByIdentifier(cleanEmail)) {
+          return res.status(400).json({ error: `Email "${cleanEmail}" is already registered.` });
+        }
+
+        const newStaff = createDbUser({
+          name: String(name).trim(),
+          username: cleanUser,
+          email: cleanEmail,
+          role: 'staff',
+          passwordHash: hashPassword(cleanPass),
+          status: 'active',
+        });
+
+        return res.status(201).json({
+          success: true,
+          message: `Staff account created for ${newStaff.name}`,
+          staff: sanitizeUser(newStaff),
+        });
+      }
+
+      // Toggle Staff Status (Active / Deactivated)
+      if (action === 'toggle-staff') {
+        const { id, status } = req.body;
+        if (!id || (status !== 'active' && status !== 'deactivated')) {
+          return res.status(400).json({ error: 'Valid staff id and status ("active" | "deactivated") are required.' });
+        }
+
+        const targetUser = findDbUserById(String(id));
+        if (!targetUser) {
+          return res.status(404).json({ error: 'Staff account not found.' });
+        }
+
+        if (targetUser.role === 'owner') {
+          return res.status(400).json({ error: 'Cannot deactivate an Owner account.' });
+        }
+
+        const updated = updateDbUser(targetUser.id, { status });
+        return res.status(200).json({
+          success: true,
+          message: `Staff account ${status === 'active' ? 'activated' : 'deactivated'}.`,
+          staff: updated ? sanitizeUser(updated) : null,
+        });
+      }
+
+      // Delete Staff Account
+      if (action === 'delete-staff') {
+        const targetId = String(req.body.id || req.query.id);
+        if (!targetId) {
+          return res.status(400).json({ error: 'Staff account id is required.' });
+        }
+
+        const targetUser = findDbUserById(targetId);
+        if (!targetUser) {
+          return res.status(404).json({ error: 'Staff account not found.' });
+        }
+
+        if (targetUser.role === 'owner') {
+          return res.status(400).json({ error: 'Cannot delete an Owner account.' });
+        }
+
+        deleteDbUser(targetId);
+        return res.status(200).json({
+          success: true,
+          message: `Staff account "${targetUser.name}" permanently deleted.`,
+        });
+      }
+    }
+
+    // -------------------------------------------------------------
+    // PROTECTED ACTIONS: Products, Inventory, Prices
+    // -------------------------------------------------------------
     if (
       action === 'products' ||
       action === 'get-products' ||
@@ -329,21 +521,24 @@ export async function adminHandler(req: Request, res: Response) {
       action === 'update-prices' ||
       action === 'get-status-or-products'
     ) {
-      if (!isValidSession(token)) {
-        // If GET and no token provided, return setup status
-        if (req.method === 'GET' && !token) {
-          return res.status(200).json({
-            isSetupComplete: Boolean(config.isSetupComplete),
-            registeredEmail: config.email || 'mritunjaybh@gmail.com',
-            username: config.username || 'owner',
-          });
-        }
-        return res.status(401).json({ error: 'Unauthorized: Admin session invalid or expired' });
+      // Allow unauthenticated GET status if no token
+      if (req.method === 'GET' && !token && action === 'get-status-or-products') {
+        return res.status(200).json({
+          isSetupComplete: isSetupDone,
+          hasOwner: Boolean(ownerUser),
+          username: ownerUser?.username || '',
+          registeredEmail: ownerUser?.email || '',
+        });
+      }
+
+      const auth = verifySessionToken(token);
+      if (!auth.valid || !auth.user) {
+        return res.status(401).json({ error: 'Unauthorized: Session invalid or expired' });
       }
 
       const products = getDbProducts();
 
-      // List Products
+      // Read Products / Inventory: BOTH Owner and Staff can view
       if (
         action === 'products' ||
         action === 'get-products' ||
@@ -352,11 +547,20 @@ export async function adminHandler(req: Request, res: Response) {
         return res.status(200).json({ products, count: products.length });
       }
 
-      // Create Product
+      // ---------------------------------------------------------
+      // OWNER-ONLY RESTRICTIONS BELOW: Staff cannot modify products, inventory, prices
+      // ---------------------------------------------------------
+      if (auth.user.role !== 'owner') {
+        return res.status(403).json({
+          error: 'Forbidden: Staff accounts have view-only access and cannot modify products, inventory stock, or prices.',
+        });
+      }
+
+      // Create Product (Owner Only)
       if (action === 'create-product' || (action === 'products' && req.method === 'POST')) {
         const newProduct = req.body.product || req.body;
         if (!newProduct || !newProduct.name || !newProduct.basePriceINR) {
-          return res.status(400).json({ error: 'Product name and base price are required' });
+          return res.status(400).json({ error: 'Product name and base price are required.' });
         }
 
         const id = newProduct.id || `custom-${Date.now()}`;
@@ -374,14 +578,14 @@ export async function adminHandler(req: Request, res: Response) {
         return res.status(201).json({ success: true, product: created });
       }
 
-      // Update Product
+      // Update Product (Owner Only)
       if (action === 'update-product' || (action === 'products' && (req.method === 'PUT' || req.method === 'PATCH'))) {
         const targetId = req.body.id || req.query.id;
         const updates = req.body.updates || req.body;
 
         const index = products.findIndex((p) => p.id === targetId);
         if (index === -1) {
-          return res.status(404).json({ error: `Product ${targetId} not found` });
+          return res.status(404).json({ error: `Product ${targetId} not found.` });
         }
 
         products[index] = { ...products[index], ...updates };
@@ -389,19 +593,19 @@ export async function adminHandler(req: Request, res: Response) {
         return res.status(200).json({ success: true, product: products[index] });
       }
 
-      // Delete Product
+      // Delete Product (Owner Only)
       if (action === 'delete-product' || (action === 'products' && req.method === 'DELETE')) {
         const targetId = req.body.id || req.query.id;
         const filtered = products.filter((p) => p.id !== targetId);
         updateDbProducts(filtered);
-        return res.status(200).json({ success: true, message: `Product ${targetId} removed` });
+        return res.status(200).json({ success: true, message: `Product ${targetId} removed.` });
       }
 
-      // Bulk Update Inventory
+      // Bulk Update Inventory (Owner Only)
       if (action === 'inventory' || action === 'update-inventory') {
         const stockDrafts = req.body.stockDrafts || req.body;
         if (typeof stockDrafts !== 'object' || !stockDrafts) {
-          return res.status(400).json({ error: 'Invalid stockDrafts object' });
+          return res.status(400).json({ error: 'Invalid stockDrafts object.' });
         }
 
         let updatedCount = 0;
@@ -422,11 +626,11 @@ export async function adminHandler(req: Request, res: Response) {
         });
       }
 
-      // Bulk Update Prices
+      // Bulk Update Prices (Owner Only)
       if (action === 'prices' || action === 'update-prices') {
         const priceDrafts = req.body.priceDrafts || req.body;
         if (typeof priceDrafts !== 'object' || !priceDrafts) {
-          return res.status(400).json({ error: 'Invalid priceDrafts object' });
+          return res.status(400).json({ error: 'Invalid priceDrafts object.' });
         }
 
         let updatedCount = 0;
@@ -448,7 +652,7 @@ export async function adminHandler(req: Request, res: Response) {
     }
 
     return res.status(400).json({
-      error: `Unknown action: '${action}'. Supported actions: setup-status, setup, login, verify, logout, change-password, forgot-password-request, forgot-password-verify-reset, get-products, create-product, update-product, delete-product, update-inventory, update-prices.`,
+      error: `Unknown action: '${action}'. Supported actions: setup-status, setup, login, verify, logout, change-password, forgot-password-request, forgot-password-verify-reset, staff-list, create-staff, toggle-staff, delete-staff, get-products, create-product, update-product, delete-product, update-inventory, update-prices.`,
     });
   } catch (err: any) {
     console.error('[Admin Handler Error]:', err);
