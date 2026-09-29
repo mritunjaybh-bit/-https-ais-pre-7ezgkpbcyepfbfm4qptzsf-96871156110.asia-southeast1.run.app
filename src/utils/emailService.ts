@@ -122,6 +122,10 @@ export async function sendOrderEmails(
     direct_tracking_url: directTrackingUrl,
     production_tracking_url: productionTrackingUrl,
     official_tracking_url: productionTrackingUrl,
+    // HTML button and link variants if EmailJS template is formatted as rich HTML
+    tracking_button_html: `<a href="${directTrackingUrl}" target="_blank" style="display:inline-block;padding:12px 24px;background-color:#785a00;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px;letter-spacing:0.5px;">Track Your Order</a>`,
+    tracking_link_html: `<a href="${directTrackingUrl}" target="_blank" style="color:#785a00;font-weight:bold;text-decoration:underline;">${directTrackingUrl}</a>`,
+    track_button: `<a href="${directTrackingUrl}" target="_blank" style="display:inline-block;padding:12px 24px;background-color:#785a00;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px;">Track Your Order</a>`,
   };
 
   let ownerSuccess = false;

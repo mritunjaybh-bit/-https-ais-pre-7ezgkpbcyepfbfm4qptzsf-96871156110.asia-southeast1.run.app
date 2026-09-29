@@ -308,32 +308,62 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       // 3. Also check browser localStorage
       const localOrders = getAllOrders();
 
-      // 4. Merge: server orders + local orders
-      const orderMap = new Map<string, PlacedOrder>();
-      serverOrders.forEach((o) => {
-        if (o && o.orderId) orderMap.set(String(o.orderId).toLowerCase(), o);
-      });
-
+      // 4. Merge: prev React state + initialOrders + local storage + server orders
       let hasLocalPending = false;
-      localOrders.forEach((lo) => {
-        if (lo && lo.orderId && !orderMap.has(String(lo.orderId).toLowerCase())) {
-          orderMap.set(String(lo.orderId).toLowerCase(), lo);
-          hasLocalPending = true;
+
+      setOrders((prev) => {
+        const orderMap = new Map<string, PlacedOrder>();
+
+        // 1. Existing orders in React state (never lose an order that was placed in the current session)
+        (prev || []).forEach((o) => {
+          if (o && o.orderId) orderMap.set(String(o.orderId).toLowerCase(), o);
+        });
+
+        // 2. Initial orders passed from parent App.tsx
+        if (initialOrders && Array.isArray(initialOrders)) {
+          initialOrders.forEach((o) => {
+            if (o && o.orderId) orderMap.set(String(o.orderId).toLowerCase(), o);
+          });
         }
+
+        // 3. Browser localStorage orders
+        localOrders.forEach((lo) => {
+          if (lo && lo.orderId) {
+            if (!orderMap.has(String(lo.orderId).toLowerCase())) {
+              hasLocalPending = true;
+            }
+            orderMap.set(String(lo.orderId).toLowerCase(), lo);
+          }
+        });
+
+        // 4. Server orders from /api/orders
+        serverOrders.forEach((so) => {
+          if (so && so.orderId) {
+            orderMap.set(String(so.orderId).toLowerCase(), so);
+          }
+        });
+
+        // Check if any orders in our map are missing on the server
+        const serverIdSet = new Set(serverOrders.map((so) => String(so.orderId).toLowerCase()));
+        for (const [id] of orderMap) {
+          if (!serverIdSet.has(id)) {
+            hasLocalPending = true;
+          }
+        }
+
+        const mergedOrders = Array.from(orderMap.values()).sort(
+          (a, b) => (b.createdAt || 0) - (a.createdAt || 0)
+        );
+
+        // Keep localStorage in sync with full orders list
+        try {
+          localStorage.setItem('caphe_vietnam_orders_database_v1', JSON.stringify(mergedOrders));
+        } catch {}
+
+        return mergedOrders;
       });
 
-      const mergedOrders = Array.from(orderMap.values()).sort(
-        (a, b) => (b.createdAt || 0) - (a.createdAt || 0)
-      );
-
-      setOrders(mergedOrders);
-
-      // Keep localStorage in sync with full orders list
-      try {
-        localStorage.setItem('caphe_vietnam_orders_database_v1', JSON.stringify(mergedOrders));
-      } catch {}
-
-      // If any local orders were missing on server, sync them in background
+      // If any local or cached orders are missing from the server, push them to the server
       if (hasLocalPending) {
         syncPendingLocalOrdersToServer().catch(() => {});
       }
