@@ -159,17 +159,19 @@ export default function App() {
     paymentMethod?: string;
     emailSentSuccess?: boolean;
     emailMessage?: string;
+    items?: CartItem[];
   }) => {
     const orderId = details.orderId || `CP-${Math.floor(100000 + Math.random() * 900000)}`;
+    const finalItems = (details.items && details.items.length > 0) ? details.items : [...cartItems];
     const newPlacedOrder: PlacedOrder = {
       orderId,
       ...details,
-      items: [...cartItems],
-      createdAt: Date.now(),
-      timestamp: new Date().toISOString(),
-      status: 'Order Placed & Roasting',
-      courierPartner: details.shippingType === 'express' ? 'BlueDart Air Express' : 'Delhivery Surface',
-      trackingNumber: `BD-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      items: finalItems,
+      createdAt: (details as any).createdAt || Date.now(),
+      timestamp: (details as any).timestamp || new Date().toISOString(),
+      status: (details as any).status || 'Order Placed & Roasting',
+      courierPartner: (details as any).courierPartner || (details.shippingType === 'express' ? 'BlueDart Air Express' : 'Delhivery Surface'),
+      trackingNumber: (details as any).trackingNumber || `BD-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
       paymentStatus: details.paymentStatus || 'paid',
       paymentId: details.paymentId,
       paymentMethod: details.paymentMethod || 'Razorpay Online (UPI/Cards)',
@@ -182,11 +184,8 @@ export default function App() {
 
     setOrders((prev) => [newPlacedOrder, ...prev.filter((o) => o.orderId !== orderId)]);
     setConfirmedOrder({
-      orderId,
-      ...details,
-      items: [...cartItems],
-      emailSentSuccess: details.emailSentSuccess ?? true,
-      emailMessage: details.emailMessage,
+      ...newPlacedOrder,
+      items: finalItems,
     });
     setCartItems([]);
 
@@ -269,7 +268,16 @@ export default function App() {
       try {
         const path = window.location.pathname.toLowerCase();
         const search = new URLSearchParams(window.location.search);
-        let targetOrderId = search.get('order') || search.get('orderId');
+        let targetOrderId =
+          search.get('orderId') ||
+          search.get('order_id') ||
+          search.get('orderID') ||
+          search.get('order') ||
+          search.get('id');
+        let targetContact =
+          search.get('contact') ||
+          search.get('email') ||
+          search.get('phone');
 
         // Roastery Owner Admin Portal & Setup Routes
         if (
@@ -358,13 +366,23 @@ export default function App() {
           return;
         }
 
-        if (path === '/track' || path.startsWith('/track') || path.startsWith('/order')) {
-          const match = path.match(/^\/(?:order|track)\/([^/]+)/i);
+        if (
+          path === '/track-order' ||
+          path.startsWith('/track-order') ||
+          path === '/track' ||
+          path.startsWith('/track') ||
+          path === '/order' ||
+          path.startsWith('/order')
+        ) {
+          const match = path.match(/^\/(?:order|track-order|track)\/([^/?#]+)/i);
           if (match && match[1]) {
             targetOrderId = decodeURIComponent(match[1]);
           }
           if (targetOrderId) {
             setTrackingOrderId(targetOrderId);
+          }
+          if (targetContact) {
+            setTrackingContact(targetContact);
           }
           setActiveTab('track-order');
           return;
@@ -382,7 +400,9 @@ export default function App() {
 
         if (targetOrderId) {
           setTrackingOrderId(targetOrderId);
+          if (targetContact) setTrackingContact(targetContact);
           setActiveTab('track-order');
+          return;
         }
       } catch (e) {
         console.error('Error parsing route URL:', e);
@@ -400,9 +420,9 @@ export default function App() {
     setActiveTab('track-order');
     try {
       if (orderId) {
-        window.history.pushState({}, '', `/order/${encodeURIComponent(orderId)}`);
+        window.history.pushState({}, '', `/track-order?orderId=${encodeURIComponent(orderId)}`);
       } else {
-        window.history.pushState({}, '', '/track');
+        window.history.pushState({}, '', '/track-order');
       }
     } catch {
       // Ignore if pushState fails in preview sandbox
@@ -425,6 +445,7 @@ export default function App() {
           currency={currency}
           onBackToShop={() => handleSelectTab('shop')}
           onOrderUpdated={handleUpdateOrderStatus}
+          initialOrders={orders}
         />
       </div>
     );
@@ -468,13 +489,16 @@ export default function App() {
               </div>
             </div>
             <div className="flex items-center gap-2 self-end sm:self-auto">
-              <button
-                type="button"
-                onClick={() => handleTrackOrder(emailAlert.orderId, emailAlert.customerEmail)}
-                className="text-[11px] font-bold bg-white text-emerald-900 px-3 py-1 rounded-md hover:bg-emerald-50 transition-colors shadow-2xs cursor-pointer"
+              <a
+                href={`/track-order?orderId=${encodeURIComponent(emailAlert.orderId)}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleTrackOrder(emailAlert.orderId, emailAlert.customerEmail);
+                }}
+                className="text-[11px] font-bold bg-white text-emerald-900 px-3 py-1 rounded-md hover:bg-emerald-50 transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
               >
                 Track Your Order
-              </button>
+              </a>
               <button
                 type="button"
                 onClick={() => setEmailAlert(null)}

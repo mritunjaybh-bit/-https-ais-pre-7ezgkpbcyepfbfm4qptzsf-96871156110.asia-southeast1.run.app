@@ -106,21 +106,47 @@ function tryReadFile(filePath: string): StoreDatabase | null {
   return null;
 }
 
-export function loadDatabase(): StoreDatabase {
-  if (dbCache) return dbCache;
+export function loadDatabase(forceReload = false): StoreDatabase {
+  if (dbCache && !forceReload) return dbCache;
 
-  // 1. Try reading from TMP_DB_FILE
+  const fromProject = tryReadFile(DB_FILE);
   const fromTmp = tryReadFile(TMP_DB_FILE);
-  if (fromTmp) {
-    dbCache = fromTmp;
-    return dbCache;
+
+  let chosen: StoreDatabase | null = null;
+
+  if (fromProject && fromTmp) {
+    // Both files exist: merge orders from both so no order is ever lost
+    const orderMap = new Map<string, PlacedOrder>();
+    (fromTmp.orders || []).forEach((o) => {
+      if (o && o.orderId) orderMap.set(String(o.orderId).toLowerCase(), o);
+    });
+    (fromProject.orders || []).forEach((o) => {
+      if (o && o.orderId) orderMap.set(String(o.orderId).toLowerCase(), o);
+    });
+
+    let projectMtime = 0;
+    let tmpMtime = 0;
+    try {
+      projectMtime = fs.statSync(DB_FILE).mtimeMs;
+    } catch {}
+    try {
+      tmpMtime = fs.statSync(TMP_DB_FILE).mtimeMs;
+    } catch {}
+
+    const base = projectMtime >= tmpMtime ? fromProject : fromTmp;
+    base.orders = Array.from(orderMap.values()).sort(
+      (a, b) => (b.createdAt || 0) - (a.createdAt || 0)
+    );
+    chosen = base;
+  } else if (fromProject) {
+    chosen = fromProject;
+  } else if (fromTmp) {
+    chosen = fromTmp;
   }
 
-  // 2. Try reading from project DB_FILE
-  const fromProject = tryReadFile(DB_FILE);
-  if (fromProject) {
-    dbCache = fromProject;
-    return dbCache;
+  if (chosen) {
+    dbCache = chosen;
+    return chosen;
   }
 
   // 3. Seed fresh database
@@ -272,8 +298,8 @@ export function updateDbProducts(products: ProductItem[]): void {
 // -------------------------------------------------------------
 // ORDER ACCESSORS
 // -------------------------------------------------------------
-export function getDbOrders(): PlacedOrder[] {
-  const db = loadDatabase();
+export function getDbOrders(forceReload = true): PlacedOrder[] {
+  const db = loadDatabase(forceReload);
   return db.orders || [];
 }
 

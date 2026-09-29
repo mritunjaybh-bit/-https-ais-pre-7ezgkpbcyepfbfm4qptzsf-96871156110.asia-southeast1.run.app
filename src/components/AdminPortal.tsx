@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Currency, ProductItem, PlacedOrder, OrderState, ProductCategory, PackageSize } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
 import { syncLiveProducts, fetchLiveProducts } from '../data/coffeeData';
+import { getAllOrders, syncPendingLocalOrdersToServer } from '../utils/orderStorage';
 import emailjs from '@emailjs/browser';
 import { EMAILJS_CREDENTIALS } from '../utils/emailService';
 import {
@@ -51,6 +52,7 @@ interface AdminPortalProps {
   currency: Currency;
   onBackToShop: () => void;
   onOrderUpdated?: (orderId: string, newStatus: OrderState) => void;
+  initialOrders?: PlacedOrder[];
 }
 
 export type AdminRole = 'owner' | 'staff';
@@ -72,6 +74,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   currency,
   onBackToShop,
   onOrderUpdated,
+  initialOrders,
 }) => {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -127,8 +130,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [staffError, setStaffError] = useState<string | null>(null);
   const [isSubmittingStaff, setIsSubmittingStaff] = useState<boolean>(false);
 
-  // Orders State
-  const [orders, setOrders] = useState<PlacedOrder[]>([]);
+  // Orders State: Instant hydration from initialOrders or local storage so orders are never blank
+  const [orders, setOrders] = useState<PlacedOrder[]>(() => {
+    if (initialOrders && initialOrders.length > 0) return initialOrders;
+    return getAllOrders();
+  });
   const [searchOrdersQuery, setSearchOrdersQuery] = useState<string>('');
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
   const [editingAwbOrderId, setEditingAwbOrderId] = useState<string | null>(null);
@@ -166,10 +172,33 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     }, 3200);
   };
 
+  // Keep orders in sync if initialOrders prop changes from parent
+  useEffect(() => {
+    if (initialOrders && initialOrders.length > 0) {
+      setOrders((prev) => {
+        const orderMap = new Map<string, PlacedOrder>();
+        initialOrders.forEach((o) => {
+          if (o && o.orderId) orderMap.set(String(o.orderId).toLowerCase(), o);
+        });
+        prev.forEach((o) => {
+          if (o && o.orderId && !orderMap.has(String(o.orderId).toLowerCase())) {
+            orderMap.set(String(o.orderId).toLowerCase(), o);
+          }
+        });
+        return Array.from(orderMap.values()).sort(
+          (a, b) => (b.createdAt || 0) - (a.createdAt || 0)
+        );
+      });
+    }
+  }, [initialOrders]);
+
   // Check setup status and existing session token on mount
   useEffect(() => {
+    // Immediate pre-fetch of orders on portal open
+    loadOrders();
+
     // 1. Query setup status from database
-    fetch('/api/admin?action=setup-status')
+    fetch(`/api/admin?action=setup-status&_t=${Date.now()}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => {
         const setupDone = Boolean(data.isSetupComplete);
@@ -205,6 +234,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             if (data.user.role === 'staff') {
               setActiveTab('orders');
             }
+            loadOrders(savedToken);
+            loadAdminProducts();
           } else {
             sessionStorage.removeItem('caphe_admin_token');
           }
@@ -223,22 +254,97 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       if (currentUserRole === 'owner') {
         loadStaffMembers();
       }
+
+      // Auto-poll orders every 8 seconds while dashboard is open
+      const interval = setInterval(() => {
+        loadOrders();
+      }, 8000);
+      return () => clearInterval(interval);
     }
   }, [isAuthenticated, authToken, currentUserRole]);
 
-  const loadOrders = async () => {
+  const [isLoadingOrders, setIsLoadingOrders] = useState<boolean>(false);
+
+  const loadOrders = async (tokenOverride?: string) => {
+    setIsLoadingOrders(true);
+    const effectiveToken = tokenOverride || authToken || sessionStorage.getItem('caphe_admin_token') || '';
     try {
-      const res = await fetch('/api/orders', {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.orders)) {
-          setOrders(data.orders);
+      let serverOrders: PlacedOrder[] = [];
+
+      // 1. Fetch from server orders database (/api/orders) with cache busting
+      try {
+        const res = await fetch(`/api/orders?_t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: effectiveToken ? { Authorization: `Bearer ${effectiveToken}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.orders)) {
+            serverOrders = data.orders;
+          }
         }
+      } catch (e) {
+        console.warn('[AdminPortal] /api/orders fetch failed, trying admin orders endpoint:', e);
+      }
+
+      // 2. If no orders or endpoint issue, try fallback: /api/admin?action=orders with cache busting
+      if (serverOrders.length === 0 && effectiveToken) {
+        try {
+          const adminRes = await fetch(`/api/admin?action=orders&_t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: { Authorization: `Bearer ${effectiveToken}` },
+          });
+          if (adminRes.ok) {
+            const adminData = await adminRes.json();
+            if (Array.isArray(adminData.orders)) {
+              serverOrders = adminData.orders;
+            }
+          }
+        } catch (adminErr) {
+          console.warn('[AdminPortal] /api/admin?action=orders fallback error:', adminErr);
+        }
+      }
+
+      // 3. Also check browser localStorage
+      const localOrders = getAllOrders();
+
+      // 4. Merge: server orders + local orders
+      const orderMap = new Map<string, PlacedOrder>();
+      serverOrders.forEach((o) => {
+        if (o && o.orderId) orderMap.set(String(o.orderId).toLowerCase(), o);
+      });
+
+      let hasLocalPending = false;
+      localOrders.forEach((lo) => {
+        if (lo && lo.orderId && !orderMap.has(String(lo.orderId).toLowerCase())) {
+          orderMap.set(String(lo.orderId).toLowerCase(), lo);
+          hasLocalPending = true;
+        }
+      });
+
+      const mergedOrders = Array.from(orderMap.values()).sort(
+        (a, b) => (b.createdAt || 0) - (a.createdAt || 0)
+      );
+
+      setOrders(mergedOrders);
+
+      // Keep localStorage in sync with full orders list
+      try {
+        localStorage.setItem('caphe_vietnam_orders_database_v1', JSON.stringify(mergedOrders));
+      } catch {}
+
+      // If any local orders were missing on server, sync them in background
+      if (hasLocalPending) {
+        syncPendingLocalOrdersToServer().catch(() => {});
       }
     } catch (err) {
       console.error('Failed to load orders from server:', err);
+      const fallback = getAllOrders();
+      if (fallback.length > 0) {
+        setOrders(fallback);
+      }
+    } finally {
+      setIsLoadingOrders(false);
     }
   };
 
@@ -315,6 +421,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             loadStaffMembers();
           }
         }
+        loadOrders(data.token);
+        loadAdminProducts();
         setUsernameInput('');
         setPasswordInput('');
         showToast(`Authenticated securely as ${data.user?.role === 'owner' ? 'Roastery Owner' : 'Staff Member'}.`);
@@ -381,6 +489,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         setCurrentAdminEmail(data.user?.email || cleanEmail);
         setCurrentUserRole('owner');
         setActiveTab('overview');
+        loadOrders(data.token);
+        loadAdminProducts();
+        loadStaffMembers();
         showToast('Owner Account created securely! Welcome to your Roastery Console.');
       } else {
         setSetupError(data.error || 'Failed to complete owner setup.');
@@ -484,6 +595,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               loadStaffMembers();
             }
           }
+          loadOrders(data.token);
+          loadAdminProducts();
         }
         showToast('Password reset successfully! Logged in with new credentials.');
         setAuthView('login');
@@ -1005,21 +1118,29 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const filteredOrders = useMemo(() => {
     const q = searchOrdersQuery.toLowerCase().trim();
     return orders.filter((ord) => {
+      if (!ord || !ord.orderId) return false;
+      const orderIdStr = String(ord.orderId).toLowerCase();
+      const customerNameStr = String(ord.customerName || '').toLowerCase();
+      const customerEmailStr = String(ord.customerEmail || '').toLowerCase();
+      const customerPhoneStr = String(ord.customerPhone || '');
+      const cityPincodeStr = String(ord.cityPincode || '').toLowerCase();
+
       const matchesQuery =
         !q ||
-        ord.orderId.toLowerCase().includes(q) ||
-        (ord.customerName && ord.customerName.toLowerCase().includes(q)) ||
-        (ord.customerEmail && ord.customerEmail.toLowerCase().includes(q)) ||
-        (ord.customerPhone && ord.customerPhone.includes(q)) ||
-        (ord.cityPincode && ord.cityPincode.toLowerCase().includes(q));
+        orderIdStr.includes(q) ||
+        customerNameStr.includes(q) ||
+        customerEmailStr.includes(q) ||
+        customerPhoneStr.includes(q) ||
+        cityPincodeStr.includes(q);
 
+      const status = ord.status || 'Order Placed & Roasting';
       const matchesStatus =
         orderStatusFilter === 'all' ||
-        (orderStatusFilter === 'placed' && (ord.status === 'Order Placed' || ord.status === 'Order Placed & Roasting')) ||
-        (orderStatusFilter === 'confirmed' && (ord.status === 'Confirmed' || ord.status === 'Packaged & Sealed')) ||
-        (orderStatusFilter === 'transit' && ord.status === 'In Transit') ||
-        (orderStatusFilter === 'delivered' && ord.status === 'Delivered') ||
-        (orderStatusFilter === 'cancelled' && ord.status === 'Cancelled');
+        (orderStatusFilter === 'placed' && (status === 'Order Placed' || status === 'Order Placed & Roasting')) ||
+        (orderStatusFilter === 'confirmed' && (status === 'Confirmed' || status === 'Packaged & Sealed')) ||
+        (orderStatusFilter === 'transit' && status === 'In Transit') ||
+        (orderStatusFilter === 'delivered' && status === 'Delivered') ||
+        (orderStatusFilter === 'cancelled' && status === 'Cancelled');
 
       return matchesQuery && matchesStatus;
     });
@@ -1029,11 +1150,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const filteredProducts = useMemo(() => {
     const q = searchProductQuery.toLowerCase().trim();
     return products.filter((p) => {
+      if (!p) return false;
+      const nameStr = String(p.name || '').toLowerCase();
+      const vietNameStr = String(p.vietnameseName || '').toLowerCase();
+      const descStr = String(p.description || '').toLowerCase();
+
       const matchesQuery =
         !q ||
-        p.name.toLowerCase().includes(q) ||
-        p.vietnameseName.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q);
+        nameStr.includes(q) ||
+        vietNameStr.includes(q) ||
+        descStr.includes(q);
 
       const matchesCategory =
         productCategoryFilter === 'all' || p.category === productCategoryFilter;
@@ -1044,16 +1170,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   // Overview Metrics (Standardized to Roastery Owner Console)
   const totalRevenue = orders.reduce(
-    (sum, o) => (o.status !== 'Cancelled' ? sum + (o.finalTotalINR || 0) : sum),
+    (sum, o) => (o && o.status !== 'Cancelled' ? sum + (Number(o.finalTotalINR) || 0) : sum),
     0
   );
   const totalOrdersCount = orders.length;
   const activeInPipelineCount = orders.filter(
-    (o) => o.status !== 'Delivered' && o.status !== 'Cancelled'
+    (o) => o && o.status !== 'Delivered' && o.status !== 'Cancelled'
   ).length;
-  const deliveredOrdersCount = orders.filter((o) => o.status === 'Delivered').length;
-  const lowStockItems = products.filter((p) => (p.stockQuantity ?? 50) <= 10);
-  const outOfStockItems = products.filter((p) => (p.stockQuantity ?? 50) <= 0);
+  const deliveredOrdersCount = orders.filter((o) => o && o.status === 'Delivered').length;
+  const lowStockItems = products.filter((p) => (p?.stockQuantity ?? 50) <= 10);
+  const outOfStockItems = products.filter((p) => (p?.stockQuantity ?? 50) <= 0);
 
   // ==========================================
   // VIEW 1: UNAUTHENTICATED SCREENS
@@ -1625,7 +1751,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         {currentUserRole === 'owner' && (
           <button
             type="button"
-            onClick={() => setActiveTab('overview')}
+            onClick={() => {
+              setActiveTab('overview');
+              loadOrders();
+            }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'overview'
                 ? 'bg-[#feca4d] text-[#271310] shadow-sm'
@@ -1640,7 +1769,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         {/* Section 2: Orders (BOTH OWNER & STAFF) */}
         <button
           type="button"
-          onClick={() => setActiveTab('orders')}
+          onClick={() => {
+            setActiveTab('orders');
+            loadOrders();
+          }}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'orders'
               ? 'bg-[#feca4d] text-[#271310] shadow-sm'
@@ -1918,7 +2050,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => setActiveTab('orders')}
+                onClick={() => {
+                  setActiveTab('orders');
+                  loadOrders();
+                }}
                 className="text-xs text-[#785a00] font-bold hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <span>View All Orders ({orders.length})</span>
@@ -1950,14 +2085,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           {ord.orderId}
                         </td>
                         <td className="py-3 px-3">
-                          <p className="font-semibold text-[#271310]">{ord.customerName}</p>
-                          <p className="text-[10px] text-[#827472]">{ord.cityPincode}</p>
+                          <p className="font-semibold text-[#271310]">{ord.customerName || 'Valued Customer'}</p>
+                          <p className="text-[10px] text-[#827472]">{ord.cityPincode || ''}</p>
                         </td>
                         <td className="py-3 px-3 text-[#504442]">
-                          {ord.items.length} item(s)
+                          {Array.isArray(ord.items) ? ord.items.length : 0} item(s)
                         </td>
                         <td className="py-3 px-3 font-bold text-[#271310]">
-                          {formatPrice(ord.finalTotalINR, currency)}
+                          {formatPrice(ord.finalTotalINR || 0, currency)}
                         </td>
                         <td className="py-3 px-3">
                           <span
@@ -1969,7 +2104,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                                 : 'bg-amber-50 text-amber-800 border-amber-200'
                             }`}
                           >
-                            {ord.status}
+                            {ord.status || 'Order Placed & Roasting'}
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right text-[11px] text-[#827472]">
@@ -2016,6 +2151,19 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 <option value="delivered">Delivered</option>
                 <option value="cancelled">Cancelled</option>
               </select>
+
+              <button
+                type="button"
+                onClick={() => {
+                  loadOrders();
+                  showToast('Orders refreshed.');
+                }}
+                className="px-3 py-2 rounded-xl bg-[#faf2f0] hover:bg-[#ebdcd9] text-[#271310] border border-[#d3c3c0] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Refresh orders list"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-[#785a00]" />
+                <span>Refresh</span>
+              </button>
 
               <button
                 type="button"
@@ -2105,30 +2253,36 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     {/* Items Table */}
                     <div className="space-y-1.5">
                       <span className="text-[10px] font-bold text-[#827472] uppercase block">
-                        Ordered Items ({order.items.length})
+                        Ordered Items ({Array.isArray(order.items) ? order.items.length : 0})
                       </span>
                       <div className="divide-y divide-[#d3c3c0]/40 border border-[#d3c3c0]/60 rounded-xl overflow-hidden bg-white">
-                        {order.items.map((item, idx) => (
+                        {(order.items || []).map((item, idx) => (
                           <div
                             key={idx}
                             className="p-3 flex items-center justify-between gap-3 text-xs"
                           >
                             <div className="flex items-center gap-3">
-                              <img
-                                src={item.imageUrl}
-                                alt={item.name}
-                                className="w-10 h-10 rounded-lg object-cover bg-stone-100 shrink-0"
-                              />
+                              {item.imageUrl ? (
+                                <img
+                                  src={item.imageUrl}
+                                  alt={item.name || 'Coffee'}
+                                  className="w-10 h-10 rounded-lg object-cover bg-stone-100 shrink-0"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center shrink-0 text-stone-400">
+                                  <Package className="w-5 h-5" />
+                                </div>
+                              )}
                               <div>
-                                <p className="font-bold text-[#271310]">{item.name}</p>
+                                <p className="font-bold text-[#271310]">{item.name || item.productId || 'Artisan Coffee'}</p>
                                 <p className="text-[11px] text-[#827472]">
-                                  {item.selectedSize} {item.selectedGrind ? `• ${item.selectedGrind}` : ''}
+                                  {item.selectedSize || '250g Valve Pouch'} {item.selectedGrind ? `• ${item.selectedGrind}` : ''}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
                               <span className="font-bold text-[#271310]">
-                                {item.quantity} × {formatPrice(item.unitPriceINR, currency)}
+                                {item.quantity || 1} × {formatPrice(item.unitPriceINR || 0, currency)}
                               </span>
                             </div>
                           </div>

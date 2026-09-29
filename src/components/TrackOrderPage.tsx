@@ -33,23 +33,95 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
   initialContact = '',
   onBackToShop,
 }) => {
-  const [orderIdInput, setOrderIdInput] = useState<string>(initialOrderId);
-  const [contactInput, setContactInput] = useState<string>(initialContact);
+  // Read Order ID directly from initialOrderId prop or URL query parameter (?orderId=... or ?order_id=...)
+  const [orderIdInput, setOrderIdInput] = useState<string>(() => {
+    if (initialOrderId) return initialOrderId;
+    if (typeof window !== 'undefined') {
+      const search = new URLSearchParams(window.location.search);
+      const fromQuery =
+        search.get('orderId') ||
+        search.get('order_id') ||
+        search.get('orderID') ||
+        search.get('order') ||
+        search.get('id');
+      if (fromQuery) return fromQuery.trim();
+
+      const match = window.location.pathname.match(/^\/(?:order|track|track-order)\/([^/?#]+)/i);
+      if (match && match[1]) return decodeURIComponent(match[1]).trim();
+    }
+    return '';
+  });
+
+  const [contactInput, setContactInput] = useState<string>(() => {
+    if (initialContact) return initialContact;
+    if (typeof window !== 'undefined') {
+      const search = new URLSearchParams(window.location.search);
+      const fromQuery = search.get('contact') || search.get('email') || search.get('phone');
+      if (fromQuery) return fromQuery.trim();
+    }
+    return '';
+  });
+
+  const [isPreFilledFromUrl, setIsPreFilledFromUrl] = useState<boolean>(false);
   const [verifiedOrder, setVerifiedOrder] = useState<PlacedOrder | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [copiedTracking, setCopiedTracking] = useState<boolean>(false);
+  const contactInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  // Auto-verify if initialOrderId and initialContact are supplied (e.g., directly from checkout)
+  // Sync with prop updates and URL parameters
   useEffect(() => {
-    if (initialOrderId && initialContact) {
-      const match = verifyAndGetOrder(initialOrderId, initialContact);
+    let effectiveOrderId = initialOrderId;
+    let effectiveContact = initialContact;
+
+    if (!effectiveOrderId && typeof window !== 'undefined') {
+      const search = new URLSearchParams(window.location.search);
+      effectiveOrderId =
+        search.get('orderId') ||
+        search.get('order_id') ||
+        search.get('orderID') ||
+        search.get('order') ||
+        search.get('id') ||
+        '';
+
+      if (!effectiveOrderId) {
+        const match = window.location.pathname.match(/^\/(?:order|track|track-order)\/([^/?#]+)/i);
+        if (match && match[1]) effectiveOrderId = decodeURIComponent(match[1]);
+      }
+    }
+
+    if (!effectiveContact && typeof window !== 'undefined') {
+      const search = new URLSearchParams(window.location.search);
+      effectiveContact = search.get('contact') || search.get('email') || search.get('phone') || '';
+    }
+
+    if (effectiveOrderId) {
+      setOrderIdInput(effectiveOrderId);
+      setIsPreFilledFromUrl(true);
+    }
+    if (effectiveContact) {
+      setContactInput(effectiveContact);
+    }
+
+    // Auto-verify if both Order ID and contact details are available
+    if (effectiveOrderId && effectiveContact) {
+      const match = verifyAndGetOrder(effectiveOrderId, effectiveContact);
       if (match) {
         setVerifiedOrder(match);
         setHasSearched(true);
+      } else {
+        fetchOrderFromServer(effectiveOrderId, effectiveContact).then((serverOrder) => {
+          if (serverOrder) {
+            setVerifiedOrder(serverOrder);
+            setHasSearched(true);
+          }
+        });
       }
-    } else if (initialOrderId) {
-      setOrderIdInput(initialOrderId);
+    } else if (effectiveOrderId && !effectiveContact) {
+      // Focus contact input field automatically for seamless verification
+      setTimeout(() => {
+        contactInputRef.current?.focus();
+      }, 100);
     }
   }, [initialOrderId, initialContact]);
 
@@ -142,11 +214,25 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
 
       {/* Verification Search Box */}
       <div className="bg-white rounded-2xl border border-[#d3c3c0]/70 p-6 shadow-sm mb-8">
+        {orderIdInput && !verifiedOrder && (
+          <div className="mb-4 p-3 rounded-xl bg-amber-50/80 border border-amber-200/80 flex items-center gap-2.5 text-xs text-amber-900">
+            <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span>
+              Order ID <strong className="font-mono text-[#785a00] font-bold">{orderIdInput}</strong> pre-filled from your tracking link. Please enter your email or phone below to view real-time delivery status.
+            </span>
+          </div>
+        )}
+
         <form onSubmit={handleVerifyAndTrack} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="orderIdInput" className="text-[11px] font-bold text-[#827472] uppercase block mb-1.5">
-                Order ID *
+              <label htmlFor="orderIdInput" className="text-[11px] font-bold text-[#827472] uppercase block mb-1.5 flex items-center justify-between">
+                <span>Order ID *</span>
+                {orderIdInput && (
+                  <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                    Pre-filled
+                  </span>
+                )}
               </label>
               <input
                 id="orderIdInput"
@@ -171,6 +257,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
               </label>
               <input
                 id="contactInput"
+                ref={contactInputRef}
                 type="text"
                 required
                 value={contactInput}

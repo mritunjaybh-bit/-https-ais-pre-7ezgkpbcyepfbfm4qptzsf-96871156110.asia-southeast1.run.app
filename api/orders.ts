@@ -11,6 +11,9 @@ export function ordersHandler(req: Request, res: Response) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -26,7 +29,7 @@ export function ordersHandler(req: Request, res: Response) {
   }
   req.body = body || {};
 
-  const orders = getDbOrders();
+  const orders = getDbOrders(true);
   const pathParts = (req.path || req.url || '').split('?')[0].split('/').filter(Boolean);
   const pathId = pathParts.length > 2 && pathParts[1] === 'orders' ? pathParts[2] : undefined;
 
@@ -116,13 +119,41 @@ export function ordersHandler(req: Request, res: Response) {
 
   // 3. POST /api/orders - Record new placed order and decrement inventory
   if (req.method === 'POST') {
-    const newOrder = (req.body.order || req.body) as PlacedOrder;
-    if (!newOrder || !newOrder.orderId || !newOrder.items) {
-      return res.status(400).json({ error: 'Invalid order structure' });
+    const rawOrder = (req.body.order || req.body) as any;
+    if (!rawOrder) {
+      return res.status(400).json({ error: 'Order data required' });
     }
 
+    const orderId = String(rawOrder.orderId || `CP-${Math.floor(100000 + Math.random() * 900000)}`).trim();
+    const items = Array.isArray(rawOrder.items) ? rawOrder.items : [];
+
+    const newOrder: PlacedOrder = {
+      orderId,
+      shippingType: rawOrder.shippingType || 'standard',
+      shippingAddress: String(rawOrder.shippingAddress || ''),
+      cityPincode: String(rawOrder.cityPincode || ''),
+      customerName: String(rawOrder.customerName || 'Valued Customer'),
+      customerPhone: String(rawOrder.customerPhone || ''),
+      customerEmail: String(rawOrder.customerEmail || ''),
+      giftMessage: rawOrder.giftMessage,
+      discountINR: Number(rawOrder.discountINR) || 0,
+      finalTotalINR: Number(rawOrder.finalTotalINR) || 0,
+      items,
+      createdAt: rawOrder.createdAt || Date.now(),
+      timestamp: rawOrder.timestamp || new Date().toISOString(),
+      status: rawOrder.status || 'Order Placed & Roasting',
+      courierPartner: rawOrder.courierPartner || (rawOrder.shippingType === 'express' ? 'BlueDart Air Express' : 'Delhivery Surface'),
+      trackingNumber: rawOrder.trackingNumber || `BD-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      paymentStatus: rawOrder.paymentStatus || 'paid',
+      paymentId: rawOrder.paymentId,
+      paymentMethod: rawOrder.paymentMethod || 'Razorpay Online',
+      emailSentSuccess: rawOrder.emailSentSuccess ?? true,
+      emailMessage: rawOrder.emailMessage,
+    };
+
     // Prevent duplicates
-    const filtered = orders.filter((o) => o.orderId.toLowerCase() !== newOrder.orderId.toLowerCase());
+    const currentDbOrders = getDbOrders(true);
+    const filtered = currentDbOrders.filter((o) => o.orderId.toLowerCase() !== newOrder.orderId.toLowerCase());
     const updatedOrders = [newOrder, ...filtered];
     updateDbOrders(updatedOrders);
 

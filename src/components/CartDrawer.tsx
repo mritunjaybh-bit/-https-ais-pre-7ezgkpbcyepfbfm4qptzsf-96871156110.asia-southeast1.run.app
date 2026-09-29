@@ -3,6 +3,7 @@ import { CartItem, Currency } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
 import { sendOrderEmails, EmailSendResult } from '../utils/emailService';
 import { openRazorpayCheckout } from '../utils/razorpayService';
+import { saveOrderAsync } from '../utils/orderStorage';
 import {
   X,
   Trash2,
@@ -166,6 +167,33 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       setCheckoutStep('sending_emails');
       setStepMessage('Placing Cash on Delivery order & dispatching confirmation emails...');
 
+      const codOrderData: any = {
+        orderId,
+        shippingType,
+        shippingAddress: cleanShippingAddress,
+        cityPincode: cleanCityPincode,
+        customerName: cleanCustomerName,
+        customerPhone: cleanCustomerPhone,
+        customerEmail: cleanCustomerEmail,
+        giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
+        discountINR: appliedDiscount,
+        finalTotalINR,
+        items: [...items],
+        createdAt: Date.now(),
+        timestamp: new Date().toISOString(),
+        status: 'Order Placed & Roasting',
+        courierPartner: shippingType === 'express' ? 'BlueDart Air Express' : 'Delhivery Surface',
+        trackingNumber: `BD-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
+        paymentStatus: 'Pending (COD)',
+        paymentId: `COD-${Date.now().toString(36).toUpperCase()}`,
+        paymentMethod: 'COD',
+        emailSentSuccess: true,
+      };
+
+      try {
+        saveOrderAsync(codOrderData).catch(() => {});
+      } catch {}
+
       try {
         const emailResult: EmailSendResult = await sendOrderEmails({
           orderId,
@@ -180,6 +208,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           paymentStatus: 'Pending (COD)',
         });
 
+        codOrderData.emailSentSuccess = emailResult.success;
+        codOrderData.emailMessage = emailResult.message;
+        saveOrderAsync(codOrderData).catch(() => {});
+
         if (emailResult.success) {
           setCheckoutStep('success');
           setStepMessage('Cash on Delivery order placed & confirmation emails dispatched!');
@@ -191,23 +223,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
         setTimeout(() => {
           setIsSubmitting(false);
-          onCheckout({
-            orderId,
-            shippingType,
-            shippingAddress: cleanShippingAddress,
-            cityPincode: cleanCityPincode,
-            customerName: cleanCustomerName,
-            customerPhone: cleanCustomerPhone,
-            customerEmail: cleanCustomerEmail,
-            giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
-            discountINR: appliedDiscount,
-            finalTotalINR,
-            paymentStatus: 'Pending (COD)',
-            paymentId: `COD-${Date.now().toString(36).toUpperCase()}`,
-            paymentMethod: 'COD',
-            emailSentSuccess: emailResult.success,
-            emailMessage: emailResult.message,
-          });
+          onCheckout(codOrderData);
         }, 700);
       } catch (err: any) {
         console.error('[Checkout] Error executing COD email notification:', err);
@@ -215,23 +231,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         setCheckoutStep('error');
         setStepMessage(err?.text || err?.message || 'Error sending confirmation email for COD order.');
 
-        onCheckout({
-          orderId,
-          shippingType,
-          shippingAddress: cleanShippingAddress,
-          cityPincode: cleanCityPincode,
-          customerName: cleanCustomerName,
-          customerPhone: cleanCustomerPhone,
-          customerEmail: cleanCustomerEmail,
-          giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
-          discountINR: appliedDiscount,
-          finalTotalINR,
-          paymentStatus: 'Pending (COD)',
-          paymentId: `COD-${Date.now().toString(36).toUpperCase()}`,
-          paymentMethod: 'COD',
-          emailSentSuccess: false,
-          emailMessage: 'Email delivery pending roastery connection.',
-        });
+        codOrderData.emailSentSuccess = false;
+        codOrderData.emailMessage = 'Email delivery pending roastery connection.';
+        saveOrderAsync(codOrderData).catch(() => {});
+        onCheckout(codOrderData);
       }
       return;
     }
@@ -268,7 +271,34 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       return;
     }
 
-    // Step 3: Payment Succeeded -> Send Both Order Emails via EmailJS
+    // Step 3: Payment Succeeded -> Immediately persist order to database & storage
+    const onlineOrderData: any = {
+      orderId,
+      shippingType,
+      shippingAddress: cleanShippingAddress,
+      cityPincode: cleanCityPincode,
+      customerName: cleanCustomerName,
+      customerPhone: cleanCustomerPhone,
+      customerEmail: cleanCustomerEmail,
+      giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
+      discountINR: appliedDiscount,
+      finalTotalINR,
+      items: [...items],
+      createdAt: Date.now(),
+      timestamp: new Date().toISOString(),
+      status: 'Order Placed & Roasting',
+      courierPartner: shippingType === 'express' ? 'BlueDart Air Express' : 'Delhivery Surface',
+      trackingNumber: `BD-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      paymentStatus: 'paid',
+      paymentId: paymentResponse.razorpay_payment_id,
+      paymentMethod: 'Razorpay Online (UPI/Cards/Wallets)',
+      emailSentSuccess: true,
+    };
+
+    try {
+      saveOrderAsync(onlineOrderData).catch(() => {});
+    } catch {}
+
     setCheckoutStep('sending_emails');
     setStepMessage(`Payment verified (ID: ${paymentResponse.razorpay_payment_id})! Sending confirmation emails...`);
 
@@ -284,6 +314,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         finalTotalINR,
       });
 
+      onlineOrderData.emailSentSuccess = emailResult.success;
+      onlineOrderData.emailMessage = emailResult.message;
+      saveOrderAsync(onlineOrderData).catch(() => {});
+
       if (emailResult.success) {
         setCheckoutStep('success');
         setStepMessage('Payment confirmed & both confirmation emails dispatched successfully!');
@@ -297,23 +331,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       // Step 4: Finalize local order & trigger receipt modal
       setTimeout(() => {
         setIsSubmitting(false);
-        onCheckout({
-          orderId,
-          shippingType,
-          shippingAddress: cleanShippingAddress,
-          cityPincode: cleanCityPincode,
-          customerName: cleanCustomerName,
-          customerPhone: cleanCustomerPhone,
-          customerEmail: cleanCustomerEmail,
-          giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
-          discountINR: appliedDiscount,
-          finalTotalINR,
-          paymentStatus: 'paid',
-          paymentId: paymentResponse.razorpay_payment_id,
-          paymentMethod: 'Razorpay Online (UPI/Cards/Wallets)',
-          emailSentSuccess: emailResult.success,
-          emailMessage: emailResult.message,
-        });
+        onCheckout(onlineOrderData);
       }, 700);
     } catch (err: any) {
       console.error('[Checkout] Email execution error after payment:', err);
@@ -321,24 +339,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       setCheckoutStep('error');
       setStepMessage(err?.text || err?.message || 'Error executing email notification service.');
 
-      // Payment was already captured, ensure user still gets their order confirmation
-      onCheckout({
-        orderId,
-        shippingType,
-        shippingAddress: cleanShippingAddress,
-        cityPincode: cleanCityPincode,
-        customerName: cleanCustomerName,
-        customerPhone: cleanCustomerPhone,
-        customerEmail: cleanCustomerEmail,
-        giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
-        discountINR: appliedDiscount,
-        finalTotalINR,
-        paymentStatus: 'paid',
-        paymentId: paymentResponse.razorpay_payment_id,
-        paymentMethod: 'Razorpay Online (UPI/Cards/Wallets)',
-        emailSentSuccess: false,
-        emailMessage: 'Email delivery pending roastery connection.',
-      });
+      onlineOrderData.emailSentSuccess = false;
+      onlineOrderData.emailMessage = 'Email delivery pending roastery connection.';
+      saveOrderAsync(onlineOrderData).catch(() => {});
+      onCheckout(onlineOrderData);
     }
   };
 

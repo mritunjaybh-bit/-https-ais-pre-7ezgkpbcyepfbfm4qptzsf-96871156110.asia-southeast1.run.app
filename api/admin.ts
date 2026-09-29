@@ -14,6 +14,8 @@ import {
   verifyPassword,
   getDbProducts,
   updateDbProducts,
+  getDbOrders,
+  updateDbOrders,
   saveDbOtp,
   getDbOtp,
   deleteDbOtp,
@@ -55,6 +57,9 @@ export async function adminHandler(req: Request, res: Response) {
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -504,6 +509,70 @@ export async function adminHandler(req: Request, res: Response) {
           message: `Staff account "${targetUser.name}" permanently deleted.`,
         });
       }
+    }
+
+    // -------------------------------------------------------------
+    // PROTECTED ACTION: Orders List for Admin / Owner / Staff
+    // -------------------------------------------------------------
+    if (
+      action === 'orders' ||
+      action === 'get-orders' ||
+      action === 'order-list'
+    ) {
+      const auth = verifySessionToken(token);
+      if (!auth.valid || !auth.user) {
+        return res.status(401).json({ error: 'Unauthorized: Session invalid or expired' });
+      }
+      const orders = getDbOrders(true);
+      return res.status(200).json({ orders, count: orders.length });
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: save-order (Direct Order Ingestion Fallback)
+    // -------------------------------------------------------------
+    if (action === 'save-order' && req.method === 'POST') {
+      const rawOrder = (req.body.order || req.body) as any;
+      if (!rawOrder) {
+        return res.status(400).json({ error: 'Order data required' });
+      }
+
+      const orderId = String(rawOrder.orderId || `CP-${Math.floor(100000 + Math.random() * 900000)}`).trim();
+      const items = Array.isArray(rawOrder.items) ? rawOrder.items : [];
+
+      const newOrder = {
+        orderId,
+        shippingType: rawOrder.shippingType || 'standard',
+        shippingAddress: String(rawOrder.shippingAddress || ''),
+        cityPincode: String(rawOrder.cityPincode || ''),
+        customerName: String(rawOrder.customerName || 'Valued Customer'),
+        customerPhone: String(rawOrder.customerPhone || ''),
+        customerEmail: String(rawOrder.customerEmail || ''),
+        giftMessage: rawOrder.giftMessage,
+        discountINR: Number(rawOrder.discountINR) || 0,
+        finalTotalINR: Number(rawOrder.finalTotalINR) || 0,
+        items,
+        createdAt: rawOrder.createdAt || Date.now(),
+        timestamp: rawOrder.timestamp || new Date().toISOString(),
+        status: rawOrder.status || 'Order Placed & Roasting',
+        courierPartner: rawOrder.courierPartner || (rawOrder.shippingType === 'express' ? 'BlueDart Air Express' : 'Delhivery Surface'),
+        trackingNumber: rawOrder.trackingNumber || `BD-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
+        paymentStatus: rawOrder.paymentStatus || 'paid',
+        paymentId: rawOrder.paymentId,
+        paymentMethod: rawOrder.paymentMethod || 'Razorpay Online',
+        emailSentSuccess: rawOrder.emailSentSuccess ?? true,
+        emailMessage: rawOrder.emailMessage,
+      };
+
+      const currentDbOrders = getDbOrders(true);
+      const filtered = currentDbOrders.filter((o) => o.orderId.toLowerCase() !== newOrder.orderId.toLowerCase());
+      const updatedOrders = [newOrder as any, ...filtered];
+      updateDbOrders(updatedOrders);
+
+      return res.status(200).json({
+        success: true,
+        message: `Order ${newOrder.orderId} saved via admin endpoint`,
+        order: newOrder,
+      });
     }
 
     // -------------------------------------------------------------

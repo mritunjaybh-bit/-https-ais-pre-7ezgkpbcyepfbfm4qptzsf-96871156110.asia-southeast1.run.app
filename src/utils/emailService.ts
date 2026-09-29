@@ -65,11 +65,25 @@ export async function sendOrderEmails(
 
   const isCOD = payload.paymentMethod === 'COD' || payload.paymentStatus?.includes('COD');
 
+  const siteOrigin =
+    typeof window !== 'undefined' &&
+    window.location.origin &&
+    !window.location.origin.includes('localhost') &&
+    !window.location.origin.includes('127.0.0.1')
+      ? window.location.origin
+      : 'https://www.caphevietnam.in';
+
+  // Direct order tracking URL format: https://www.caphevietnam.in/track-order?orderId={{order_id}}
+  const directTrackingUrl = `${siteOrigin}/track-order?orderId=${encodeURIComponent(payload.orderId)}`;
+  const productionTrackingUrl = `https://www.caphevietnam.in/track-order?orderId=${encodeURIComponent(payload.orderId)}`;
+
   const paymentNotice = isCOD
     ? `\n\n[Payment Notice: Cash on Delivery (COD). Total amount ₹${payload.finalTotalINR} will be collected upon delivery.]`
     : '';
 
-  const formattedOrderItems = `${order_items}${paymentNotice}`;
+  const trackingNotice = `\n\n[Track Your Order Directly: ${directTrackingUrl}]`;
+
+  const formattedOrderItems = `${order_items}${paymentNotice}${trackingNotice}`;
 
   const order_quantity = payload.items.reduce((sum, item) => sum + item.quantity, 0);
   const order_total = isCOD
@@ -80,9 +94,10 @@ export async function sendOrderEmails(
     timeStyle: 'short',
   });
 
-  // Base template variables required by prompt
+  // Base template variables required by prompt and EmailJS templates
   const baseVariables = {
     order_id: payload.orderId,
+    orderId: payload.orderId,
     order_items: formattedOrderItems,
     order_quantity,
     order_total,
@@ -96,6 +111,17 @@ export async function sendOrderEmails(
     customer_phone: customerPhoneClean,
     customer_address: customerAddressClean,
     order_time,
+    // Direct tracking link variables for EmailJS templates (e.g. template_yrtnzv3)
+    tracking_url: directTrackingUrl,
+    track_order_url: directTrackingUrl,
+    track_url: directTrackingUrl,
+    tracking_link: directTrackingUrl,
+    track_link: directTrackingUrl,
+    order_tracking_link: directTrackingUrl,
+    order_tracking_url: directTrackingUrl,
+    direct_tracking_url: directTrackingUrl,
+    production_tracking_url: productionTrackingUrl,
+    official_tracking_url: productionTrackingUrl,
   };
 
   let ownerSuccess = false;

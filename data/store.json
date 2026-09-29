@@ -1002,11 +1002,56 @@
       "isActive": true
     }
   ],
-  "orders": [],
+  "orders": [
+    {
+      "orderId": "CP-999888",
+      "shippingType": "express",
+      "shippingAddress": "123 Coffee Lane",
+      "cityPincode": "Bengaluru, 560001",
+      "customerName": "Mritunjay Bhardwaj",
+      "customerPhone": "+91 9876543210",
+      "customerEmail": "mritunjaybh@gmail.com",
+      "discountINR": 0,
+      "finalTotalINR": 1250,
+      "items": [
+        {
+          "id": "item-1",
+          "productId": "single-origin-robusta",
+          "name": "Central Highlands Peaberry Robusta",
+          "unitPriceINR": 520,
+          "quantity": 2,
+          "selectedSize": "250g Valve Pouch"
+        }
+      ],
+      "createdAt": 1790512463465,
+      "timestamp": "2026-09-27T12:34:23.465Z",
+      "status": "Order Placed & Roasting",
+      "courierPartner": "BlueDart Air Express",
+      "trackingNumber": "BD-EXP-82397747",
+      "paymentStatus": "Pending (COD)",
+      "paymentMethod": "COD",
+      "emailSentSuccess": true
+    }
+  ],
   "adminConfig": {
-    "isSetupComplete": false
+    "isSetupComplete": true,
+    "setupAt": "2026-09-27T12:23:07.966Z"
   },
   "otps": {},
-  "users": [],
-  "sessions": []
+  "users": [
+    {
+      "username": "Mritunjay",
+      "email": "mritunjay.bhardwaj@caphevietnam.in",
+      "name": "Mritunjay Bhardwaj",
+      "role": "owner",
+      "passwordHash": "d11f39bbae21d012247f56d456d9be55:9cd77a67670d24a29d18c1e9fe539d92f542c726633df65b98bde01ec89604f140af2e87215bc0f696bcfe908ab9fae82798505428e514820edd9083358ef9c8",
+      "status": "active",
+      "id": "usr-owner-1790511787965-3e82c9a1",
+      "createdAt": "2026-09-27T12:23:07.965Z",
+      "lastLoginAt": "2026-09-27T12:25:10.137Z"
+    }
+  ],
+  "sessions": [
+    "usr-owner-1790511787965-3e82c9a1:Mritunjay:owner:1790511910138:7ff48b01fc1807366d4d091d00e97181:a3ca6af9849be538af188511583d1e14627f0ad4c77cebf7380f5490910fdbaf"
+  ]
 }

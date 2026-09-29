@@ -67,7 +67,15 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
 
   if (!isOpen || !orderDetails) return null;
 
-  const trackingUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/order/${orderDetails.orderId}`;
+  const siteOrigin =
+    typeof window !== 'undefined' &&
+    window.location.origin &&
+    !window.location.origin.includes('localhost') &&
+    !window.location.origin.includes('127.0.0.1')
+      ? window.location.origin
+      : 'https://www.caphevietnam.in';
+
+  const trackingUrl = `${siteOrigin}/track-order?orderId=${encodeURIComponent(orderDetails.orderId)}`;
 
   const handleCopyOrderId = () => {
     navigator.clipboard?.writeText(orderDetails.orderId);
@@ -191,7 +199,7 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
               type="button"
               id="track-order-button"
               onClick={handleTrackClick}
-              className="px-3.5 py-2 rounded-lg bg-[#785a00] hover:bg-[#8e6b00] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-lg bg-[#785a00] hover:bg-[#8e6b00] active:scale-[0.99] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Truck className="w-3.5 h-3.5" />
               <span>Track Your Order</span>
@@ -201,7 +209,7 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
             <button
               type="button"
               onClick={handleCopyTrackingLink}
-              className="text-[11px] text-[#504442] hover:text-[#271310] flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#d3c3c0]/70 bg-white transition-colors cursor-pointer"
+              className="text-[11px] text-[#504442] hover:text-[#271310] flex items-center justify-center gap-1 px-3 py-2 rounded-lg border border-[#d3c3c0]/70 bg-white transition-colors cursor-pointer"
             >
               {copiedLink ? (
                 <>
@@ -215,6 +223,30 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
                 </>
               )}
             </button>
+          </div>
+
+          {/* Direct Clickable Tracking Link Box */}
+          <div className="p-2.5 rounded-lg bg-white border border-[#d3c3c0]/60 space-y-1">
+            <span className="text-[10px] uppercase font-bold text-[#827472] block">
+              Direct Tracking URL:
+            </span>
+            <div className="flex items-center justify-between gap-2">
+              <a
+                href={`/track-order?orderId=${encodeURIComponent(orderDetails.orderId)}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleTrackClick();
+                }}
+                className="text-[11px] font-mono text-[#785a00] hover:underline font-semibold flex items-center gap-1 truncate cursor-pointer"
+                title="Open tracking page with Order ID pre-filled"
+              >
+                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{trackingUrl}</span>
+              </a>
+            </div>
+            <p className="text-[10px] text-[#827472]">
+              Clicking this link automatically pre-fills your Order ID. You will only need to enter your email or phone for verification.
+            </p>
           </div>
         </div>
 
