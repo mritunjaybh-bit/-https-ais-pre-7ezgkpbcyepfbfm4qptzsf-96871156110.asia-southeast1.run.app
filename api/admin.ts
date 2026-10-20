@@ -16,6 +16,8 @@ import {
   updateDbProducts,
   getDbOrders,
   updateDbOrders,
+  getDbSubscribers,
+  addDbSubscriber,
   saveDbOtp,
   getDbOtp,
   deleteDbOtp,
@@ -573,6 +575,38 @@ export async function adminHandler(req: Request, res: Response) {
         message: `Order ${newOrder.orderId} saved via admin endpoint`,
         order: newOrder,
       });
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: subscribe & subscribers (Email Marketing Capture)
+    // -------------------------------------------------------------
+    if (action === 'subscribe' && req.method === 'POST') {
+      const email = String(req.body.email || '').trim().toLowerCase();
+      const source = String(req.body.source || 'exit_intent_popup').trim();
+      const discountCode = String(req.body.discountCode || 'XINCHAO10').trim();
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Please enter a valid email address.' });
+      }
+
+      const { subscriber, isNew } = addDbSubscriber({ email, source, discountCode });
+      return res.status(200).json({
+        success: true,
+        isNew,
+        message: 'Subscribed successfully!',
+        discountCode: subscriber.discountCode,
+        subscriber,
+      });
+    }
+
+    if (action === 'subscribers') {
+      const auth = verifySessionToken(token);
+      if (!auth.valid || !auth.user) {
+        return res.status(401).json({ error: 'Unauthorized: Admin session required' });
+      }
+      const subscribers = getDbSubscribers();
+      return res.status(200).json({ success: true, count: subscribers.length, subscribers });
     }
 
     // -------------------------------------------------------------

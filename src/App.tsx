@@ -31,11 +31,13 @@ import { OrderConfirmationModal } from './components/OrderConfirmationModal';
 import { Footer } from './components/Footer';
 import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 import { CoffeeMasterChat } from './components/CoffeeMasterChat';
+import { EmailCaptureModal } from './components/EmailCaptureModal';
 import { MusicProvider } from './context/MusicContext';
 import { CheckCircle2, X } from 'lucide-react';
 import { getAllOrders, saveOrder, updateOrderStatus as updateStoredOrderStatus } from './utils/orderStorage';
 import { getBlogPostBySlug } from './data/blogPosts';
 import { getProductById } from './data/coffeeData';
+import { trackPageView, trackAddToCart, trackInitiateCheckout, trackPurchase } from './utils/metaPixel';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('shop');
@@ -94,6 +96,16 @@ export default function App() {
         return updated;
       }
       return [...prev, newItem];
+    });
+
+    // Track Meta Pixel AddToCart event
+    trackAddToCart({
+      id: newItem.productId || newItem.id,
+      name: newItem.name,
+      price: newItem.unitPriceINR,
+      quantity: newItem.quantity,
+      currency: 'INR',
+      category: newItem.category,
     });
   };
 
@@ -182,6 +194,14 @@ export default function App() {
     // Save order in persistent storage database
     saveOrder(newPlacedOrder);
 
+    // Track Meta Pixel Purchase Event
+    trackPurchase({
+      orderId,
+      total: newPlacedOrder.finalTotalINR,
+      currency: 'INR',
+      items: finalItems,
+    });
+
     setOrders((prev) => [newPlacedOrder, ...prev.filter((o) => o.orderId !== orderId)]);
     setConfirmedOrder({
       ...newPlacedOrder,
@@ -201,6 +221,19 @@ export default function App() {
   // Tab navigation handler with URL pushState
   const handleSelectTab = (tab: ActiveTab) => {
     setActiveTab(tab);
+
+    // Track Meta Pixel PageView on tab change
+    trackPageView(tab);
+
+    // Track Meta Pixel InitiateCheckout when navigating to checkout
+    if (tab === 'checkout' && cartItems.length > 0) {
+      trackInitiateCheckout({
+        items: cartItems,
+        total: cartTotalINR,
+        currency: 'INR',
+      });
+    }
+
     try {
       if (tab === 'checkout') {
         window.history.pushState({}, '', '/checkout');
@@ -671,6 +704,11 @@ export default function App() {
           onSelectProduct={handleSelectProduct}
           onAddToCart={handleAddToCart}
         />
+      )}
+
+      {/* Visitor 10% Off Welcome Email Capture Popup (Exit-Intent + 24s Timed Fallback) */}
+      {activeTab !== 'admin' && (
+        <EmailCaptureModal />
       )}
     </div>
   </MusicProvider>

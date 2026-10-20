@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Currency, ProductItem, PlacedOrder, OrderState, ProductCategory, PackageSize } from '../types';
+import { Currency, ProductItem, PlacedOrder, OrderState, ProductCategory, PackageSize, EmailSubscriber } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
 import { syncLiveProducts, fetchLiveProducts } from '../data/coffeeData';
 import { getAllOrders, syncPendingLocalOrdersToServer } from '../utils/orderStorage';
@@ -68,7 +68,7 @@ export interface StaffAccount {
   lastLoginAt?: string;
 }
 
-type AdminTab = 'overview' | 'orders' | 'inventory' | 'prices' | 'products' | 'staff';
+type AdminTab = 'overview' | 'orders' | 'inventory' | 'prices' | 'products' | 'staff' | 'subscribers';
 
 export const AdminPortal: React.FC<AdminPortalProps> = ({
   currency,
@@ -140,6 +140,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [editingAwbOrderId, setEditingAwbOrderId] = useState<string | null>(null);
   const [awbInput, setAwbInput] = useState<string>('');
   const [courierInput, setCourierInput] = useState<string>('');
+
+  // Email Subscribers / Marketing Leads State
+  const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
+  const [isLoadingSubscribers, setIsLoadingSubscribers] = useState<boolean>(false);
+  const [searchSubscriberQuery, setSearchSubscriberQuery] = useState<string>('');
 
   // Products & Inventory State
   const [products, setProducts] = useState<ProductItem[]>([]);
@@ -253,6 +258,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       loadAdminProducts();
       if (currentUserRole === 'owner') {
         loadStaffMembers();
+        loadSubscribers();
       }
 
       // Auto-poll orders every 8 seconds while dashboard is open
@@ -665,6 +671,47 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     } finally {
       setIsLoadingStaff(false);
     }
+  };
+
+  // Subscribers Management Handlers (Owner Only)
+  const loadSubscribers = async () => {
+    setIsLoadingSubscribers(true);
+    try {
+      const res = await fetch('/api/subscribers');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.subscribers)) {
+          setSubscribers(data.subscribers);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load subscribers:', err);
+    } finally {
+      setIsLoadingSubscribers(false);
+    }
+  };
+
+  const handleExportSubscribersCSV = () => {
+    if (subscribers.length === 0) {
+      showToast('No subscribers captured yet.');
+      return;
+    }
+    const headers = 'ID,Email,Created At,Source,Discount Code\n';
+    const rows = subscribers
+      .map(
+        (s) =>
+          `"${s.id}","${s.email}","${s.createdAt}","${s.source || ''}","${s.discountCode || ''}"`
+      )
+      .join('\n');
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `caphe_subscribers_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Subscribers CSV exported successfully!');
   };
 
   const handleCreateStaffSubmit = async (e: React.FormEvent) => {
@@ -1175,6 +1222,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       return matchesQuery && matchesStatus;
     });
   }, [orders, searchOrdersQuery, orderStatusFilter]);
+
+  // Filtered Email Subscribers for Marketing Leads view
+  const filteredSubscribers = useMemo(() => {
+    const q = searchSubscriberQuery.toLowerCase().trim();
+    if (!q) return subscribers;
+    return subscribers.filter(
+      (s) =>
+        (s.email && s.email.toLowerCase().includes(q)) ||
+        (s.discountCode && s.discountCode.toLowerCase().includes(q)) ||
+        (s.source && s.source.toLowerCase().includes(q))
+    );
+  }, [subscribers, searchSubscriberQuery]);
 
   // Filtered Products for Inventory & Price tables
   const filteredProducts = useMemo(() => {
@@ -1888,6 +1947,30 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             {staffMembers.length > 0 && (
               <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-white text-[9px] font-extrabold">
                 {staffMembers.length}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* Section 7: Email Marketing Leads (OWNER ONLY) */}
+        {currentUserRole === 'owner' && (
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('subscribers');
+              loadSubscribers();
+            }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'subscribers'
+                ? 'bg-[#feca4d] text-[#271310] shadow-sm'
+                : 'text-[#d6c7c4] hover:bg-white/10'
+            }`}
+          >
+            <Mail className="w-4 h-4" />
+            <span>Email Leads</span>
+            {subscribers.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-[#feca4d] text-[#271310] text-[9px] font-extrabold">
+                {subscribers.length}
               </span>
             )}
           </button>
@@ -3034,6 +3117,159 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                         </tr>
                       );
                     })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Email Leads & Marketing Subscribers (OWNER ONLY) */}
+      {activeTab === 'subscribers' && currentUserRole === 'owner' && (
+        <div className="space-y-6">
+          {/* Header & Controls */}
+          <div className="bg-white rounded-2xl border border-[#d3c3c0]/80 p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Mail className="w-5 h-5 text-[#785a00]" />
+                <h2 className="font-serif font-bold text-xl text-[#271310]">
+                  Email Leads & Marketing Subscribers
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-[#785a00] text-xs font-bold border border-amber-300">
+                  {subscribers.length} Captured
+                </span>
+              </div>
+              <p className="text-xs text-[#827472] mt-1">
+                Subscribers who entered their email in the 10% welcome discount popup (Exit-Intent + Timed Fallback).
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={loadSubscribers}
+                disabled={isLoadingSubscribers}
+                className="px-3.5 py-2 rounded-xl bg-[#f4ecea] hover:bg-[#ede0dc] text-[#271310] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-[#d3c3c0]"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingSubscribers ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportSubscribersCSV}
+                className="px-4 py-2 rounded-xl bg-[#271310] hover:bg-[#3d201c] text-[#feca4d] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              >
+                <Download className="w-3.5 h-3.5 text-[#feca4d]" />
+                <span>Export CSV</span>
+              </button>
+
+              <a
+                href="/api/subscribers?format=csv"
+                download="caphe_subscribers.csv"
+                className="px-3 py-2 rounded-xl bg-white hover:bg-[#faf2f0] text-[#785a00] text-xs font-semibold flex items-center gap-1 border border-[#d3c3c0] transition-colors"
+                title="Direct API CSV Link"
+              >
+                <ExternalLink className="w-3 h-3" />
+                <span>Direct CSV URL</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Search Box */}
+          <div className="bg-white rounded-2xl border border-[#d3c3c0]/80 p-4 shadow-xs">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#827472]" />
+              <input
+                type="text"
+                value={searchSubscriberQuery}
+                onChange={(e) => setSearchSubscriberQuery(e.target.value)}
+                placeholder="Search subscribers by email address, discount code, or trigger source..."
+                className="w-full pl-10 pr-4 py-2.5 bg-[#faf2f0] border border-[#d3c3c0] rounded-xl text-xs text-[#271310] placeholder-[#827472] outline-hidden focus:border-[#785a00] focus:bg-white transition-all"
+              />
+              {searchSubscriberQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchSubscriberQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#827472] hover:text-[#271310]"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Subscribers Table */}
+          <div className="bg-white rounded-2xl border border-[#d3c3c0]/80 shadow-xs overflow-hidden">
+            {filteredSubscribers.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-[#f4ecea] flex items-center justify-center text-[#827472] mx-auto">
+                  <Mail className="w-6 h-6" />
+                </div>
+                <h3 className="font-serif font-bold text-base text-[#271310]">
+                  No Subscribers Found
+                </h3>
+                <p className="text-xs text-[#827472] max-w-sm mx-auto">
+                  {searchSubscriberQuery
+                    ? 'No subscriber email matches your search query.'
+                    : 'Visitors who claim the 10% discount on the storefront will appear here instantly.'}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#fcf7f5] border-b border-[#d3c3c0]/60 text-[10px] font-bold text-[#827472] uppercase tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4">#</th>
+                      <th className="py-3 px-4">Subscriber Email</th>
+                      <th className="py-3 px-4">Trigger Source</th>
+                      <th className="py-3 px-4">Discount Code</th>
+                      <th className="py-3 px-4">Date & Time Subscribed</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#d3c3c0]/40">
+                    {filteredSubscribers.map((sub, idx) => (
+                      <tr key={sub.id || idx} className="hover:bg-[#fcf7f5]/80 transition-colors">
+                        <td className="py-3.5 px-4 font-mono text-[11px] text-[#827472]">
+                          {idx + 1}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-bold text-[#271310] font-mono select-all">
+                            {sub.email}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-stone-100 text-stone-800 border border-stone-200">
+                            {sub.source === 'exit_intent' ? 'Exit-Intent (Desktop)' : 'Timed Fallback (Mobile/Timer)'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-mono font-bold text-[#785a00] px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-[11px]">
+                            {sub.discountCode || 'XINCHAO10'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-[#827472] text-[11px] whitespace-nowrap">
+                          {new Date(sub.createdAt).toLocaleString('en-IN', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(sub.email);
+                              showToast(`Copied ${sub.email} to clipboard!`);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-[#f4ecea] hover:bg-[#ede0dc] text-[#271310] text-xs font-semibold border border-[#d3c3c0] transition-colors cursor-pointer"
+                          >
+                            Copy Email
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

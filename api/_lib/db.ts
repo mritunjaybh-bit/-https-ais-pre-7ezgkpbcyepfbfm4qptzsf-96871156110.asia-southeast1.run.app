@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import crypto from 'crypto';
-import { ProductItem, PlacedOrder } from '../../src/types';
+import { ProductItem, PlacedOrder, EmailSubscriber } from '../../src/types';
 import { PRODUCT_ITEMS } from '../../src/data/coffeeData';
 
 export type UserRole = 'owner' | 'staff';
@@ -38,6 +38,7 @@ export interface StoreDatabase {
   users: UserAccount[];
   sessions?: string[];
   otps?: Record<string, OtpRecord>;
+  subscribers?: EmailSubscriber[];
 }
 
 // Local project path
@@ -86,6 +87,7 @@ export function getInitialSeedData(): StoreDatabase {
     users: [], // Zero accounts — fresh setup
     sessions: [],
     otps: {},
+    subscribers: [],
   };
 }
 
@@ -115,13 +117,21 @@ export function loadDatabase(forceReload = false): StoreDatabase {
   let chosen: StoreDatabase | null = null;
 
   if (fromProject && fromTmp) {
-    // Both files exist: merge orders from both so no order is ever lost
+    // Both files exist: merge orders and subscribers from both so no data is ever lost
     const orderMap = new Map<string, PlacedOrder>();
     (fromTmp.orders || []).forEach((o) => {
       if (o && o.orderId) orderMap.set(String(o.orderId).toLowerCase(), o);
     });
     (fromProject.orders || []).forEach((o) => {
       if (o && o.orderId) orderMap.set(String(o.orderId).toLowerCase(), o);
+    });
+
+    const subMap = new Map<string, EmailSubscriber>();
+    (fromTmp.subscribers || []).forEach((s) => {
+      if (s && s.email) subMap.set(s.email.toLowerCase(), s);
+    });
+    (fromProject.subscribers || []).forEach((s) => {
+      if (s && s.email) subMap.set(s.email.toLowerCase(), s);
     });
 
     let projectMtime = 0;
@@ -136,6 +146,9 @@ export function loadDatabase(forceReload = false): StoreDatabase {
     const base = projectMtime >= tmpMtime ? fromProject : fromTmp;
     base.orders = Array.from(orderMap.values()).sort(
       (a, b) => (b.createdAt || 0) - (a.createdAt || 0)
+    );
+    base.subscribers = Array.from(subMap.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     chosen = base;
   } else if (fromProject) {
@@ -394,3 +407,49 @@ export function deleteDbOtp(resetToken: string): void {
     saveDatabase(db);
   }
 }
+
+// -------------------------------------------------------------
+// EMAIL SUBSCRIBERS / NEWSLETTER
+// -------------------------------------------------------------
+export function getDbSubscribers(): EmailSubscriber[] {
+  const db = loadDatabase();
+  return db.subscribers || [];
+}
+
+export function addDbSubscriber(subscriber: {
+  email: string;
+  source?: string;
+  discountCode?: string;
+}): { subscriber: EmailSubscriber; isNew: boolean } {
+  const db = loadDatabase();
+  const current = db.subscribers || [];
+  const cleanEmail = subscriber.email.trim().toLowerCase();
+  const existingIdx = current.findIndex((s) => s.email.toLowerCase() === cleanEmail);
+
+  let result: EmailSubscriber;
+  let isNew = false;
+
+  if (existingIdx !== -1) {
+    result = {
+      ...current[existingIdx],
+      discountCode: subscriber.discountCode || current[existingIdx].discountCode || 'XINCHAO10',
+      source: subscriber.source || current[existingIdx].source || 'exit_intent_popup',
+    };
+    current[existingIdx] = result;
+  } else {
+    isNew = true;
+    result = {
+      id: `sub-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`,
+      email: cleanEmail,
+      createdAt: new Date().toISOString(),
+      source: subscriber.source || 'exit_intent_popup',
+      discountCode: subscriber.discountCode || 'XINCHAO10',
+    };
+    current.unshift(result);
+  }
+
+  db.subscribers = current;
+  saveDatabase(db);
+  return { subscriber: result, isNew };
+}
+

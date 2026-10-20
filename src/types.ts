@@ -158,3 +158,12 @@ export interface PlacedOrder {
   emailSentSuccess?: boolean;
   emailMessage?: string;
 }
+
+export interface EmailSubscriber {
+  id: string;
+  email: string;
+  createdAt: string;
+  source: string;
+  discountCode?: string;
+}
+

@@ -17,6 +17,10 @@
       "destination": "/api/orders?id=$1"
     },
     {
+      "source": "/api/newsletter",
+      "destination": "/api/subscribers"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

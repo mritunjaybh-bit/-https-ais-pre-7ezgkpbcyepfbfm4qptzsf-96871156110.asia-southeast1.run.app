@@ -10,6 +10,7 @@ import coffeeMasterHandler from './api/coffee-master.ts';
 import adminHandler from './api/admin.ts';
 import publicProductsHandler from './api/products.ts';
 import ordersHandler from './api/orders.ts';
+import subscribersHandler from './api/subscribers.ts';
 
 // Load environment variables from .env with override
 dotenv.config({ override: true });
@@ -76,6 +77,12 @@ async function startServer() {
    * Endpoints: GET/POST/PATCH /api/orders, /api/orders/*
    */
   app.all(['/api/orders', '/api/orders/:id', '/api/orders/*'], ordersHandler);
+
+  /**
+   * Email Subscribers / Exit-Intent Newsletter Capture
+   * Endpoints: GET/POST /api/subscribers, /api/newsletter
+   */
+  app.all(['/api/subscribers', '/api/subscribers/*', '/api/newsletter', '/api/newsletter/*'], subscribersHandler);
 
   // Guard API routes so missing endpoints never fall through to HTML
   app.all('/api/*', (req, res) => {

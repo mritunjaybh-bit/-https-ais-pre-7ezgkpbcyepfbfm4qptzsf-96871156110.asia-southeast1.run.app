@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CartItem, Currency, PlacedOrder } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
 import { sendOrderEmails, EmailSendResult } from '../utils/emailService';
 import { openRazorpayCheckout } from '../utils/razorpayService';
 import { saveOrder, saveOrderAsync } from '../utils/orderStorage';
+import { trackInitiateCheckout, trackPurchase } from '../utils/metaPixel';
 import {
   ShoppingBag,
   Trash2,
@@ -90,11 +91,34 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
     ? 180
     : 80;
 
+  // Track Meta Pixel InitiateCheckout on checkout mount & pre-fill email if captured via popup
+  useEffect(() => {
+    if (items.length > 0) {
+      trackInitiateCheckout({
+        items,
+        total: subtotalINR + shippingFeeINR,
+        currency: 'INR',
+      });
+    }
+
+    // Pre-fill email from welcome popup subscription if available
+    try {
+      const savedSubscriberEmail = localStorage.getItem('caphe_subscriber_email');
+      if (savedSubscriberEmail && !customerEmail) {
+        setCustomerEmail(savedSubscriberEmail);
+      }
+    } catch {}
+  }, []);
+
   const handleApplyPromo = () => {
     setPromoError(null);
     setPromoSuccess(null);
     const code = promoCode.trim().toUpperCase();
-    if (code === 'VIETNAM15' || code === 'XINCHAO') {
+    if (code === 'XINCHAO10' || code === 'CAPHE10' || code === 'WELCOME10') {
+      const discount = Math.round(subtotalINR * 0.10);
+      setAppliedDiscount(discount);
+      setPromoSuccess('10% Welcome discount applied!');
+    } else if (code === 'VIETNAM15' || code === 'XINCHAO') {
       const discount = Math.round(subtotalINR * 0.15);
       setAppliedDiscount(discount);
       setPromoSuccess('15% Coffee discount applied!');
@@ -102,7 +126,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
       setAppliedDiscount(shippingFeeINR);
       setPromoSuccess('Free express courier applied!');
     } else {
-      setPromoError('Invalid promo code. Try VIETNAM15 or FREESHIP.');
+      setPromoError('Invalid promo code. Try XINCHAO10, VIETNAM15 or FREESHIP.');
       setAppliedDiscount(0);
     }
   };
