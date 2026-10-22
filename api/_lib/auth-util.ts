@@ -124,3 +124,34 @@ export async function sendOtpEmail(email: string, otp: string, userName?: string
     return false;
   }
 }
+
+export async function sendAccountRecoveryEmail(email: string, username: string, name?: string): Promise<boolean> {
+  try {
+    const payload = {
+      service_id: 'service_g3orv2b',
+      template_id: 'template_yrtnzv3',
+      user_id: 'ELHAjVMVjQAEVIiWB',
+      template_params: {
+        to_email: email,
+        customer_email: email,
+        email: email,
+        customer_name: name || 'Cà Phê Vietnam Owner',
+        order_id: 'ACCOUNT-RECOVERY',
+        order_items: `Roastery Admin Account Recovery Notice:\n\nOwner Login ID: ${username}\nRegistered Email: ${email}\n\nYou can now sign in at the Roastery Portal or use "Forgot Password" with this ID to reset your password via OTP.`,
+      },
+    };
+
+    const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return res.ok;
+  } catch (err) {
+    console.error('Failed to send recovery email:', err);
+    return false;
+  }
+}

@@ -22,6 +22,7 @@ import {
   getDbOtp,
   deleteDbOtp,
   removeDbSession,
+  findDbUserByRecovery,
   UserAccount,
 } from './_lib/db';
 import {
@@ -30,6 +31,7 @@ import {
   clearInMemorySessions,
   maskEmail,
   sendOtpEmail,
+  sendAccountRecoveryEmail,
 } from './_lib/auth-util';
 import { ProductItem } from '../src/types';
 
@@ -265,6 +267,55 @@ export async function adminHandler(req: Request, res: Response) {
     }
 
     // -------------------------------------------------------------
+    // ACTION: forgot-id / forgot-username-request (Recover Owner ID & Email)
+    // -------------------------------------------------------------
+    if (
+      action === 'forgot-id' ||
+      action === 'forgot-username-request' ||
+      action === 'recover-id' ||
+      action === 'forgot-username'
+    ) {
+      if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'POST required' });
+      }
+
+      const { recoveryDetail, detail } = req.body;
+      const query = String(recoveryDetail || detail || '').trim();
+
+      if (!query) {
+        return res.status(400).json({
+          error: 'Please enter your registered phone number, full name, or answer a recovery prompt.',
+        });
+      }
+
+      const result = findDbUserByRecovery(query);
+      if (!result || !result.user) {
+        return res.status(404).json({
+          error:
+            'No matching account found with that detail. Please verify your phone number, full name, or roastery security prompt.',
+        });
+      }
+
+      const { user, matchReason } = result;
+
+      // Send credential email asynchronously in background
+      sendAccountRecoveryEmail(user.email, user.username, user.name).catch(() => {});
+
+      return res.status(200).json({
+        success: true,
+        matchReason,
+        user: {
+          username: user.username,
+          email: user.email,
+          maskedEmail: maskEmail(user.email),
+          name: user.name,
+          role: user.role,
+        },
+        message: `Account credentials located! Owner ID: "${user.username}" | Registered Email: "${user.email}".`,
+      });
+    }
+
+    // -------------------------------------------------------------
     // ACTION: forgot-password-request (OTP verification code)
     // -------------------------------------------------------------
     if (
@@ -299,6 +350,8 @@ export async function adminHandler(req: Request, res: Response) {
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const resetToken = crypto.randomBytes(24).toString('hex');
       const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+      console.log(`[AUTH] Password Reset OTP for ${targetUser.email} (${targetUser.username}): ${otp}`);
 
       saveDbOtp(resetToken, {
         otp,

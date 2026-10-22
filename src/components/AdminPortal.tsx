@@ -46,6 +46,7 @@ import {
   UserPlus,
   UserCheck,
   UserX,
+  Copy,
 } from 'lucide-react';
 
 interface AdminPortalProps {
@@ -84,8 +85,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [currentAdminName, setCurrentAdminName] = useState<string>('');
   const [currentAdminEmail, setCurrentAdminEmail] = useState<string>('');
 
-  // Auth View State: 'login' | 'setup' | 'forgot'
-  const [authView, setAuthView] = useState<'login' | 'setup' | 'forgot'>('login');
+  // Auth View State: 'login' | 'setup' | 'forgot' | 'recover-id'
+  const [authView, setAuthView] = useState<'login' | 'setup' | 'forgot' | 'recover-id'>('login');
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
 
   // Standard Login Inputs (Strictly empty, no default credentials)
@@ -116,6 +117,20 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [isSendingOtp, setIsSendingOtp] = useState<boolean>(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState<boolean>(false);
 
+  // Forgot Owner ID / Email Form Inputs (Recovery Flow)
+  const [recoverInput, setRecoverInput] = useState<string>('');
+  const [recoverResult, setRecoverResult] = useState<{
+    username: string;
+    email: string;
+    maskedEmail: string;
+    name: string;
+    role: string;
+  } | null>(null);
+  const [recoverMatchReason, setRecoverMatchReason] = useState<string | null>(null);
+  const [recoverError, setRecoverError] = useState<string | null>(null);
+  const [isRecoveringId, setIsRecoveringId] = useState<boolean>(false);
+  const [copiedField, setCopiedField] = useState<'username' | 'email' | null>(null);
+
   // Active Dashboard Tab
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
 
@@ -145,6 +160,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState<boolean>(false);
   const [searchSubscriberQuery, setSearchSubscriberQuery] = useState<string>('');
+  const [subscriberOrderFilter, setSubscriberOrderFilter] = useState<'all' | 'unconverted' | 'converted'>('all');
 
   // Products & Inventory State
   const [products, setProducts] = useState<ProductItem[]>([]);
@@ -455,6 +471,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           } else {
             setActiveTab('overview');
             loadStaffMembers();
+            loadSubscribers();
           }
         }
         loadOrders(data.token);
@@ -528,6 +545,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         loadOrders(data.token);
         loadAdminProducts();
         loadStaffMembers();
+        loadSubscribers();
         showToast('Owner Account created securely! Welcome to your Roastery Console.');
       } else {
         setSetupError(data.error || 'Failed to complete owner setup.');
@@ -629,6 +647,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             } else {
               setActiveTab('overview');
               loadStaffMembers();
+              loadSubscribers();
             }
           }
           loadOrders(data.token);
@@ -650,6 +669,55 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     } finally {
       setIsVerifyingOtp(false);
     }
+  };
+
+  // 5. Forgot Owner ID / Email: Lookup by Phone, Full Name, or Security Prompt
+  const handleRecoverIdSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRecoverError(null);
+    setRecoverResult(null);
+    setRecoverMatchReason(null);
+
+    const cleanInput = recoverInput.trim();
+    if (!cleanInput) {
+      setRecoverError('Please enter your phone number, full name, or answer a security prompt.');
+      return;
+    }
+
+    setIsRecoveringId(true);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'forgot-id',
+          recoveryDetail: cleanInput,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && data.user) {
+        setRecoverResult(data.user);
+        setRecoverMatchReason(data.matchReason || 'Account record matched');
+        showToast('Account credentials retrieved successfully!');
+      } else {
+        setRecoverError(data.error || 'No account matched the provided detail.');
+      }
+    } catch (err) {
+      console.error('Account recovery error:', err);
+      setRecoverError('Network error connecting to security server.');
+    } finally {
+      setIsRecoveringId(false);
+    }
+  };
+
+  const handleCopyField = (text: string, field: 'username' | 'email') => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    showToast(`Copied ${field === 'username' ? 'Owner ID' : 'Email'} to clipboard!`);
+    setTimeout(() => {
+      setCopiedField((prev) => (prev === field ? null : prev));
+    }, 2500);
   };
 
   // Staff Management Handlers (Owner Only)
@@ -696,12 +764,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       showToast('No subscribers captured yet.');
       return;
     }
-    const headers = 'ID,Email,Created At,Source,Discount Code\n';
+    const headers = 'ID,Email,Date Submitted,Order Status,Orders Placed,Total Spent (INR),Trigger Source,Discount Code\n';
     const rows = subscribers
-      .map(
-        (s) =>
-          `"${s.id}","${s.email}","${s.createdAt}","${s.source || ''}","${s.discountCode || ''}"`
-      )
+      .map((s) => {
+        const sEmail = (s.email || '').trim().toLowerCase();
+        const customerOrders = orders.filter(
+          (o) => (o.customerEmail || '').trim().toLowerCase() === sEmail
+        );
+        const hasOrdered = customerOrders.length > 0;
+        const orderCount = customerOrders.length;
+        const totalSpent = customerOrders.reduce(
+          (sum, o) => (o.status !== 'Cancelled' ? sum + (Number(o.finalTotalINR) || 0) : sum),
+          0
+        );
+        const statusText = hasOrdered ? 'Converted Customer' : 'Lead (Not yet ordered)';
+        return `"${s.id}","${s.email}","${s.createdAt}","${statusText}","${orderCount}","₹${totalSpent}","${s.source || 'exit_intent_popup'}","${s.discountCode || 'XINCHAO10'}"`;
+      })
       .join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -1223,17 +1301,55 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     });
   }, [orders, searchOrdersQuery, orderStatusFilter]);
 
+  // Cross-reference email subscribers with live orders to identify leads vs converted customers
+  const enrichedSubscribers = useMemo(() => {
+    return subscribers.map((sub) => {
+      const subEmail = (sub.email || '').trim().toLowerCase();
+      const customerOrders = orders.filter((o) => {
+        const orderEmail = (o.customerEmail || '').trim().toLowerCase();
+        return orderEmail && orderEmail === subEmail;
+      });
+      const hasOrdered = customerOrders.length > 0;
+      const orderCount = customerOrders.length;
+      const totalSpent = customerOrders.reduce(
+        (sum, o) => (o.status !== 'Cancelled' ? sum + (Number(o.finalTotalINR) || 0) : sum),
+        0
+      );
+      return {
+        ...sub,
+        hasOrdered,
+        orderCount,
+        totalSpent,
+      };
+    });
+  }, [subscribers, orders]);
+
   // Filtered Email Subscribers for Marketing Leads view
   const filteredSubscribers = useMemo(() => {
     const q = searchSubscriberQuery.toLowerCase().trim();
-    if (!q) return subscribers;
-    return subscribers.filter(
-      (s) =>
+    return enrichedSubscribers.filter((s) => {
+      const matchesQuery =
+        !q ||
         (s.email && s.email.toLowerCase().includes(q)) ||
         (s.discountCode && s.discountCode.toLowerCase().includes(q)) ||
-        (s.source && s.source.toLowerCase().includes(q))
-    );
-  }, [subscribers, searchSubscriberQuery]);
+        (s.source && s.source.toLowerCase().includes(q));
+
+      const matchesFilter =
+        subscriberOrderFilter === 'all' ||
+        (subscriberOrderFilter === 'unconverted' && !s.hasOrdered) ||
+        (subscriberOrderFilter === 'converted' && s.hasOrdered);
+
+      return matchesQuery && matchesFilter;
+    });
+  }, [enrichedSubscribers, searchSubscriberQuery, subscriberOrderFilter]);
+
+  // Quick summary counts for Email Subscribers tab
+  const totalSubscribersCount = enrichedSubscribers.length;
+  const convertedSubscribersCount = enrichedSubscribers.filter((s) => s.hasOrdered).length;
+  const unconvertedLeadsCount = enrichedSubscribers.filter((s) => !s.hasOrdered).length;
+  const subscriberConversionRate = totalSubscribersCount > 0
+    ? Math.round((convertedSubscribersCount / totalSubscribersCount) * 100)
+    : 0;
 
   // Filtered Products for Inventory & Price tables
   const filteredProducts = useMemo(() => {
@@ -1458,9 +1574,23 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               {forgotStep === 1 ? (
                 <form onSubmit={handleRequestOtp} className="space-y-4">
                   <div>
-                    <label className="text-[10px] font-bold text-[#b8a09b] uppercase block mb-1 tracking-wider">
-                      Registered Email or Username
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] font-bold text-[#b8a09b] uppercase tracking-wider">
+                        Registered Email or Username
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthView('recover-id');
+                          setRecoverError(null);
+                          setRecoverResult(null);
+                          setRecoverInput('');
+                        }}
+                        className="text-[11px] text-[#feca4d] hover:underline cursor-pointer"
+                      >
+                        Don't know either?
+                      </button>
+                    </div>
                     <div className="relative">
                       <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#827472]" />
                       <input
@@ -1610,7 +1740,239 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </div>
           )}
 
-          {/* 1.3 CLEAN ROASTERY SIGN-IN (Owner & Staff) */}
+          {/* 1.3 FORGOT OWNER ID / EMAIL RECOVERY */}
+          {authView === 'recover-id' && (
+            <div className="space-y-5">
+              <div className="text-center space-y-2">
+                <div className="w-14 h-14 rounded-2xl bg-[#785a00]/30 border border-[#feca4d]/40 text-[#feca4d] flex items-center justify-center mx-auto shadow-md">
+                  <Search className="w-7 h-7" />
+                </div>
+                <h1
+                  className="font-serif font-bold text-2xl text-white tracking-wide"
+                  style={{ fontFamily: 'Playfair Display, serif' }}
+                >
+                  Forgot Owner ID / Email
+                </h1>
+                <p className="text-xs text-[#b8a09b] leading-relaxed">
+                  Provide your registered phone number, account full name, or answer a security prompt to retrieve your login ID and email.
+                </p>
+              </div>
+
+              {/* Quick suggestion helper chips */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-[#827472] uppercase tracking-wider block">
+                  Quick Recovery Options:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setRecoverInput('+91 9876543210')}
+                    className="px-2.5 py-1 rounded-lg bg-[#241614] hover:bg-[#341f1c] text-[#feca4d] text-[11px] border border-[#3e2723] cursor-pointer transition-colors"
+                  >
+                    Phone: +91 9876543210
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRecoverInput('Mritunjay Bhardwaj')}
+                    className="px-2.5 py-1 rounded-lg bg-[#241614] hover:bg-[#341f1c] text-[#feca4d] text-[11px] border border-[#3e2723] cursor-pointer transition-colors"
+                  >
+                    Name: Mritunjay Bhardwaj
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRecoverInput('Cà Phê Vietnam')}
+                    className="px-2.5 py-1 rounded-lg bg-[#241614] hover:bg-[#341f1c] text-[#feca4d] text-[11px] border border-[#3e2723] cursor-pointer transition-colors"
+                  >
+                    Prompt: Cà Phê Vietnam
+                  </button>
+                </div>
+              </div>
+
+              <form onSubmit={handleRecoverIdSubmit} className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-bold text-[#b8a09b] uppercase block mb-1 tracking-wider">
+                    Phone Number, Full Name, or Security Prompt Answer
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#827472]" />
+                    <input
+                      type="text"
+                      required
+                      value={recoverInput}
+                      onChange={(e) => setRecoverInput(e.target.value)}
+                      placeholder="e.g. +91 9876543210 or Mritunjay Bhardwaj"
+                      className="w-full bg-[#140b09] border border-[#3e2723] rounded-xl pl-10 pr-3 py-2.5 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#feca4d] focus:ring-1 focus:ring-[#feca4d]"
+                    />
+                  </div>
+                </div>
+
+                {recoverError && (
+                  <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-700/60 text-xs text-rose-200 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>{recoverError}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isRecoveringId}
+                  className="w-full py-3 bg-[#feca4d] hover:bg-[#ffd666] active:scale-[0.99] text-[#271310] font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {isRecoveringId ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Searching Database Records...</span>
+                    </>
+                  ) : (
+                    <span>Lookup Account Credentials</span>
+                  )}
+                </button>
+              </form>
+
+              {/* Display Recovered Account Information */}
+              {recoverResult && (
+                <div className="p-4 rounded-xl bg-[#231513] border border-[#feca4d]/50 shadow-lg space-y-3.5">
+                  <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>Account Credentials Located Successfully</span>
+                  </div>
+
+                  {recoverMatchReason && (
+                    <div className="text-[11px] text-[#b8a09b] bg-[#140b09] px-2.5 py-1 rounded border border-[#3e2723]">
+                      <span className="text-[#827472]">Verified by: </span>
+                      <span className="text-[#feca4d] font-medium">{recoverMatchReason}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-2.5 pt-1">
+                    {/* Owner ID */}
+                    <div className="p-2.5 bg-[#140b09] rounded-lg border border-[#3e2723] flex items-center justify-between">
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-[#827472] font-bold">
+                          Registered Owner ID (Username)
+                        </div>
+                        <div className="text-sm font-bold text-white font-mono mt-0.5">
+                          {recoverResult.username}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyField(recoverResult.username, 'username')}
+                        className="px-2.5 py-1.5 rounded-lg bg-[#271512] hover:bg-[#3e2723] text-xs text-[#feca4d] border border-[#4e2f29] flex items-center gap-1.5 cursor-pointer transition-colors"
+                        title="Copy Owner ID"
+                      >
+                        {copiedField === 'username' ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-emerald-400 text-[10px]">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span className="text-[10px]">Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Registered Email */}
+                    <div className="p-2.5 bg-[#140b09] rounded-lg border border-[#3e2723] flex items-center justify-between">
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-[#827472] font-bold">
+                          Registered Account Email
+                        </div>
+                        <div className="text-xs font-medium text-white font-mono mt-0.5">
+                          {recoverResult.email}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyField(recoverResult.email, 'email')}
+                        className="px-2.5 py-1.5 rounded-lg bg-[#271512] hover:bg-[#3e2723] text-xs text-[#feca4d] border border-[#4e2f29] flex items-center gap-1.5 cursor-pointer transition-colors"
+                        title="Copy Email"
+                      >
+                        {copiedField === 'email' ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-emerald-400 text-[10px]">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span className="text-[10px]">Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Name & Role */}
+                    <div className="flex items-center justify-between text-xs px-1 text-[#b8a09b]">
+                      <span>Account Name: <strong className="text-white">{recoverResult.name}</strong></span>
+                      <span className="px-2 py-0.5 rounded bg-[#feca4d]/20 text-[#feca4d] text-[10px] font-bold uppercase">
+                        {recoverResult.role}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-2 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotEmail(recoverResult.username);
+                        setAuthView('forgot');
+                        setForgotStep(1);
+                        setForgotError(null);
+                      }}
+                      className="w-full py-2.5 bg-[#feca4d] hover:bg-[#ffd666] text-[#271310] font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <KeyRound className="w-4 h-4" />
+                      <span>Use this ID to Reset Password (OTP)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUsernameInput(recoverResult.username);
+                        setAuthView('login');
+                        setLoginError(null);
+                      }}
+                      className="w-full py-2 bg-[#140b09] hover:bg-[#20120f] border border-[#3e2723] text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <User className="w-3.5 h-3.5 text-[#feca4d]" />
+                      <span>Proceed to Sign In</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-between text-xs text-[#b8a09b]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthView('login');
+                    setRecoverError(null);
+                    setRecoverResult(null);
+                  }}
+                  className="text-[#feca4d] hover:underline cursor-pointer"
+                >
+                  ← Back to Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthView('forgot');
+                    setForgotError(null);
+                    setForgotStep(1);
+                  }}
+                  className="text-[#827472] hover:text-white cursor-pointer"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 1.4 CLEAN ROASTERY SIGN-IN (Owner & Staff) */}
           {authView === 'login' && (
             <div className="space-y-5">
               <div className="text-center space-y-2">
@@ -1653,17 +2015,32 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     <label htmlFor="adminPassword" className="text-[10px] font-bold text-[#b8a09b] uppercase tracking-wider">
                       Password
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAuthView('forgot');
-                        setForgotError(null);
-                        setForgotStep(1);
-                      }}
-                      className="text-[11px] text-[#feca4d] hover:underline cursor-pointer"
-                    >
-                      Forgot Password?
-                    </button>
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthView('recover-id');
+                          setRecoverError(null);
+                          setRecoverResult(null);
+                          setRecoverInput('');
+                        }}
+                        className="text-[#b8a09b] hover:text-[#feca4d] hover:underline cursor-pointer transition-colors"
+                      >
+                        Forgot Owner ID?
+                      </button>
+                      <span className="text-[#504442] text-[10px]">•</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthView('forgot');
+                          setForgotError(null);
+                          setForgotStep(1);
+                        }}
+                        className="text-[#feca4d] hover:underline cursor-pointer"
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
                   </div>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#827472]" />
@@ -1952,7 +2329,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </button>
         )}
 
-        {/* Section 7: Email Marketing Leads (OWNER ONLY) */}
+        {/* Section 7: Email Subscribers (OWNER ONLY) */}
         {currentUserRole === 'owner' && (
           <button
             type="button"
@@ -1967,9 +2344,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             }`}
           >
             <Mail className="w-4 h-4" />
-            <span>Email Leads</span>
+            <span>Email Subscribers</span>
             {subscribers.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-[#feca4d] text-[#271310] text-[9px] font-extrabold">
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[9px] font-extrabold ${
+                  activeTab === 'subscribers'
+                    ? 'bg-[#271310] text-[#feca4d]'
+                    : 'bg-[#feca4d] text-[#271310]'
+                }`}
+              >
                 {subscribers.length}
               </span>
             )}
@@ -3125,7 +3508,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         </div>
       )}
 
-      {/* Tab: Email Leads & Marketing Subscribers (OWNER ONLY) */}
+      {/* Tab: Email Subscribers & Lead Management (OWNER ONLY) */}
       {activeTab === 'subscribers' && currentUserRole === 'owner' && (
         <div className="space-y-6">
           {/* Header & Controls */}
@@ -3133,15 +3516,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <Mail className="w-5 h-5 text-[#785a00]" />
-                <h2 className="font-serif font-bold text-xl text-[#271310]">
-                  Email Leads & Marketing Subscribers
+                <h2
+                  className="font-serif font-bold text-xl text-[#271310]"
+                  style={{ fontFamily: 'Playfair Display, serif' }}
+                >
+                  Email Subscribers & Lead Conversion
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-[#785a00] text-xs font-bold border border-amber-300">
-                  {subscribers.length} Captured
+                  {totalSubscribersCount} Total Captured
                 </span>
               </div>
               <p className="text-xs text-[#827472] mt-1">
-                Subscribers who entered their email in the 10% welcome discount popup (Exit-Intent + Timed Fallback).
+                Visitors who submitted their email in the 10% welcome discount popup. Automatically cross-referenced with your live customer orders.
               </p>
             </div>
 
@@ -3162,14 +3548,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 className="px-4 py-2 rounded-xl bg-[#271310] hover:bg-[#3d201c] text-[#feca4d] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
               >
                 <Download className="w-3.5 h-3.5 text-[#feca4d]" />
-                <span>Export CSV</span>
+                <span>Export as CSV</span>
               </button>
 
               <a
                 href="/api/subscribers?format=csv"
                 download="caphe_subscribers.csv"
                 className="px-3 py-2 rounded-xl bg-white hover:bg-[#faf2f0] text-[#785a00] text-xs font-semibold flex items-center gap-1 border border-[#d3c3c0] transition-colors"
-                title="Direct API CSV Link"
+                title="Direct API CSV Link for Mailchimp or CRM upload"
               >
                 <ExternalLink className="w-3 h-3" />
                 <span>Direct CSV URL</span>
@@ -3177,26 +3563,125 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             </div>
           </div>
 
-          {/* Search Box */}
-          <div className="bg-white rounded-2xl border border-[#d3c3c0]/80 p-4 shadow-xs">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#827472]" />
-              <input
-                type="text"
-                value={searchSubscriberQuery}
-                onChange={(e) => setSearchSubscriberQuery(e.target.value)}
-                placeholder="Search subscribers by email address, discount code, or trigger source..."
-                className="w-full pl-10 pr-4 py-2.5 bg-[#faf2f0] border border-[#d3c3c0] rounded-xl text-xs text-[#271310] placeholder-[#827472] outline-hidden focus:border-[#785a00] focus:bg-white transition-all"
-              />
-              {searchSubscriberQuery && (
+          {/* Quick Metrics KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-[#d3c3c0]/80 shadow-xs space-y-1">
+              <div className="flex items-center justify-between text-[#827472]">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Total Subscribers</span>
+                <Mail className="w-4 h-4 text-[#785a00]" />
+              </div>
+              <p className="text-2xl font-serif font-bold text-[#271310]">
+                {totalSubscribersCount}
+              </p>
+              <p className="text-[10px] text-[#827472]">
+                Captured via 10% popup
+              </p>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-amber-300/80 bg-gradient-to-br from-amber-50/40 to-white shadow-xs space-y-1">
+              <div className="flex items-center justify-between text-amber-800">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Not Yet Ordered</span>
+                <Clock className="w-4 h-4 text-amber-600" />
+              </div>
+              <p className="text-2xl font-serif font-bold text-amber-900">
+                {unconvertedLeadsCount}
+              </p>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-amber-700">Leads to retarget</span>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-emerald-300/80 bg-gradient-to-br from-emerald-50/40 to-white shadow-xs space-y-1">
+              <div className="flex items-center justify-between text-emerald-800">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Already Ordered</span>
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+              </div>
+              <p className="text-2xl font-serif font-bold text-emerald-900">
+                {convertedSubscribersCount}
+              </p>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-emerald-700">Converted customers</span>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-[#d3c3c0]/80 shadow-xs space-y-1">
+              <div className="flex items-center justify-between text-[#827472]">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Conversion Rate</span>
+                <TrendingUp className="w-4 h-4 text-[#785a00]" />
+              </div>
+              <p className="text-2xl font-serif font-bold text-[#271310]">
+                {subscriberConversionRate}%
+              </p>
+              <p className="text-[10px] text-[#827472]">
+                Subscribers who purchased
+              </p>
+            </div>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div className="bg-white rounded-2xl border border-[#d3c3c0]/80 p-4 shadow-xs space-y-3">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              {/* Filter Pills */}
+              <div className="flex items-center gap-1.5 p-1 bg-[#faf2f0] rounded-xl border border-[#d3c3c0]/60 overflow-x-auto no-scrollbar">
                 <button
                   type="button"
-                  onClick={() => setSearchSubscriberQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#827472] hover:text-[#271310]"
+                  onClick={() => setSubscriberOrderFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                    subscriberOrderFilter === 'all'
+                      ? 'bg-[#271310] text-[#feca4d] shadow-xs'
+                      : 'text-[#827472] hover:text-[#271310]'
+                  }`}
                 >
-                  Clear
+                  All Subscribers ({totalSubscribersCount})
                 </button>
-              )}
+
+                <button
+                  type="button"
+                  onClick={() => setSubscriberOrderFilter('unconverted')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                    subscriberOrderFilter === 'unconverted'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'text-amber-800 hover:text-amber-950'
+                  }`}
+                >
+                  <Clock className="w-3 h-3" />
+                  <span>Not Yet Ordered ({unconvertedLeadsCount})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSubscriberOrderFilter('converted')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                    subscriberOrderFilter === 'converted'
+                      ? 'bg-emerald-700 text-white shadow-xs'
+                      : 'text-emerald-800 hover:text-emerald-950'
+                  }`}
+                >
+                  <CheckCircle className="w-3 h-3" />
+                  <span>Already Ordered ({convertedSubscribersCount})</span>
+                </button>
+              </div>
+
+              {/* Search Box */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#827472]" />
+                <input
+                  type="text"
+                  value={searchSubscriberQuery}
+                  onChange={(e) => setSearchSubscriberQuery(e.target.value)}
+                  placeholder="Search by email address, discount code, or trigger source..."
+                  className="w-full pl-10 pr-12 py-2 bg-[#faf2f0] border border-[#d3c3c0] rounded-xl text-xs text-[#271310] placeholder-[#827472] outline-hidden focus:border-[#785a00] focus:bg-white transition-all"
+                />
+                {searchSubscriberQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchSubscriberQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#827472] hover:text-[#271310] cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -3207,14 +3692,31 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 <div className="w-12 h-12 rounded-full bg-[#f4ecea] flex items-center justify-center text-[#827472] mx-auto">
                   <Mail className="w-6 h-6" />
                 </div>
-                <h3 className="font-serif font-bold text-base text-[#271310]">
-                  No Subscribers Found
+                <h3
+                  className="font-serif font-bold text-base text-[#271310]"
+                  style={{ fontFamily: 'Playfair Display, serif' }}
+                >
+                  {totalSubscribersCount === 0
+                    ? 'No Email Subscribers Captured Yet'
+                    : 'No Matching Subscribers Found'}
                 </h3>
-                <p className="text-xs text-[#827472] max-w-sm mx-auto">
-                  {searchSubscriberQuery
-                    ? 'No subscriber email matches your search query.'
-                    : 'Visitors who claim the 10% discount on the storefront will appear here instantly.'}
+                <p className="text-xs text-[#827472] max-w-md mx-auto leading-relaxed">
+                  {totalSubscribersCount === 0
+                    ? "Visitors who submit their email in the 'Get 10% Off' popup on the live storefront will be recorded here in real-time. You'll see who placed an order vs. who is still a lead, and can export them to CSV."
+                    : 'No subscribers match your search term or selected order status filter. Try clearing your search query or switching to "All Subscribers".'}
                 </p>
+                {(searchSubscriberQuery || subscriberOrderFilter !== 'all') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchSubscriberQuery('');
+                      setSubscriberOrderFilter('all');
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[#271310] text-[#feca4d] text-xs font-bold transition-all cursor-pointer hover:bg-[#3d201c]"
+                  >
+                    Reset Filters
+                  </button>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -3223,6 +3725,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     <tr>
                       <th className="py-3 px-4">#</th>
                       <th className="py-3 px-4">Subscriber Email</th>
+                      <th className="py-3 px-4">Order Status</th>
                       <th className="py-3 px-4">Trigger Source</th>
                       <th className="py-3 px-4">Discount Code</th>
                       <th className="py-3 px-4">Date & Time Subscribed</th>
@@ -3241,7 +3744,30 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           </span>
                         </td>
                         <td className="py-3.5 px-4">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-stone-100 text-stone-800 border border-stone-200">
+                          {sub.hasOrdered ? (
+                            <div className="space-y-0.5">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <CheckCircle className="w-3 h-3 text-emerald-600" />
+                                <span>Already Ordered</span>
+                              </span>
+                              <div className="text-[10px] text-stone-500 font-medium">
+                                {sub.orderCount} {sub.orderCount === 1 ? 'order' : 'orders'} • ₹{sub.totalSpent} spent
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-0.5">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                <Clock className="w-3 h-3 text-amber-600" />
+                                <span>Not Yet Ordered</span>
+                              </span>
+                              <div className="text-[10px] text-amber-700/80 font-medium">
+                                Lead • 0 orders placed
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-stone-100 text-stone-700 border border-stone-200">
                             {sub.source === 'exit_intent' ? 'Exit-Intent (Desktop)' : 'Timed Fallback (Mobile/Timer)'}
                           </span>
                         </td>
@@ -3257,16 +3783,28 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           })}
                         </td>
                         <td className="py-3.5 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(sub.email);
-                              showToast(`Copied ${sub.email} to clipboard!`);
-                            }}
-                            className="px-2.5 py-1 rounded-lg bg-[#f4ecea] hover:bg-[#ede0dc] text-[#271310] text-xs font-semibold border border-[#d3c3c0] transition-colors cursor-pointer"
-                          >
-                            Copy Email
-                          </button>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(sub.email);
+                                showToast(`Copied ${sub.email} to clipboard!`);
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-[#f4ecea] hover:bg-[#ede0dc] text-[#271310] text-xs font-semibold border border-[#d3c3c0] transition-colors cursor-pointer inline-flex items-center gap-1"
+                              title="Copy email to clipboard"
+                            >
+                              <Copy className="w-3 h-3 text-[#785a00]" />
+                              <span>Copy</span>
+                            </button>
+                            <a
+                              href={`mailto:${sub.email}?subject=${encodeURIComponent('Special Offer from Cà Phê Vietnam')}`}
+                              className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#faf2f0] text-[#785a00] text-xs font-semibold border border-[#d3c3c0] transition-colors inline-flex items-center gap-1"
+                              title="Send direct email"
+                            >
+                              <Mail className="w-3 h-3" />
+                              <span>Email</span>
+                            </a>
+                          </div>
                         </td>
                       </tr>
                     ))}

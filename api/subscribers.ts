@@ -32,12 +32,25 @@ export function subscribersHandler(req: Request, res: Response) {
 
     // Check if CSV export is requested
     if (req.query.format === 'csv') {
+      const { getDbOrders } = require('./_lib/db');
+      const orders = getDbOrders() || [];
+
       const csvRows = [
-        'ID,Email,Created At,Source,Discount Code',
-        ...subscribers.map(
-          (s) =>
-            `"${s.id}","${s.email}","${s.createdAt}","${s.source || ''}","${s.discountCode || ''}"`
-        ),
+        'ID,Email,Created At,Order Status,Orders Placed,Total Spent (INR),Source,Discount Code',
+        ...subscribers.map((s) => {
+          const sEmail = (s.email || '').trim().toLowerCase();
+          const customerOrders = orders.filter(
+            (o: any) => (o.customerEmail || '').trim().toLowerCase() === sEmail
+          );
+          const hasOrdered = customerOrders.length > 0;
+          const orderCount = customerOrders.length;
+          const totalSpent = customerOrders.reduce(
+            (sum: number, o: any) => (o.status !== 'Cancelled' ? sum + (Number(o.finalTotalINR) || 0) : sum),
+            0
+          );
+          const statusText = hasOrdered ? 'Converted Customer' : 'Lead (Not yet ordered)';
+          return `"${s.id}","${s.email}","${s.createdAt}","${statusText}","${orderCount}","₹${totalSpent}","${s.source || ''}","${s.discountCode || ''}"`;
+        }),
       ].join('\n');
 
       res.setHeader('Content-Type', 'text/csv');

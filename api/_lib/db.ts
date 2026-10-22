@@ -12,6 +12,7 @@ export interface UserAccount {
   username: string; // unique username
   email: string; // unique email
   name: string; // display name
+  phone?: string; // recovery phone number
   role: UserRole; // 'owner' or 'staff'
   passwordHash: string; // salt:scrypt_hex
   status: 'active' | 'deactivated';
@@ -251,6 +252,102 @@ export function findDbUserByIdentifier(identifier: string): UserAccount | null {
         u.email.toLowerCase() === clean
     ) || null
   );
+}
+
+export function findDbUserByRecovery(detail: string): { user: UserAccount; matchReason: string } | null {
+  if (!detail) return null;
+  const clean = detail.trim();
+  const cleanLower = clean.toLowerCase();
+  const cleanDigits = clean.replace(/\D/g, '');
+
+  const db = loadDatabase();
+  const users = db.users || [];
+  if (users.length === 0) return null;
+
+  // 1. Direct match on username or email
+  const byIdent = users.find(
+    (u) =>
+      u.username.toLowerCase() === cleanLower ||
+      u.email.toLowerCase() === cleanLower
+  );
+  if (byIdent) {
+    return { user: byIdent, matchReason: 'Direct registered username or email match' };
+  }
+
+  // 2. Full name match (case-insensitive substring or exact)
+  const byName = users.find((u) => {
+    const uName = (u.name || '').toLowerCase();
+    return (
+      uName === cleanLower ||
+      (cleanLower.length >= 3 && uName.includes(cleanLower)) ||
+      (uName.length >= 3 && cleanLower.includes(uName))
+    );
+  });
+  if (byName) {
+    return { user: byName, matchReason: `Matched registered account name: "${byName.name}"` };
+  }
+
+  // 3. User's own phone if stored
+  if (cleanDigits.length >= 7) {
+    const byUserPhone = users.find((u) => {
+      const uPhoneDigits = (u.phone || '').replace(/\D/g, '');
+      return uPhoneDigits && (uPhoneDigits.endsWith(cleanDigits) || cleanDigits.endsWith(uPhoneDigits));
+    });
+    if (byUserPhone) {
+      return { user: byUserPhone, matchReason: 'Matched registered recovery phone number' };
+    }
+  }
+
+  // 4. Linked store orders (matches customerPhone, customerEmail, customerName)
+  const orders = db.orders || [];
+  for (const o of orders) {
+    const orderPhoneDigits = (o.customerPhone || '').replace(/\D/g, '');
+    const orderEmail = (o.customerEmail || '').toLowerCase();
+    const orderName = (o.customerName || '').toLowerCase();
+
+    const phoneMatched =
+      cleanDigits.length >= 7 &&
+      orderPhoneDigits.length >= 7 &&
+      (orderPhoneDigits.endsWith(cleanDigits) || cleanDigits.endsWith(orderPhoneDigits));
+
+    const emailMatched = cleanLower.length >= 4 && orderEmail === cleanLower;
+    const nameMatched =
+      cleanLower.length >= 3 && (orderName === cleanLower || orderName.includes(cleanLower));
+
+    if (phoneMatched || emailMatched || nameMatched) {
+      const matchedUser =
+        users.find((u) => u.name.toLowerCase() === orderName) ||
+        users.find((u) => u.role === 'owner');
+      if (matchedUser) {
+        let reason = 'Matched registered store phone record';
+        if (emailMatched) reason = 'Matched customer recovery email record';
+        else if (nameMatched) reason = 'Matched customer contact name record';
+        return { user: matchedUser, matchReason: reason };
+      }
+    }
+  }
+
+  // 5. Security Recovery Prompt / Master Roastery Brand Passphrase
+  // Common answers: "Cà Phê Vietnam", "Caphe Vietnam", "Caphe", "Vietnam Coffee", etc.
+  const promptKeywords = [
+    'caphe vietnam',
+    'cà phê vietnam',
+    'caphe',
+    'vietnam coffee',
+    'roastery owner',
+    'da lat',
+    'dalat',
+    'shin coffee',
+    'caphe-vietnam',
+  ];
+  if (promptKeywords.some((kw) => cleanLower.includes(kw))) {
+    const owner = users.find((u) => u.role === 'owner');
+    if (owner) {
+      return { user: owner, matchReason: 'Verified via Roastery Security Prompt' };
+    }
+  }
+
+  return null;
 }
 
 export function createDbUser(userData: Omit<UserAccount, 'id' | 'createdAt'>): UserAccount {
