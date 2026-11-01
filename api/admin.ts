@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import crypto from 'crypto';
 import {
   getDbAdminConfig,
@@ -23,8 +23,8 @@ import {
   deleteDbOtp,
   removeDbSession,
   findDbUserByRecovery,
-  UserAccount,
-} from './_lib/db';
+  type UserAccount,
+} from './_lib/db.ts';
 import {
   generateSessionToken,
   verifySessionToken,
@@ -32,8 +32,8 @@ import {
   maskEmail,
   sendOtpEmail,
   sendAccountRecoveryEmail,
-} from './_lib/auth-util';
-import { ProductItem } from '../src/types';
+} from './_lib/auth-util.ts';
+import type { ProductItem } from '../src/types.ts';
 
 function sanitizeUser(u: UserAccount) {
   return {
@@ -53,63 +53,91 @@ export default async function handler(req: any, res: any) {
 }
 
 export async function adminHandler(req: Request, res: Response) {
-  // CORS Headers
   const origin = req.headers?.origin || '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  if (origin !== '*') {
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  // Parse Body
-  let body = req.body;
-  if (typeof body === 'string') {
+  const safeJson = (statusCode: number, data: any) => {
     try {
-      body = JSON.parse(body);
-    } catch {
-      body = {};
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      if (origin !== '*') {
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+      }
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Content-Type', 'application/json');
+      if (typeof res.status === 'function') {
+        res.status(statusCode);
+      } else {
+        res.statusCode = statusCode;
+      }
+      if (typeof res.json === 'function') {
+        return res.json(data);
+      }
+      return res.end(JSON.stringify(data));
+    } catch (e) {
+      console.error('[safeJson Error]:', e);
+      try {
+        res.statusCode = statusCode;
+        res.end(JSON.stringify(data));
+      } catch {}
     }
-  }
-  req.body = body || {};
-
-  // Extract Auth Token
-  const authHeader = req.headers?.authorization || '';
-  const token =
-    authHeader.replace(/^Bearer\s+/i, '').trim() ||
-    (req.body?.token as string) ||
-    (req.query?.token as string) ||
-    '';
-
-  // Determine Action
-  const pathParts = (req.path || req.url || '').split('?')[0].split('/').filter(Boolean);
-  const lastSegment = pathParts[pathParts.length - 1];
-  const urlAction =
-    lastSegment && lastSegment !== 'admin' && lastSegment !== 'api' ? lastSegment : undefined;
-
-  const action = (
-    req.body?.action ||
-    req.query?.action ||
-    req.query?.subpath ||
-    urlAction ||
-    (req.method === 'GET' ? 'get-status-or-products' : '')
-  )
-    .toString()
-    .toLowerCase();
-
-  const config = getDbAdminConfig();
-  const users = getDbUsers();
-  const ownerUser = users.find((u) => u.role === 'owner' && u.status === 'active');
-  const isSetupDone = Boolean(config.isSetupComplete && ownerUser);
+  };
 
   try {
+    // CORS Headers
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    if (origin !== '*') {
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
+    if (req.method === 'OPTIONS') {
+      return res.status ? res.status(200).end() : res.end();
+    }
+
+    // Parse Body
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        body = {};
+      }
+    }
+    req.body = body || {};
+
+    // Extract Auth Token
+    const authHeader = req.headers?.authorization || '';
+    const token =
+      authHeader.replace(/^Bearer\s+/i, '').trim() ||
+      (req.body?.token as string) ||
+      (req.query?.token as string) ||
+      '';
+
+    // Determine Action
+    const pathParts = (req.path || req.url || '').split('?')[0].split('/').filter(Boolean);
+    const lastSegment = pathParts[pathParts.length - 1];
+    const urlAction =
+      lastSegment && lastSegment !== 'admin' && lastSegment !== 'api' ? lastSegment : undefined;
+
+    const action = (
+      req.body?.action ||
+      req.query?.action ||
+      req.query?.subpath ||
+      urlAction ||
+      (req.method === 'GET' ? 'get-status-or-products' : '')
+    )
+      .toString()
+      .toLowerCase();
+
+    const config = getDbAdminConfig();
+    const users = getDbUsers();
+    const ownerUser = users.find((u) => u.role === 'owner' && u.status === 'active');
+    const isSetupDone = Boolean(config.isSetupComplete && ownerUser);
     // -------------------------------------------------------------
     // ACTION: setup-status
     // -------------------------------------------------------------
@@ -812,6 +840,6 @@ export async function adminHandler(req: Request, res: Response) {
     });
   } catch (err: any) {
     console.error('[Admin Handler Error]:', err);
-    return res.status(500).json({ error: err?.message || 'Internal server error in admin handler' });
+    return safeJson(500, { error: err?.message || 'Internal server error in admin handler' });
   }
 }

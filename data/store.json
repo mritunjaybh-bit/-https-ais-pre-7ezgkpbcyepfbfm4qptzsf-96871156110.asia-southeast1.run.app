@@ -1038,7 +1038,14 @@
     "isSetupComplete": true,
     "setupAt": "2026-09-27T12:23:07.966Z"
   },
-  "otps": {},
+  "otps": {
+    "6baa6ab903d63133d6be768fc1ac4fe0fb3a498876405057": {
+      "otp": "473955",
+      "email": "mritunjay.bhardwaj@caphevietnam.in",
+      "userId": "usr-owner-1790511787965-3e82c9a1",
+      "expiresAt": 1792705231070
+    }
+  },
   "users": [
     {
       "username": "Mritunjay",

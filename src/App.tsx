@@ -18,6 +18,7 @@ import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
 import { ProductCatalogSection } from './components/ProductCatalogSection';
 import { ProductDetailModal } from './components/ProductDetailModal';
+import { BrewRecipeModal } from './components/BrewRecipeModal';
 import { PhinBrewStudio } from './components/PhinBrewStudio';
 import { FlavorMatcher } from './components/FlavorMatcher';
 import { HeritageStory } from './components/HeritageStory';
@@ -43,6 +44,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('shop');
   const [currency, setCurrency] = useState<Currency>('INR');
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
+  const [recipeModalProduct, setRecipeModalProduct] = useState<ProductItem | null>(null);
   const [selectedBlogPost, setSelectedBlogPost] = useState<BlogPost | null>(null);
 
   // Initial cart starts empty
@@ -486,7 +488,7 @@ export default function App() {
 
   return (
     <MusicProvider>
-      <div className="min-h-screen flex flex-col bg-[#fff8f6] text-[#271310] w-full max-w-full overflow-x-hidden">
+      <div className="min-h-screen flex flex-col bg-[#fcfbf7] text-[#140d09] w-full max-w-full overflow-x-hidden selection:bg-[#c5a880]/30 selection:text-[#140d09]">
         {/* Top Header */}
         <Header
           activeTab={activeTab}
@@ -560,6 +562,7 @@ export default function App() {
           <ProductCatalogSection
             currency={currency}
             onOpenProductModal={handleSelectProduct}
+            onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
             onAddToCart={handleAddToCart}
           />
         )}
@@ -570,6 +573,7 @@ export default function App() {
             currency={currency}
             initialCategory="flavoured-coffee"
             onOpenProductModal={handleSelectProduct}
+            onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
             onAddToCart={handleAddToCart}
           />
         )}
@@ -580,6 +584,7 @@ export default function App() {
             currency={currency}
             initialCategory="instant-coffee"
             onOpenProductModal={handleSelectProduct}
+            onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
             onAddToCart={handleAddToCart}
           />
         )}
@@ -596,6 +601,7 @@ export default function App() {
             }}
             onBackToShop={() => handleSelectTab('shop')}
             onSelectRelatedProduct={handleSelectProduct}
+            onOpenBrewStudio={() => handleSelectTab('brew-studio')}
           />
         )}
 
@@ -674,8 +680,22 @@ export default function App() {
           currency={currency}
           onClose={() => setSelectedProduct(null)}
           onAddToCart={handleAddToCart}
+          onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
         />
       )}
+
+      {/* Artisanal Brew Recipe Modal for all 22 products */}
+      <BrewRecipeModal
+        product={recipeModalProduct}
+        isOpen={!!recipeModalProduct}
+        onClose={() => setRecipeModalProduct(null)}
+        currency={currency}
+        onAddToCart={handleAddToCart}
+        onOpenBrewStudio={() => {
+          setRecipeModalProduct(null);
+          handleSelectTab('brew-studio');
+        }}
+      />
 
       {/* Order Confirmation Modal */}
       <OrderConfirmationModal

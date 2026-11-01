@@ -549,10 +549,10 @@ export const CoffeeMasterChat: React.FC<CoffeeMasterChatProps> = ({
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="hidden md:flex items-center gap-2 bg-[#271310] text-[#f4eceb] border border-[#feca4d]/40 px-3.5 py-2 rounded-full shadow-lg text-xs font-semibold hover:border-[#feca4d] transition-all cursor-pointer group"
+            className="hidden md:flex items-center gap-2 bg-[#140d09] text-[#fcfbf7] border border-[#c5a880]/40 px-3.5 py-2 rounded-full shadow-lg text-xs font-light tracking-wider hover:border-[#c5a880] transition-all cursor-pointer group"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#feca4d] animate-pulse" />
-            <span>Taste Quiz • <strong>Coffee Master</strong></span>
+            <Sparkles className="w-3.5 h-3.5 text-[#c5a880]" />
+            <span>Taste Concierge • <strong>Coffee Master</strong></span>
           </button>
 
           {/* Main Round Floating Button */}
@@ -560,15 +560,11 @@ export const CoffeeMasterChat: React.FC<CoffeeMasterChatProps> = ({
             id="coffee-master-floating-btn"
             type="button"
             onClick={() => setIsOpen(true)}
-            aria-label="Open Coffee Master AI Assistant"
-            className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#1a0a08] via-[#2f140f] to-[#5a2a1e] text-[#feca4d] border-2 border-[#feca4d] shadow-2xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 group relative"
+            aria-label="Open Coffee Master Concierge"
+            className="w-13 h-13 rounded-full bg-[#140d09] text-[#c5a880] border border-[#c5a880]/60 shadow-xl flex items-center justify-center cursor-pointer transition-all hover:border-[#c5a880] active:scale-95 group relative"
           >
-            <div className="relative">
-              <Coffee className="w-6 h-6 text-[#feca4d] group-hover:rotate-6 transition-transform" />
-              <Sparkles className="w-3.5 h-3.5 text-white absolute -top-1.5 -right-2 animate-bounce" />
-            </div>
-            {/* Online status indicator */}
-            <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-[#271310] rounded-full" />
+            <Coffee className="w-5 h-5 text-[#c5a880] group-hover:scale-105 transition-transform" />
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#c5a880] border-2 border-[#140d09] rounded-full" />
           </button>
         </div>
       )}
@@ -577,30 +573,27 @@ export const CoffeeMasterChat: React.FC<CoffeeMasterChatProps> = ({
       {isOpen && (
         <div
           id="coffee-master-chat-window"
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[395px] max-w-[calc(100vw-32px)] h-[610px] max-h-[calc(100vh-70px)] bg-[#fff8f6] border border-[#d3c3c0] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[395px] max-w-[calc(100vw-32px)] h-[610px] max-h-[calc(100vh-70px)] bg-[#fcfbf7] border border-[#c5a880]/40 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in duration-200"
         >
           {/* Chat Header */}
-          <div className="bg-[#271310] text-white p-3 px-4 flex items-center justify-between border-b border-[#feca4d]/30 shrink-0">
+          <div className="bg-[#140d09] text-white p-3.5 px-4 flex items-center justify-between border-b border-[#c5a880]/25 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#785a00] to-[#feca4d] p-0.5 shadow-sm flex items-center justify-center">
-                <div className="w-full h-full rounded-full bg-[#1e0d0b] flex items-center justify-center text-[#feca4d]">
-                  <Coffee className="w-4 h-4" />
-                </div>
+              <div className="w-8 h-8 rounded-full border border-[#c5a880]/60 p-0.5 flex items-center justify-center bg-white/5">
+                <Coffee className="w-4 h-4 text-[#c5a880]" />
               </div>
               <div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <h3
-                    className="font-bold text-sm text-[#feca4d] tracking-wide"
+                    className="font-normal text-sm text-[#fcfbf7] tracking-wider font-serif"
                     style={{ fontFamily: 'Playfair Display, serif' }}
                   >
-                    Coffee Master
+                    Coffee Master Concierge
                   </h3>
-                  <span className="bg-[#feca4d]/20 text-[#feca4d] text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded tracking-wider">
-                    AI Sommelier
+                  <span className="text-[#c5a880] text-[8px] uppercase tracking-[0.2em] font-medium border border-[#c5a880]/40 px-1.5 py-0.2 rounded-full">
+                    Sommelier
                   </span>
                 </div>
-                <p className="text-[10px] text-[#ae8d87] flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <p className="text-[10px] text-[#a3978f] font-light">
                   Direct-Trade Vietnamese Roastery Matcher
                 </p>
               </div>
@@ -611,16 +604,15 @@ export const CoffeeMasterChat: React.FC<CoffeeMasterChatProps> = ({
                 type="button"
                 onClick={handleRestartQuiz}
                 title="Restart Sommelier Taste Quiz"
-                className="p-1.5 text-[#ae8d87] hover:text-[#feca4d] hover:bg-white/10 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
+                className="p-1.5 text-[#a3978f] hover:text-[#c5a880] hover:bg-white/5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-[10px] uppercase tracking-wider font-light"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Restart</span>
+                <RotateCcw className="w-3 h-3 text-[#c5a880]" />
+                <span className="hidden sm:inline">Reset</span>
               </button>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                title="Minimize Chat"
-                className="p-1.5 text-[#ae8d87] hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-[#a3978f] hover:text-[#fcfbf7] hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>

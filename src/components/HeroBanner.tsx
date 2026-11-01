@@ -1,21 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Logo } from './Logo';
+import React from 'react';
 import { ActiveTab } from '../types';
-import {
-  Sparkles,
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Coffee,
-  Flame,
-  Layers,
-  ArrowRight,
-  ShieldCheck,
-  Package,
-  Sparkle
-} from 'lucide-react';
-import { ambientAudio } from '../utils/audioEngine';
+import { ArrowRight, Compass } from 'lucide-react';
 
 interface HeroBannerProps {
   onSelectTab: (tab: ActiveTab) => void;
@@ -26,220 +11,149 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   onSelectTab,
   onOpenMatcher,
 }) => {
-  const [isPlayingMusic, setIsPlayingMusic] = useState<boolean>(false);
-  const [isVideoMuted, setIsVideoMuted] = useState<boolean>(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Toggle synthesized ambient cafe soundtrack
-  const toggleMusic = () => {
-    if (isPlayingMusic) {
-      ambientAudio.stop();
-      setIsPlayingMusic(false);
-    } else {
-      ambientAudio.start();
-      setIsPlayingMusic(true);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      ambientAudio.stop();
-    };
-  }, []);
-
   return (
-    <section className="relative w-full max-w-full overflow-hidden bg-[#180b09] text-white border-b border-[#3e2723] py-14 sm:py-20 md:py-24 transition-all duration-300">
-      {/* Background Video Layer */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted={isVideoMuted}
-          playsInline
-          poster="https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1920&q=80"
-          className="w-full h-full object-cover object-center scale-105 filter brightness-[0.38] contrast-[1.12] saturate-[1.15]"
-        >
-          <source
-            src="https://assets.mixkit.co/videos/preview/mixkit-barista-making-a-drip-coffee-in-a-coffee-shop-42998-large.mp4"
-            type="video/mp4"
-          />
-        </video>
-
-        {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#180b09]/95 via-[#180b09]/80 to-[#180b09]/85" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#180b09] via-transparent to-[#180b09]/70" />
+    <section className="relative w-full max-w-full overflow-hidden bg-[#140d09] text-[#fcfbf7] border-b border-[#c5a880]/20 py-20 sm:py-28 lg:py-36 font-sans">
+      {/* Background Editorial Ambient Lighting */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a170e]/60 via-[#140d09] to-[#0c0806]" />
+        <div className="absolute -top-40 right-0 w-96 h-96 bg-[#c5a880]/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
       {/* Main Content Container */}
-      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* Left Column: Brand Story & CTA (7 cols) */}
-          <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            {/* Header Badges */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
-              <div className="inline-flex items-center gap-2 bg-[#feca4d]/15 text-[#feca4d] border border-[#feca4d]/30 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide backdrop-blur-md">
-                <Package className="w-3.5 h-3.5 text-[#feca4d]" />
-                <span>Authentic Packaged Coffee & Instant Mixes</span>
-              </div>
-
-              {/* Ambient Sound Toggle */}
-              <button
-                id="ambient-music-toggle-btn"
-                type="button"
-                onClick={toggleMusic}
-                className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md transition-all cursor-pointer"
-                title="Toggle ambient background sounds"
-              >
-                {isPlayingMusic ? (
-                  <>
-                    <Volume2 className="w-3.5 h-3.5 text-[#feca4d]" />
-                    <span className="text-[#feca4d]">Sound On</span>
-                  </>
-                ) : (
-                  <>
-                    <VolumeX className="w-3.5 h-3.5 text-white/70" />
-                    <span>Ambient Sound</span>
-                  </>
-                )}
-              </button>
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          {/* Left Column: Brand Story & Pure Editorial Typography (7 cols) */}
+          <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
+            {/* Super Header Tagline */}
+            <div className="inline-flex items-center gap-2 text-[#c5a880] text-[10px] font-medium tracking-[0.3em] uppercase border-b border-[#c5a880]/40 pb-1">
+              <span>Maison de Cà Phê • Vietnamese Artisanal Roasters</span>
             </div>
 
             {/* Display Headline */}
-            <div className="space-y-3">
-              <h1
-                className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] font-serif text-[#fff8f6]"
-                style={{ fontFamily: 'Playfair Display, serif' }}
-              >
-                Pure Vietnamese <br />
-                <span className="text-[#feca4d] italic font-normal">Coffee Powders</span> & <br />
-                Instant Blends
+            <div className="space-y-4">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-normal tracking-tight leading-[1.08] font-serif text-[#fcfbf7]">
+                Single-origin. <br />
+                <span className="italic font-serif text-[#c5a880]">Slow-roasted.</span> <br />
+                Vietnamese tradition.
               </h1>
-              <p
-                className="text-base sm:text-lg text-[#d3c3c0] max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed"
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
-              >
-                Direct from the volcanic red earth of Buôn Ma Thuột & misty peaks of Đà Lạt. Freshly ground for Phin gravity filters, espresso & French press, plus 3-in-1 condensed milk instant sachets.
+              <p className="text-sm sm:text-base text-[#a3978f] max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
+                Direct trade harvests from the ancient basalt soils of Buôn Ma Thuột and the misty cloud plateaus of Đà Lạt. Precision ground for gravity Phin extraction, accompanied by tailored masterclass brew recipes for every roast.
               </p>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+            {/* Refined Luxury Action Buttons */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
               <button
                 id="hero-shop-coffee-btn"
                 onClick={() => onSelectTab('shop')}
-                className="px-6 py-3.5 rounded-xl bg-[#feca4d] hover:bg-[#ffda7a] text-[#271310] font-bold text-xs uppercase tracking-wider transition-all shadow-lg flex items-center gap-2 cursor-pointer active:scale-95"
+                className="px-8 py-4 rounded-full bg-[#c5a880] hover:bg-[#b89a70] text-[#140d09] font-medium text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-sm"
               >
-                <span>Shop Coffee Powders</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>Explore the Collection</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
 
               <button
                 id="hero-instant-matcher-btn"
                 onClick={onOpenMatcher}
-                className="px-5 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/30 font-semibold text-xs transition-all backdrop-blur-sm flex items-center gap-2 cursor-pointer"
+                className="px-7 py-4 rounded-full bg-transparent hover:bg-white/5 text-[#fcfbf7] border border-[#c5a880]/40 hover:border-[#c5a880] font-light text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-[#feca4d]" />
-                <span>Coffee Powder Matcher</span>
+                <span>Find Your Profile</span>
               </button>
             </div>
 
-            {/* Micro Highlights Pill Row */}
-            <div className="pt-4 border-t border-white/15 grid grid-cols-3 gap-3 text-left">
+            {/* Terroirs Row */}
+            <div className="pt-8 border-t border-[#c5a880]/20 grid grid-cols-3 gap-6 text-left">
               <div>
-                <span className="text-[10px] text-[#feca4d] font-bold uppercase tracking-wider block">Origin</span>
-                <p className="text-xs font-semibold text-white">Đắk Lắk & Lâm Đồng</p>
+                <span className="text-[9px] text-[#c5a880] uppercase tracking-[0.25em] block mb-1">01 / Terroir</span>
+                <p className="text-xs font-serif text-[#fcfbf7]">Buôn Ma Thuột & Đà Lạt</p>
               </div>
               <div>
-                <span className="text-[10px] text-[#feca4d] font-bold uppercase tracking-wider block">Grind Profiles</span>
-                <p className="text-xs font-semibold text-white">Phin, Espresso, Beans</p>
+                <span className="text-[9px] text-[#c5a880] uppercase tracking-[0.25em] block mb-1">02 / Method</span>
+                <p className="text-xs font-serif text-[#fcfbf7]">Slow French Butter Roast</p>
               </div>
               <div>
-                <span className="text-[10px] text-[#feca4d] font-bold uppercase tracking-wider block">Shipping</span>
-                <p className="text-xs font-semibold text-white">All-India Fresh Dispatch</p>
+                <span className="text-[9px] text-[#c5a880] uppercase tracking-[0.25em] block mb-1">03 / Standard</span>
+                <p className="text-xs font-serif text-[#fcfbf7]">Tailored Brew Recipes</p>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Featured Best-Selling Packaged Products Card (5 cols) */}
+          {/* Right Column: Editorial Visual Showcase (5 cols) */}
           <div className="lg:col-span-5">
-            <div className="bg-[#271310]/85 backdrop-blur-md rounded-2xl border border-[#feca4d]/30 p-5 sm:p-6 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-white/15 pb-3">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-[#feca4d]" />
-                  <h3 className="font-serif font-bold text-sm text-white">
-                    Featured Fresh Roasts
-                  </h3>
-                </div>
-                <span className="text-[10px] uppercase font-bold text-[#feca4d] bg-[#feca4d]/20 px-2 py-0.5 rounded">
-                  100% Sealed Valve
+            <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl border border-[#c5a880]/30 p-6 sm:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-[#c5a880]/20 pb-4">
+                <span className="text-[9px] uppercase tracking-[0.25em] text-[#c5a880] font-medium">
+                  House Signature Roasts
+                </span>
+                <span className="text-[9px] uppercase tracking-wider text-[#a3978f] font-light">
+                  Direct Harvest
                 </span>
               </div>
 
-              {/* Product Mini Previews */}
-              <div className="space-y-3">
+              {/* Curated Previews */}
+              <div className="space-y-4">
                 <div
                   onClick={() => onSelectTab('shop')}
-                  className="bg-white/5 hover:bg-white/10 border border-white/10 p-3 rounded-xl flex items-center gap-3 transition-colors cursor-pointer"
+                  className="group flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-[#c5a880]/40 hover:bg-white/5 transition-all duration-300 cursor-pointer"
                 >
                   <img
                     src="https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=200&q=80"
                     alt="Saigon Heritage Phin Coffee Powder"
-                    className="w-12 h-12 rounded-lg object-cover bg-black/40"
+                    className="w-14 h-14 rounded-lg object-cover bg-black/40 border border-[#c5a880]/20"
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-white truncate font-serif">
+                    <h4 className="text-sm font-normal text-[#fcfbf7] group-hover:text-[#c5a880] transition-colors truncate font-serif">
                       Saigon Heritage Phin Powder
                     </h4>
-                    <p className="text-[10px] text-[#feca4d]">70% Fine Robusta • French Butter & Cocoa Roast</p>
-                    <span className="text-[11px] font-bold text-white mt-0.5 block">From ₹380 (250g)</span>
+                    <p className="text-[11px] text-[#a3978f] font-light">70% Fine Robusta • French Butter Roast</p>
+                    <span className="text-xs font-mono text-[#c5a880] mt-0.5 block">From ₹380</span>
                   </div>
                 </div>
 
                 <div
                   onClick={() => onSelectTab('shop')}
-                  className="bg-white/5 hover:bg-white/10 border border-white/10 p-3 rounded-xl flex items-center gap-3 transition-colors cursor-pointer"
+                  className="group flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-[#c5a880]/40 hover:bg-white/5 transition-all duration-300 cursor-pointer"
                 >
                   <img
                     src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=200&q=80"
-                    alt="Saigon 3-in-1 Instant Sachet Box"
-                    className="w-12 h-12 rounded-lg object-cover bg-black/40"
+                    alt="Hanoi Egg Custard Powder"
+                    className="w-14 h-14 rounded-lg object-cover bg-black/40 border border-[#c5a880]/20"
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-white truncate font-serif">
-                      Saigon 3-in-1 Instant Box (20 Sachets)
+                    <h4 className="text-sm font-normal text-[#fcfbf7] group-hover:text-[#c5a880] transition-colors truncate font-serif">
+                      Hà Nội Egg Custard Coffee
                     </h4>
-                    <p className="text-[10px] text-[#feca4d]">Real Condensed Milk + Microground Robusta</p>
-                    <span className="text-[11px] font-bold text-white mt-0.5 block">₹340 / Box</span>
+                    <p className="text-[11px] text-[#a3978f] font-light">Golden Egg Crème • Dark Volcanic Robusta</p>
+                    <span className="text-xs font-mono text-[#c5a880] mt-0.5 block">From ₹420</span>
                   </div>
                 </div>
 
                 <div
                   onClick={() => onSelectTab('shop')}
-                  className="bg-white/5 hover:bg-white/10 border border-white/10 p-3 rounded-xl flex items-center gap-3 transition-colors cursor-pointer"
+                  className="group flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-[#c5a880]/40 hover:bg-white/5 transition-all duration-300 cursor-pointer"
                 >
                   <img
                     src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=200&q=80"
-                    alt="Pure Freeze-Dried Robusta Jar"
-                    className="w-12 h-12 rounded-lg object-cover bg-black/40"
+                    alt="Saigon 3-in-1 Instant Box"
+                    className="w-14 h-14 rounded-lg object-cover bg-black/40 border border-[#c5a880]/20"
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-white truncate font-serif">
-                      Pure Freeze-Dried Robusta (100g Jar)
+                    <h4 className="text-sm font-normal text-[#fcfbf7] group-hover:text-[#c5a880] transition-colors truncate font-serif">
+                      Saigon 3-in-1 Instant (20 Sachets)
                     </h4>
-                    <p className="text-[10px] text-[#feca4d]">100% Pure Black Coffee Crystals (No Sugar)</p>
-                    <span className="text-[11px] font-bold text-white mt-0.5 block">₹480 / Jar</span>
+                    <p className="text-[11px] text-[#a3978f] font-light">Real Condensed Milk & Microground Coffee</p>
+                    <span className="text-xs font-mono text-[#c5a880] mt-0.5 block">₹340</span>
                   </div>
                 </div>
               </div>
 
-              {/* Bottom Card CTA */}
+              {/* Ritual Guide Link */}
               <button
                 onClick={() => onSelectTab('brew-studio')}
-                className="w-full py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-[#feca4d] font-bold text-center border border-white/15 transition-colors flex items-center justify-center gap-1.5"
+                className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-[#c5a880] font-light tracking-[0.15em] uppercase border border-[#c5a880]/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Coffee className="w-3.5 h-3.5" />
-                <span>Interactive Phin Brewing Guide</span>
+                <Compass className="w-3.5 h-3.5" />
+                <span>Enter Phin Gravity Studio</span>
               </button>
             </div>
           </div>

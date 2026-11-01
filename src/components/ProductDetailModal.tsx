@@ -7,15 +7,8 @@ import {
   Plus,
   Minus,
   Check,
-  Zap,
-  Coffee,
-  Sparkles,
-  ShieldCheck,
-  Clock,
-  MapPin,
-  Mountain,
-  Layers,
-  Award
+  ShoppingBag,
+  BookOpen
 } from 'lucide-react';
 
 interface ProductDetailModalProps {
@@ -25,6 +18,7 @@ interface ProductDetailModalProps {
   item?: ProductItem | null;
   currency: Currency;
   onAddToCart: (item: CartItem) => void;
+  onOpenRecipeModal?: (item: ProductItem) => void;
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -34,6 +28,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   item: itemProp,
   currency,
   onAddToCart,
+  onOpenRecipeModal,
 }) => {
   const rawProduct = productProp || itemProp;
   const isVisible = isOpen !== undefined ? isOpen : !!rawProduct;
@@ -51,6 +46,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   );
   const [quantity, setQuantity] = useState<number>(1);
   const [addedNotice, setAddedNotice] = useState(false);
+  const [showRecipeInline, setShowRecipeInline] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -58,6 +54,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       setSelectedGrind(product.availableGrinds ? product.availableGrinds[0] : undefined);
       setQuantity(1);
       setAddedNotice(false);
+      setShowRecipeInline(false);
     }
   }, [product?.id]);
 
@@ -86,74 +83,90 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     setTimeout(() => {
       setAddedNotice(false);
       onClose();
-    }, 800);
+    }, 1000);
   };
 
+  const recipe = product.brewRecipe;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto font-sans">
       <div
-        className="bg-[#faf2f0] border border-[#d3c3c0] rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-[#fcfbf7] border border-[#c5a880]/40 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
         role="dialog"
       >
         {/* Modal Header */}
-        <div className="bg-[#271310] text-white p-4 sm:p-5 flex items-center justify-between">
+        <div className="bg-[#140d09] text-[#fcfbf7] p-5 sm:p-6 flex items-center justify-between border-b border-[#c5a880]/30">
           <div>
-            <span className="text-[10px] uppercase font-bold tracking-wider text-[#feca4d]">
+            <span className="text-[9px] uppercase font-medium tracking-[0.25em] text-[#c5a880] block mb-1">
               {product.category === 'flavoured-coffee'
-                ? `Flavoured Vietnamese Coffee • ${product.flavorType || 'Specialty Blend'}`
+                ? `Specialty Flavour • ${product.flavorType || 'Botanical'}`
                 : product.category === 'coffee-powder'
-                ? 'Fresh Ground Coffee Powder'
+                ? 'Ground Phin Powder'
                 : product.category === 'instant-coffee'
-                ? 'Instant Coffee & Sachet Box'
+                ? 'Instant 3-in-1 Box'
                 : product.category === 'whole-bean'
-                ? 'Specialty Roasted Whole Beans'
-                : 'Brewing Hardware & Kits'}
+                ? 'Wood-Roasted Whole Bean'
+                : 'Brewing Hardware'}
             </span>
-            <h2 className="text-xl font-bold font-serif">{product.name}</h2>
-            <p className="text-xs text-[#feca4d] italic">{product.vietnameseName}</p>
+            <h2 className="text-xl sm:text-2xl font-normal font-serif text-[#fcfbf7]">{product.name}</h2>
+            <p className="text-xs text-[#c5a880] font-serif italic mt-0.5">{product.vietnameseName}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="p-2 rounded-full bg-white/5 hover:bg-white/15 text-[#e5ded8] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-[#271310]">
+        <div className="p-6 overflow-y-auto space-y-6 flex-1 text-[#140d09]">
           {/* Top Visual & Quick Info Banner */}
-          <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-[#d3c3c0]/50">
+          <div className="flex flex-col sm:flex-row gap-5 bg-white p-4 rounded-xl border border-[#c5a880]/25">
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="w-full sm:w-36 h-36 object-cover rounded-lg flex-shrink-0"
+              className="w-full sm:w-36 h-36 object-cover rounded-lg shrink-0"
             />
             <div className="space-y-2 flex-1">
-              <div className="flex flex-wrap gap-1.5">
-                {product.badge && (
-                  <span className="bg-[#785a00] text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                    {product.badge}
+              <div className="flex flex-wrap items-center gap-2">
+                {product.originRegion && (
+                  <span className="bg-[#140d09] text-[#fcfbf7] text-[9px] font-medium tracking-wider uppercase px-2.5 py-0.5 rounded">
+                    {product.originRegion}
                   </span>
                 )}
                 {product.roastLevel && (
-                  <span className="bg-[#eee3e1] text-[#271310] text-[10px] font-bold px-2 py-0.5 rounded border border-[#d3c3c0]">
+                  <span className="text-[#6e635d] text-[10px] font-light tracking-wider uppercase border border-[#c5a880]/30 px-2 py-0.5 rounded">
                     {product.roastLevel} Roast
                   </span>
                 )}
-                <span className="bg-[#feca4d]/20 text-[#785a00] text-[10px] font-bold px-2 py-0.5 rounded border border-[#feca4d]/40 flex items-center gap-1">
-                  <Zap className="w-3 h-3" /> Energy {product.caffeineScore}/5
-                </span>
+                {recipe && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onOpenRecipeModal) {
+                        onClose();
+                        onOpenRecipeModal(product);
+                      } else {
+                        setShowRecipeInline(!showRecipeInline);
+                      }
+                    }}
+                    className="text-[10px] font-medium tracking-wider uppercase text-[#c5a880] hover:text-[#140d09] border border-[#c5a880] px-2.5 py-0.5 rounded-full flex items-center gap-1 cursor-pointer"
+                  >
+                    <BookOpen className="w-3 h-3 text-[#c5a880]" />
+                    <span>☕ Brew Recipe</span>
+                  </button>
+                )}
               </div>
 
-              <p className="text-xs text-[#504442] leading-relaxed">{product.description}</p>
+              <p className="text-xs text-[#6e635d] font-light leading-relaxed">{product.description}</p>
 
               {/* Tasting Notes */}
-              <div className="flex flex-wrap gap-1 pt-1">
+              <div className="flex flex-wrap gap-1.5 pt-1">
                 {product.tastingNotes.map((note, idx) => (
                   <span
                     key={idx}
-                    className="text-[10px] bg-[#faf2f0] border border-[#d3c3c0] text-[#504442] px-2 py-0.5 rounded-full font-medium"
+                    className="text-[10px] bg-[#fcfbf7] border border-[#c5a880]/20 text-[#6e635d] px-2.5 py-0.5 rounded font-light"
                   >
                     {note}
                   </span>
@@ -162,25 +175,24 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Terroir & Origin Details */}
-          {(product.originRegion || product.elevation || product.beanBlend) && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-[#f4ecea] p-3 rounded-xl border border-[#d3c3c0]/40 text-xs">
-              {product.originRegion && (
-                <div>
-                  <span className="text-[10px] text-[#827472] font-bold uppercase block">Origin Terroir</span>
-                  <p className="font-semibold text-[#271310]">{product.originRegion}</p>
-                </div>
-              )}
-              {product.beanBlend && (
-                <div>
-                  <span className="text-[10px] text-[#827472] font-bold uppercase block">Blend Profile</span>
-                  <p className="font-semibold text-[#271310]">{product.beanBlend}</p>
-                </div>
-              )}
-              {product.shelfLife && (
-                <div>
-                  <span className="text-[10px] text-[#827472] font-bold uppercase block">Freshness</span>
-                  <p className="font-semibold text-[#271310]">{product.shelfLife}</p>
+          {/* Inline Recipe Accordion / Preview if toggled */}
+          {recipe && showRecipeInline && (
+            <div className="bg-[#fbf9f5] border border-[#c5a880]/40 rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between border-b border-[#c5a880]/20 pb-2">
+                <h4 className="text-sm font-serif font-medium text-[#140d09]">{recipe.recipeName}</h4>
+                <span className="text-[10px] uppercase tracking-wider text-[#c5a880] font-mono">{recipe.waterTemp} • {recipe.brewTime}</span>
+              </div>
+              <p className="text-xs text-[#6e635d] font-light">
+                <strong>Ingredients:</strong> {recipe.ingredients.map(i => `${i.item} (${i.quantity})`).join(', ')}
+              </p>
+              <div className="text-xs text-[#140d09] font-light space-y-1">
+                {recipe.steps.slice(0, 3).map(s => (
+                  <div key={s.stepNumber}><strong>{s.stepNumber}. {s.title}:</strong> {s.instruction}</div>
+                ))}
+              </div>
+              {recipe.baristaTip && (
+                <div className="text-[11px] text-[#c5a880] bg-[#140d09] p-2.5 rounded-lg font-light">
+                  <strong>Barista tip:</strong> {recipe.baristaTip}
                 </div>
               )}
             </div>
@@ -188,8 +200,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
           {/* Size Selection */}
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#785a00] block">
-              1. Choose Package Size / Quantity:
+            <label className="text-[11px] uppercase tracking-[0.15em] text-[#8c827a] block">
+              1. Choose Size / Format:
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {product.availableSizes.map((s) => {
@@ -200,14 +212,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     key={s.size}
                     type="button"
                     onClick={() => setSelectedSize(s.size)}
-                    className={`p-3 rounded-xl border text-left transition-all ${
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#271310] text-white border-[#271310] shadow-xs'
-                        : 'bg-white text-[#271310] border-[#d3c3c0] hover:bg-[#f4ecea]'
+                        ? 'bg-[#140d09] text-[#fcfbf7] border-[#c5a880]'
+                        : 'bg-white text-[#140d09] border-[#c5a880]/25 hover:border-[#c5a880]/50'
                     }`}
                   >
-                    <p className="text-xs font-bold">{s.size}</p>
-                    <p className={`text-xs mt-1 font-serif ${isSelected ? 'text-[#feca4d]' : 'text-[#785a00]'}`}>
+                    <p className="text-xs font-serif">{s.size}</p>
+                    <p className={`text-xs mt-0.5 font-mono ${isSelected ? 'text-[#c5a880]' : 'text-[#8c827a]'}`}>
                       {formatPrice(sizePrice, currency)}
                     </p>
                   </button>
@@ -219,8 +231,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           {/* Grind Customization (if applicable) */}
           {product.availableGrinds && product.availableGrinds.length > 0 && (
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#785a00] block">
-                2. Select Grind Profile for Your Equipment:
+              <label className="text-[11px] uppercase tracking-[0.15em] text-[#8c827a] block">
+                2. Select Grind Profile:
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {product.availableGrinds.map((grind) => {
@@ -230,51 +242,38 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       key={grind}
                       type="button"
                       onClick={() => setSelectedGrind(grind)}
-                      className={`p-2.5 rounded-xl border text-left text-xs font-semibold transition-all flex items-center justify-between ${
+                      className={`p-3 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer ${
                         isSelected
-                          ? 'bg-[#785a00] text-white border-[#785a00]'
-                          : 'bg-white text-[#504442] border-[#d3c3c0] hover:bg-[#f4ecea]'
+                          ? 'bg-[#140d09] text-[#fcfbf7] border-[#c5a880]'
+                          : 'bg-white text-[#6e635d] border-[#c5a880]/25 hover:border-[#c5a880]/50'
                       }`}
                     >
-                      <span>{grind}</span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-[#feca4d]" />}
+                      <span className="font-serif">{grind}</span>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-[#c5a880]" />}
                     </button>
                   );
                 })}
               </div>
             </div>
           )}
-
-          {/* Brewing Recommendation */}
-          {product.brewingRecommendation && (
-            <div className="bg-[#fff8f6] p-3.5 rounded-xl border border-[#feca4d]/40 flex items-start gap-2.5">
-              <Coffee className="w-4 h-4 text-[#785a00] mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="text-xs font-bold text-[#785a00] uppercase tracking-wide">
-                  Barista Home Brew Guide
-                </h4>
-                <p className="text-xs text-[#504442] mt-0.5">{product.brewingRecommendation}</p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Modal Footer with Quantity and Add Button */}
-        <div className="bg-[#f4ecea] p-4 sm:p-5 border-t border-[#d3c3c0] flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-[#fbf9f5] p-5 border-t border-[#c5a880]/30 flex flex-wrap items-center justify-between gap-4">
           {/* Quantity Stepper */}
-          <div className="flex items-center gap-3 bg-white border border-[#d3c3c0] rounded-xl p-1 px-2">
-            <span className="text-[10px] font-bold text-[#827472] uppercase">Qty:</span>
+          <div className="flex items-center gap-3 bg-white border border-[#c5a880]/30 rounded-xl p-1 px-2">
             <button
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              disabled={quantity <= 1}
-              className="w-7 h-7 rounded-lg bg-[#faf2f0] hover:bg-[#eee3e1] flex items-center justify-center text-[#271310] disabled:opacity-30"
+              disabled={quantity <= 1 || isOutOfStock}
+              className="w-7 h-7 rounded flex items-center justify-center text-[#6e635d] hover:text-[#140d09] disabled:opacity-30 cursor-pointer"
             >
               <Minus className="w-3.5 h-3.5" />
             </button>
-            <span className="font-bold text-sm w-5 text-center">{quantity}</span>
+            <span className="font-mono text-sm font-medium w-6 text-center text-[#140d09]">{quantity}</span>
             <button
               onClick={() => setQuantity((q) => Math.min(20, q + 1))}
-              className="w-7 h-7 rounded-lg bg-[#faf2f0] hover:bg-[#eee3e1] flex items-center justify-center text-[#271310]"
+              disabled={isOutOfStock}
+              className="w-7 h-7 rounded flex items-center justify-center text-[#6e635d] hover:text-[#140d09] disabled:opacity-30 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
@@ -283,8 +282,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           {/* Price & Submit Action */}
           <div className="flex items-center gap-4 flex-1 justify-end">
             <div className="text-right">
-              <span className="text-[10px] text-[#827472] uppercase block font-semibold">Total</span>
-              <span className="text-xl font-bold text-[#271310] font-serif">
+              <span className="text-[9px] text-[#8c827a] uppercase tracking-wider block font-light">Total</span>
+              <span className="text-xl font-normal text-[#140d09] font-serif">
                 {formatPrice(totalPrice, currency)}
               </span>
             </div>
@@ -292,28 +291,28 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             {isOutOfStock ? (
               <button
                 disabled
-                className="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wide bg-stone-200 text-stone-500 cursor-not-allowed border border-stone-300"
+                className="px-6 py-3 rounded-xl font-medium text-xs uppercase tracking-wider bg-stone-200 text-stone-500 cursor-not-allowed border border-stone-300"
               >
-                Out of Stock
+                Sold Out
               </button>
             ) : (
               <button
                 onClick={handleAddToCart}
-                className={`px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wide flex items-center gap-2 transition-all shadow-md ${
+                className={`px-6 py-3 rounded-xl font-medium text-xs uppercase tracking-[0.15em] flex items-center gap-2 transition-all cursor-pointer ${
                   addedNotice
-                    ? 'bg-emerald-700 text-white'
-                    : 'bg-[#785a00] hover:bg-[#8e6b00] text-white active:scale-95'
+                    ? 'bg-[#140d09] text-[#c5a880] border border-[#c5a880]'
+                    : 'bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] border border-[#c5a880]/40'
                 }`}
               >
                 {addedNotice ? (
                   <>
-                    <Check className="w-4 h-4" />
-                    <span>Added to Cart!</span>
+                    <Check className="w-4 h-4 text-[#c5a880]" />
+                    <span>Added to Bag</span>
                   </>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4" />
-                    <span>Add to Cart</span>
+                    <ShoppingBag className="w-4 h-4 text-[#c5a880]" />
+                    <span>Add to Bag</span>
                   </>
                 )}
               </button>

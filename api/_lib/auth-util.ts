@@ -1,11 +1,11 @@
 import crypto from 'crypto';
 import {
-  UserAccount,
+  type UserAccount,
   findDbUserById,
   addDbSession,
   removeDbSession,
   clearDbSessions,
-} from './db';
+} from './db.ts';
 
 const activeSessions = new Set<string>();
 const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'caphe_vietnam_secret_roastery_2026';
@@ -110,13 +110,18 @@ export async function sendOtpEmail(email: string, otp: string, userName?: string
       },
     };
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     return res.ok;
   } catch (err) {
@@ -141,13 +146,18 @@ export async function sendAccountRecoveryEmail(email: string, username: string, 
       },
     };
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     return res.ok;
   } catch (err) {

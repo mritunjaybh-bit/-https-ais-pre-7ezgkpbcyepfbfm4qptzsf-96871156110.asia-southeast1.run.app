@@ -64,9 +64,22 @@ export interface ProductItem {
   rating: number;
   reviewsCount: number;
   brewingRecommendation?: string;
+  brewRecipe?: BrewRecipe;
   stockQuantity?: number;
   isActive?: boolean;
   isOutOfStock?: boolean;
+}
+
+export interface BrewRecipe {
+  name: string;
+  bestFor: string;
+  servingTemp?: string;
+  prepTime: string;
+  equipment: string[];
+  ingredients: { item: string; quantity: string }[];
+  waterTemp: string;
+  steps: { stepNumber: number; title: string; instruction: string; duration?: string }[];
+  baristaTip: string;
 }
 
 export interface CartItem {

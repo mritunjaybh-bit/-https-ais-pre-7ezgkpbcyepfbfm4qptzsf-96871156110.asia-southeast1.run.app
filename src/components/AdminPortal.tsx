@@ -448,7 +448,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         }),
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: `Server error (${res.status}). Please try again shortly.` };
+      }
 
       if (data.requiresSetup) {
         setIsSetupComplete(false);
@@ -482,9 +487,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       } else {
         setLoginError(data.error || 'Authentication failed. Please verify your credentials.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Admin login network error:', err);
-      setLoginError('Could not reach roastery authentication server. Please try again.');
+      setLoginError(err?.message || 'Could not reach roastery authentication server. Please try again.');
     } finally {
       setIsLoggingIn(false);
     }
@@ -581,7 +586,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         }),
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: `Server error (${res.status}). Please try again shortly.` };
+      }
+
       if (res.ok && data.success) {
         setForgotResetToken(data.resetToken);
         setForgotStep(2);
@@ -589,9 +600,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       } else {
         setForgotError(data.error || 'Could not initiate OTP reset request.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Forgot password OTP request error:', err);
-      setForgotError('Network error connecting to security server.');
+      setForgotError(err?.message || 'Network error connecting to security server.');
     } finally {
       setIsSendingOtp(false);
     }
@@ -631,7 +642,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         }),
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: `Server error (${res.status}). Please try again shortly.` };
+      }
+
       if (res.ok && data.success) {
         if (data.token) {
           sessionStorage.setItem('caphe_admin_token', data.token);
@@ -663,9 +680,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       } else {
         setForgotError(data.error || 'Verification failed. Please check your OTP code.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('OTP verification error:', err);
-      setForgotError('Network error during password reset.');
+      setForgotError(err?.message || 'Network error during password reset.');
     } finally {
       setIsVerifyingOtp(false);
     }
@@ -695,7 +712,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         }),
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: `Server error (${res.status}). Please try again shortly.` };
+      }
+
       if (res.ok && data.success && data.user) {
         setRecoverResult(data.user);
         setRecoverMatchReason(data.matchReason || 'Account record matched');
@@ -703,9 +726,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       } else {
         setRecoverError(data.error || 'No account matched the provided detail.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Account recovery error:', err);
-      setRecoverError('Network error connecting to security server.');
+      setRecoverError(err?.message || 'Network error connecting to security server.');
     } finally {
       setIsRecoveringId(false);
     }

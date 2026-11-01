@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import express, { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 
@@ -89,19 +89,31 @@ async function startServer() {
     res.status(404).json({ error: `API endpoint ${req.method} ${req.path} not found` });
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== 'production') {
+  // Production vs Development: Serve static dist if built and index.html exists, otherwise mount Vite middlewares
+  const distPath = path.join(process.cwd(), 'dist');
+  const distIndexPath = path.join(distPath, 'index.html');
+  const hasDistIndex = fs.existsSync(distIndexPath);
+
+  if (hasDistIndex) {
+    app.use(express.static(distPath));
+    app.get('*', (_req: Request, res: Response) => {
+      if (fs.existsSync(distIndexPath)) {
+        res.sendFile(distIndexPath);
+      } else {
+        const rootIndexPath = path.join(process.cwd(), 'index.html');
+        if (fs.existsSync(rootIndexPath)) {
+          res.sendFile(rootIndexPath);
+        } else {
+          res.status(500).send('Application index.html not found');
+        }
+      }
+    });
+  } else {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (_req: Request, res: Response) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
   }
 
   app.listen(PORT, '0.0.0.0', () => {

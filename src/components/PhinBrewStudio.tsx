@@ -13,13 +13,11 @@ import {
   CheckCircle,
   Flame,
   Clock,
-  Award,
   Plus,
-  Package,
-  Layers,
-  Sparkle
+  ArrowRight
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface PhinBrewStudioProps {
   currency: Currency;
@@ -43,7 +41,7 @@ export const PhinBrewStudio: React.FC<PhinBrewStudioProps> = ({
   // 0: Prep (Ingredients selected)
   // 1: Bloom (30s countdown, wetting grounds with 20ml water)
   // 2: Drip Extraction (Slow gravity drip 40-45 drops/min)
-  // 3: Stir & Ice (Complete!)
+  // 3: Complete
   const [brewStep, setBrewStep] = useState<0 | 1 | 2 | 3>(0);
   const [isBrewing, setIsBrewing] = useState<boolean>(false);
   const [bloomSeconds, setBloomSeconds] = useState<number>(30);
@@ -79,15 +77,18 @@ export const PhinBrewStudio: React.FC<PhinBrewStudioProps> = ({
           if (prev >= 100) {
             setIsBrewing(false);
             setBrewStep(3);
-            confetti({
-              particleCount: 80,
-              spread: 80,
-              origin: { y: 0.6 },
-              colors: ['#feca4d', '#785a00', '#271310', '#fff8f6'],
-            });
+            try {
+              confetti({
+                particleCount: 50,
+                spread: 60,
+                origin: { y: 0.6 },
+                colors: ['#c5a880', '#e5d7c3', '#140d09'],
+              });
+            } catch {
+              // Ignore confetti errors if blocked
+            }
             return 100;
           }
-          // Increments based on press tightness
           const speed = pressTightness === 'firm' ? 1.5 : pressTightness === 'medium' ? 2.5 : 3.5;
           return Math.min(100, prev + speed);
         });
@@ -164,37 +165,35 @@ export const PhinBrewStudio: React.FC<PhinBrewStudioProps> = ({
   };
 
   return (
-    <section id="phin-brew-studio" className="w-full max-w-[1200px] mx-auto py-12 px-4 sm:px-6">
-      {/* Header */}
-      <div className="text-center max-w-2xl mx-auto mb-10">
-        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#785a00] bg-[#feca4d]/15 px-3 py-1 rounded-full border border-[#feca4d]/30 inline-block mb-3">
-          Interactive Phin Brewing Lab • Home Barista Masterclass
+    <section id="phin-brew-studio" className="w-full max-w-6xl mx-auto py-16 px-4 sm:px-6 font-sans">
+      {/* Editorial Luxury Header */}
+      <div className="text-center max-w-2xl mx-auto mb-14">
+        <span className="text-[10px] font-medium tracking-[0.25em] uppercase text-[#c5a880] block mb-3">
+          The Ritual of Stillness • Gravity Extraction
         </span>
-        <h2
-          className="text-3xl sm:text-4xl font-bold text-[#271310] tracking-tight leading-tight font-serif"
-          style={{ fontFamily: 'Playfair Display, serif' }}
-        >
-          Master the Slow Phin Gravity Ritual
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-normal text-[#140d09] tracking-tight font-serif">
+          Master the Phin Ritual
         </h2>
-        <p className="mt-3 text-sm text-[#504442] leading-relaxed">
-          The heart of Vietnamese coffee lies in the <em>Phin</em> gravity filter. No paper filters, no electricity—just slow hydraulic extraction delivering pure dark chocolate intensity.
+        <div className="w-12 h-px bg-[#c5a880]/60 mx-auto my-4" />
+        <p className="text-xs sm:text-sm text-[#6e635d] font-light leading-relaxed max-w-lg mx-auto">
+          No electricity, no paper filters. Pure hydraulic pre-infusion and slow gravity filtration yielding an unhurried, viscous cup with deep chocolate undertones.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         {/* Left Interactive Brewing Stage & Physics Graphic (7 cols) */}
-        <div className="lg:col-span-7 bg-[#faf2f0] border border-[#d3c3c0] rounded-2xl p-6 sm:p-8 shadow-md space-y-6">
+        <div className="lg:col-span-7 bg-[#fbf9f5] border border-[#c5a880]/30 rounded-2xl p-6 sm:p-8 space-y-6">
           {/* Stage Progress Header */}
-          <div className="flex items-center justify-between border-b border-[#d3c3c0]/40 pb-4">
+          <div className="flex items-center justify-between border-b border-[#c5a880]/20 pb-4">
             <div>
-              <span className="text-[10px] uppercase font-bold text-[#785a00] tracking-widest block">
-                Ritual Step {brewStep + 1} of 4
+              <span className="text-[9px] uppercase font-semibold text-[#c5a880] tracking-[0.2em] block mb-0.5">
+                Phase {brewStep + 1} of 4
               </span>
-              <h3 className="text-xl font-bold text-[#271310] font-serif">
-                {brewStep === 0 && 'Step 1: Prep Dosing & Condensed Milk'}
-                {brewStep === 1 && 'Step 2: The 45-Second Hydraulic Bloom'}
-                {brewStep === 2 && 'Step 3: Slow Gravity Extraction (45 drops/min)'}
-                {brewStep === 3 && 'Step 4: Golden Condensation Complete!'}
+              <h3 className="text-lg sm:text-xl font-normal text-[#140d09] font-serif">
+                {brewStep === 0 && 'I. Dosing & Layering'}
+                {brewStep === 1 && 'II. Hydraulic Pre-Infusion Bloom'}
+                {brewStep === 2 && 'III. Gravity Extraction (~42 drops/min)'}
+                {brewStep === 3 && 'IV. Viscous Golden Pour'}
               </h3>
             </div>
 
@@ -202,134 +201,282 @@ export const PhinBrewStudio: React.FC<PhinBrewStudioProps> = ({
               {isBrewing ? (
                 <button
                   onClick={handlePauseBrew}
-                  className="p-2 rounded-lg bg-[#271310] text-white hover:bg-[#3d201c] transition-colors"
+                  className="p-2.5 rounded-full bg-[#140d09] text-[#fcfbf7] hover:bg-[#2b1f1a] transition-colors cursor-pointer"
                   title="Pause brew"
                 >
-                  <Pause className="w-4 h-4" />
+                  <Pause className="w-3.5 h-3.5" />
                 </button>
               ) : brewStep > 0 && brewStep < 3 ? (
                 <button
                   onClick={handleResumeBrew}
-                  className="p-2 rounded-lg bg-[#785a00] text-white hover:bg-[#8e6b00] transition-colors"
+                  className="p-2.5 rounded-full bg-[#c5a880] text-[#140d09] hover:bg-[#b89a70] transition-colors cursor-pointer"
                   title="Resume brew"
                 >
-                  <Play className="w-4 h-4" />
+                  <Play className="w-3.5 h-3.5" />
                 </button>
               ) : null}
 
               {brewStep > 0 && (
                 <button
                   onClick={handleResetBrew}
-                  className="p-2 rounded-lg bg-white border border-[#d3c3c0] text-[#504442] hover:text-[#271310] transition-colors"
-                  title="Restart experiment"
+                  className="p-2.5 rounded-full bg-white border border-[#c5a880]/30 text-[#6e635d] hover:text-[#140d09] transition-colors cursor-pointer"
+                  title="Reset ritual"
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
           </div>
 
-          {/* Interactive Visual Glass & Phin Dripper */}
-          <div className="bg-[#271310] rounded-xl p-8 flex flex-col items-center justify-center relative min-h-[300px] overflow-hidden text-white shadow-inner">
+          {/* Interactive Visual Glass & Phin Dripper with Framer Motion */}
+          <div className="bg-gradient-to-b from-[#18110b] to-[#0f0a07] rounded-xl p-8 sm:p-10 flex flex-col items-center justify-center relative min-h-[360px] overflow-hidden text-white shadow-inner border border-white/5">
+            {/* Ambient gold glow during bloom/extraction */}
+            <AnimatePresence>
+              {isBrewing && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0.15, 0.35, 0.15] }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute inset-0 bg-radial from-[#c5a880]/15 via-transparent to-transparent pointer-events-none"
+                />
+              )}
+            </AnimatePresence>
+
             {/* Phin Stainless Steel Chamber Illustration */}
             <div className="relative z-10 flex flex-col items-center">
-              {/* Phin Lid & Chamber */}
-              <div className="w-24 h-5 bg-gradient-to-r from-[#d3c3c0] via-[#faf2f0] to-[#b0a09d] rounded-t-sm shadow-md border-b border-black/30" />
-              <div className="w-20 h-16 bg-gradient-to-r from-[#9e8f8c] via-[#d3c3c0] to-[#7f706d] relative flex items-center justify-center border-x border-[#504442]">
-                <div className="text-[9px] uppercase tracking-tighter font-mono font-bold text-[#271310] bg-[#feca4d]/70 px-1.5 py-0.5 rounded">
-                  {coffeeGrams}g Phin Grind
-                </div>
-                {brewStep === 1 && (
-                  <div className="absolute inset-0 bg-[#feca4d]/25 animate-pulse flex items-center justify-center text-[10px] text-[#feca4d] font-bold">
-                    Blooming: {bloomSeconds}s
+              {/* Hot Steam Wisps during Bloom (Framer Motion) */}
+              <AnimatePresence>
+                {brewStep === 1 && isBrewing && (
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-12 flex justify-around pointer-events-none">
+                    {[0, 1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ y: 10, opacity: 0, scale: 0.6 }}
+                        animate={{
+                          y: [-4, -28],
+                          opacity: [0, 0.65, 0],
+                          scale: [0.7, 1.2, 1.6],
+                          x: [0, (i - 1) * 6, (i - 1) * 12],
+                        }}
+                        transition={{
+                          duration: 2.2,
+                          repeat: Infinity,
+                          delay: i * 0.6,
+                          ease: 'easeOut',
+                        }}
+                        className="w-1.5 h-6 bg-gradient-to-t from-white/30 to-white/0 rounded-full blur-[1px]"
+                      />
+                    ))}
                   </div>
                 )}
-              </div>
-              {/* Phin Filter Plate Collar */}
-              <div className="w-28 h-2.5 bg-gradient-to-r from-[#b0a09d] via-[#faf2f0] to-[#827472] rounded-full shadow-lg" />
+              </AnimatePresence>
 
-              {/* Gravity Drips Falling */}
-              <div className="h-14 w-1 relative flex items-center justify-center">
-                {brewStep === 2 && isBrewing && (
-                  <div className="w-2.5 h-3 bg-[#4a261f] rounded-full animate-bounce shadow-sm" />
+              {/* Phin Lid */}
+              <div className="w-24 h-4 bg-gradient-to-r from-[#948b85] via-[#e5ded8] to-[#807671] rounded-t-sm shadow-sm border-b border-black/40" />
+              
+              {/* Phin Body Chamber */}
+              <div className="w-20 h-16 bg-gradient-to-r from-[#7a706b] via-[#c5bcb6] to-[#69605b] relative flex flex-col items-center justify-center border-x border-black/40 overflow-hidden">
+                {/* Coffee Grounds Bed with Hydraulic Swelling during Bloom */}
+                <motion.div
+                  className="absolute bottom-0 inset-x-0 bg-[#23120b] border-t border-[#4a261a]"
+                  animate={{
+                    height:
+                      brewStep === 0
+                        ? '38%'
+                        : brewStep === 1
+                        ? ['38%', '48%', '45%']
+                        : '42%',
+                  }}
+                  transition={{
+                    duration: brewStep === 1 ? 2.5 : 0.5,
+                    repeat: brewStep === 1 ? Infinity : 0,
+                    repeatType: 'reverse',
+                  }}
+                >
+                  {/* Subtle golden water saturation line */}
+                  {brewStep >= 1 && (
+                    <motion.div
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      className="h-0.5 bg-[#c5a880]/70 w-full"
+                    />
+                  )}
+                </motion.div>
+
+                {/* Ground grams label */}
+                <div className="relative z-10 text-[9px] uppercase tracking-widest font-mono text-[#fcfbf7] bg-[#140d09]/80 px-2 py-0.5 rounded border border-[#c5a880]/30">
+                  {coffeeGrams}g Phin Grind
+                </div>
+
+                {/* Blooming Countdown Banner */}
+                {brewStep === 1 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 bg-[#140d09]/60 backdrop-blur-[1px] flex flex-col items-center justify-center text-[10px] text-[#c5a880] font-medium tracking-wider"
+                  >
+                    <span className="text-[8px] uppercase tracking-[0.2em] text-[#e5ded8]">Blooming</span>
+                    <span className="font-mono text-sm font-semibold">{bloomSeconds}s</span>
+                  </motion.div>
                 )}
+              </div>
+
+              {/* Phin Filter Base Collar */}
+              <div className="w-28 h-2.5 bg-gradient-to-r from-[#807671] via-[#e5ded8] to-[#69605b] rounded-full shadow-lg border-t border-white/20" />
+
+              {/* Gravity Drips Falling Corridor (Framer Motion Animation) */}
+              <div className="h-16 w-12 relative flex flex-col items-center justify-center">
+                <AnimatePresence>
+                  {brewStep === 2 && isBrewing && (
+                    <>
+                      {/* Droplet 1 */}
+                      <motion.div
+                        key="drip-1"
+                        initial={{ y: 0, opacity: 0, scale: 0.8 }}
+                        animate={{
+                          y: [0, 8, 48],
+                          opacity: [0, 1, 1, 0],
+                          scale: [0.8, 1, 0.6],
+                        }}
+                        transition={{
+                          duration: 1.1,
+                          repeat: Infinity,
+                          ease: [0.45, 0, 0.7, 1],
+                        }}
+                        className="absolute w-2 h-2.5 bg-gradient-to-b from-[#3a1d13] to-[#140d09] rounded-full shadow-xs"
+                        style={{
+                          borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+                        }}
+                      />
+                      {/* Droplet 2 with slight offset */}
+                      <motion.div
+                        key="drip-2"
+                        initial={{ y: 0, opacity: 0, scale: 0.7 }}
+                        animate={{
+                          y: [0, 8, 48],
+                          opacity: [0, 1, 1, 0],
+                          scale: [0.7, 0.9, 0.5],
+                        }}
+                        transition={{
+                          duration: 1.1,
+                          repeat: Infinity,
+                          delay: 0.55,
+                          ease: [0.45, 0, 0.7, 1],
+                        }}
+                        className="absolute w-1.5 h-2 bg-gradient-to-b from-[#3a1d13] to-[#140d09] rounded-full shadow-xs"
+                        style={{
+                          borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+                        }}
+                      />
+                    </>
+                  )}
+                </AnimatePresence>
+
                 {brewStep === 3 && (
-                  <div className="text-[10px] font-bold text-[#feca4d]">✓ Extracted</div>
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="text-[9px] uppercase tracking-[0.2em] font-medium text-[#c5a880]"
+                  >
+                    ✓ Extracted
+                  </motion.div>
                 )}
               </div>
 
-              {/* Glass Tumbler Layering Condensed Milk & Dark Espresso */}
-              <div className="w-28 h-36 bg-white/10 backdrop-blur-xs border-2 border-white/30 rounded-b-2xl relative overflow-hidden flex flex-col justify-end p-1 shadow-2xl">
-                {/* Extracted Coffee Layer */}
-                <div
-                  className="bg-[#2a130f] transition-all duration-300 rounded-b-sm"
-                  style={{
+              {/* Glass Tumbler Layering Condensed Milk & Slow Espresso */}
+              <div className="w-28 h-36 bg-white/5 backdrop-blur-xs border border-white/20 rounded-b-2xl relative overflow-hidden flex flex-col justify-end p-1 shadow-2xl">
+                {/* Surface Drip Ripple Effect (Framer Motion) */}
+                {brewStep === 2 && isBrewing && (
+                  <motion.div
+                    key="ripple"
+                    initial={{ scale: 0.2, opacity: 0.8 }}
+                    animate={{ scale: [0.2, 1.8], opacity: [0.8, 0] }}
+                    transition={{ duration: 1.1, repeat: Infinity, ease: 'easeOut' }}
+                    className="absolute left-1/2 -translate-x-1/2 w-6 h-1 rounded-full border border-[#c5a880]/60 pointer-events-none"
+                    style={{
+                      bottom:
+                        milkType !== 'none'
+                          ? `calc(${milkSpoons * 10 + 10}px + ${Math.max(8, extractionProgress * 0.55)}%)`
+                          : `${Math.max(8, extractionProgress * 0.55)}%`,
+                    }}
+                  />
+                )}
+
+                {/* Extracted Coffee Layer (Rising Smoothly) */}
+                <motion.div
+                  className="bg-gradient-to-b from-[#361c14] to-[#1a0c08] rounded-b-xs relative"
+                  animate={{
                     height:
                       brewStep === 3
                         ? '65%'
                         : brewStep === 2
-                        ? `${Math.max(10, extractionProgress * 0.65)}%`
+                        ? `${Math.max(8, extractionProgress * 0.65)}%`
                         : '0%',
                   }}
-                />
+                  transition={{ duration: 0.35, ease: 'easeOut' }}
+                >
+                  {/* Crema foam line on top */}
+                  <div className="h-1 bg-gradient-to-r from-[#9e744a] via-[#c5a880] to-[#8c643e] opacity-80" />
+                </motion.div>
 
                 {/* Condensed Milk Base */}
                 {milkType !== 'none' && (
                   <div
-                    className={`w-full rounded-b-xl transition-all ${
+                    className={`w-full rounded-b-xl transition-all duration-300 relative ${
                       milkType === 'condensed' ? 'bg-[#fff5d6]' : 'bg-[#f4f7f6]'
                     }`}
                     style={{ height: `${milkSpoons * 10 + 10}px` }}
                   >
-                    <span className="text-[8px] font-bold text-[#271310] block text-center pt-0.5">
-                      {milkType === 'condensed' ? 'Sweetened Milk' : 'Coconut Milk'}
+                    <span className="text-[7.5px] font-medium tracking-wider text-[#140d09] block text-center pt-0.5 uppercase">
+                      {milkType === 'condensed' ? 'Sweetened Condensed' : 'Coconut Cream'}
                     </span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Brewing Stats Overlay */}
-            <div className="absolute bottom-3 left-4 right-4 flex justify-between text-[11px] text-[#d3c3c0] bg-black/40 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-              <span>Hydraulic Drops: {dropCounter}</span>
+            {/* Brewing Stats Bar */}
+            <div className="absolute bottom-3 left-4 right-4 flex justify-between text-[10px] tracking-wider text-[#d3c3c0] bg-black/50 px-3.5 py-1.5 rounded-lg border border-white/5 backdrop-blur-xs font-mono">
+              <span>Gravity Drops: {dropCounter}</span>
               <span>Extraction: {extractionProgress}%</span>
-              <span>Water Temp: 94°C</span>
+              <span>Temp: 94°C</span>
             </div>
           </div>
 
           {/* Action Trigger Buttons */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div className="pt-2">
             {brewStep === 0 && (
               <button
                 onClick={handleStartBrew}
-                className="w-full py-3.5 px-4 rounded-xl bg-[#785a00] hover:bg-[#8e6b00] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                className="w-full py-3.5 px-4 rounded-xl bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] font-medium text-xs uppercase tracking-[0.2em] transition-all border border-[#c5a880]/40 flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.99]"
               >
-                <Play className="w-4 h-4" />
-                <span>Begin 45-Second Phin Bloom & Drip</span>
+                <Play className="w-3.5 h-3.5 text-[#c5a880]" />
+                <span>Begin 45-Second Hydraulic Bloom & Drip</span>
               </button>
             )}
 
             {brewStep === 3 && (
-              <div className="w-full space-y-2">
-                <div className="p-3 bg-[#eef7ee] border border-[#bcdcbc] rounded-xl text-xs text-emerald-900 flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                  <span>
-                    Extraction complete! You've mastered the 1:4 Phin extraction ratio.
+              <div className="w-full space-y-3">
+                <div className="p-3.5 bg-[#fcfbf7] border border-[#c5a880]/40 rounded-xl text-xs text-[#140d09] flex items-center gap-2.5">
+                  <CheckCircle className="w-4 h-4 text-[#c5a880] flex-shrink-0" />
+                  <span className="font-light">
+                    Extraction complete. You have calibrated the authentic 1:4 Vietnamese Phin gravity ratio.
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <button
                     onClick={handleAddStarterKitToCart}
-                    className="py-3 px-3 rounded-xl bg-[#785a00] hover:bg-[#8e6b00] text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                    className="py-3 px-3 rounded-xl bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] font-medium text-xs uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-1.5 border border-[#c5a880]/40 cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Get Home Phin Starter Kit</span>
+                    <Plus className="w-3.5 h-3.5 text-[#c5a880]" />
+                    <span>Get Phin Starter Kit</span>
                   </button>
                   <button
                     onClick={handleAddPhinPowderToCart}
-                    className="py-3 px-3 rounded-xl bg-[#271310] hover:bg-[#3d201c] text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                    className="py-3 px-3 rounded-xl bg-white hover:bg-[#fbf9f5] text-[#140d09] font-medium text-xs uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-1.5 border border-[#c5a880]/30 cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-3.5 h-3.5 text-[#c5a880]" />
                     <span>Get 250g Phin Powder (₹380)</span>
                   </button>
                 </div>
@@ -339,154 +486,182 @@ export const PhinBrewStudio: React.FC<PhinBrewStudioProps> = ({
         </div>
 
         {/* Right Recipe Customization Panel (5 cols) */}
-        <div className="lg:col-span-5 bg-white border border-[#d3c3c0] rounded-2xl p-6 sm:p-7 shadow-md space-y-5">
-          <div className="border-b border-[#d3c3c0]/40 pb-3">
-            <h4 className="text-base font-bold text-[#271310] font-serif">
-              Brew Parameter Controls
+        <div className="lg:col-span-5 bg-white border border-[#c5a880]/30 rounded-2xl p-6 sm:p-7 space-y-6">
+          <div className="border-b border-[#c5a880]/20 pb-4">
+            <span className="text-[9px] uppercase tracking-[0.2em] text-[#c5a880] block mb-0.5">
+              Parameters Calibration
+            </span>
+            <h4 className="text-lg font-normal text-[#140d09] font-serif">
+              Fine-Tune Your Brew
             </h4>
-            <p className="text-xs text-[#504442]">
-              Adjust dosage, bean origin, and milk layering to calibrate flavor intensity.
+            <p className="text-xs text-[#6e635d] font-light mt-1">
+              Adjust bean origin, dosage, and milk layer to taste traditional Saigon style.
             </p>
           </div>
 
           {/* Bean Selection */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-[#271310] block">
+            <label className="text-xs font-medium text-[#140d09] block tracking-wide">
               1. Single-Origin Ground Powder:
             </label>
-            <div className="grid grid-cols-1 gap-1.5">
+            <div className="grid grid-cols-1 gap-2">
               <button
                 type="button"
                 onClick={() => setBeanOrigin('buon-ma-thuot')}
-                className={`p-2.5 rounded-lg border text-left text-xs transition-all ${
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                   beanOrigin === 'buon-ma-thuot'
-                    ? 'bg-[#271310] text-white border-[#271310]'
-                    : 'bg-[#faf2f0] text-[#504442] border-[#d3c3c0]'
+                    ? 'border-[#c5a880] bg-[#fbf9f5]'
+                    : 'border-[#c5a880]/20 hover:border-[#c5a880]/50'
                 }`}
               >
-                <div className="flex justify-between font-bold">
-                  <span>Buôn Ma Thuột 100% Fine Robusta</span>
-                  <span className="text-[#feca4d]">Dark Cacao</span>
+                <div className="flex items-center justify-between text-xs font-serif text-[#140d09]">
+                  <span>Buôn Ma Thuột Robusta</span>
+                  <span className="text-[10px] font-sans text-[#c5a880] tracking-wider uppercase">Heavy Crema</span>
                 </div>
-                <p className="text-[10px] opacity-80">Full body, intense creaminess, heavy caffeine</p>
+                <p className="text-[11px] text-[#6e635d] font-light mt-0.5">
+                  Dark chocolate notes, deep walnut finish, rich natural body.
+                </p>
               </button>
 
               <button
                 type="button"
                 onClick={() => setBeanOrigin('heritage-blend')}
-                className={`p-2.5 rounded-lg border text-left text-xs transition-all ${
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                   beanOrigin === 'heritage-blend'
-                    ? 'bg-[#271310] text-white border-[#271310]'
-                    : 'bg-[#faf2f0] text-[#504442] border-[#d3c3c0]'
+                    ? 'border-[#c5a880] bg-[#fbf9f5]'
+                    : 'border-[#c5a880]/20 hover:border-[#c5a880]/50'
                 }`}
               >
-                <div className="flex justify-between font-bold">
-                  <span>Saigon Heritage 70/30 Blend</span>
-                  <span className="text-[#feca4d]">Hazelnut & Toffee</span>
+                <div className="flex items-center justify-between text-xs font-serif text-[#140d09]">
+                  <span>Saigon Heritage Blend (80/20)</span>
+                  <span className="text-[10px] font-sans text-[#c5a880] tracking-wider uppercase">Traditional</span>
                 </div>
-                <p className="text-[10px] opacity-80">Classic balanced Saigon street style</p>
+                <p className="text-[11px] text-[#6e635d] font-light mt-0.5">
+                  Classic Vietnamese cafe balance with French butter roast aromatics.
+                </p>
               </button>
 
               <button
                 type="button"
                 onClick={() => setBeanOrigin('da-lat')}
-                className={`p-2.5 rounded-lg border text-left text-xs transition-all ${
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                   beanOrigin === 'da-lat'
-                    ? 'bg-[#271310] text-white border-[#271310]'
-                    : 'bg-[#faf2f0] text-[#504442] border-[#d3c3c0]'
+                    ? 'border-[#c5a880] bg-[#fbf9f5]'
+                    : 'border-[#c5a880]/20 hover:border-[#c5a880]/50'
                 }`}
               >
-                <div className="flex justify-between font-bold">
-                  <span>Đà Lạt Highland 100% Arabica</span>
-                  <span className="text-[#feca4d]">Jasmine & Bergamot</span>
+                <div className="flex items-center justify-between text-xs font-serif text-[#140d09]">
+                  <span>Đà Lạt High-Altitude Arabica</span>
+                  <span className="text-[10px] font-sans text-[#c5a880] tracking-wider uppercase">Floral</span>
                 </div>
-                <p className="text-[10px] opacity-80">Crisp acidity, floral bouquet, gentle finish</p>
+                <p className="text-[11px] text-[#6e635d] font-light mt-0.5">
+                  Bright lemongrass, honey blossom, delicate stone fruit sweetness.
+                </p>
               </button>
             </div>
           </div>
 
-          {/* Coffee Dose Slider */}
-          <div className="space-y-1.5 bg-[#faf2f0] p-3.5 rounded-xl border border-[#d3c3c0]/60">
-            <div className="flex justify-between text-xs font-bold text-[#271310]">
-              <span>2. Coffee Powder Dose:</span>
-              <span className="text-[#785a00] font-mono">{coffeeGrams} grams</span>
+          {/* Dosage Slider */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-medium text-[#140d09]">2. Coffee Dose:</span>
+              <span className="font-mono text-[#c5a880] font-semibold">{coffeeGrams} grams</span>
             </div>
             <input
               type="range"
-              min="15"
-              max="25"
-              step="1"
+              min={18}
+              max={25}
               value={coffeeGrams}
+              disabled={isBrewing}
               onChange={(e) => setCoffeeGrams(Number(e.target.value))}
-              className="w-full accent-[#785a00] cursor-pointer"
+              className="w-full accent-[#c5a880] cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-[#827472]">
-              <span>15g (Lighter)</span>
-              <span>20g (Standard Phin)</span>
-              <span>25g (Double Strength)</span>
+            <div className="flex justify-between text-[10px] text-[#8c827a] font-light">
+              <span>18g (Balanced)</span>
+              <span>20g (Recommended)</span>
+              <span>25g (Saigon Strong)</span>
             </div>
           </div>
 
           {/* Milk Layering Option */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-[#271310] block">3. Dairy / Base Sweetener:</label>
+            <span className="text-xs font-medium text-[#140d09] block">
+              3. Glass Base Sweetener:
+            </span>
             <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setMilkType('condensed')}
-                className={`p-2 rounded-lg border text-center text-xs font-semibold ${
-                  milkType === 'condensed'
-                    ? 'bg-[#785a00] text-white border-[#785a00]'
-                    : 'bg-[#faf2f0] text-[#504442] border-[#d3c3c0]'
-                }`}
-              >
-                Condensed Milk
-              </button>
-              <button
-                type="button"
-                onClick={() => setMilkType('coconut')}
-                className={`p-2 rounded-lg border text-center text-xs font-semibold ${
-                  milkType === 'coconut'
-                    ? 'bg-[#785a00] text-white border-[#785a00]'
-                    : 'bg-[#faf2f0] text-[#504442] border-[#d3c3c0]'
-                }`}
-              >
-                Coconut Cream
-              </button>
-              <button
-                type="button"
-                onClick={() => setMilkType('none')}
-                className={`p-2 rounded-lg border text-center text-xs font-semibold ${
-                  milkType === 'none'
-                    ? 'bg-[#785a00] text-white border-[#785a00]'
-                    : 'bg-[#faf2f0] text-[#504442] border-[#d3c3c0]'
-                }`}
-              >
-                Pure Black
-              </button>
+              {[
+                { key: 'condensed', label: 'Condensed' },
+                { key: 'coconut', label: 'Coconut' },
+                { key: 'none', label: 'Pure Black' },
+              ].map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setMilkType(m.key as any)}
+                  className={`py-2 px-1 text-center text-xs rounded-lg border transition-all cursor-pointer ${
+                    milkType === m.key
+                      ? 'border-[#c5a880] bg-[#fbf9f5] text-[#140d09] font-medium'
+                      : 'border-[#c5a880]/20 text-[#6e635d] hover:border-[#c5a880]/50'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
             </div>
+
+            {milkType !== 'none' && (
+              <div className="pt-2 flex items-center justify-between text-xs">
+                <span className="text-[#6e635d] font-light">Quantity:</span>
+                <div className="flex gap-2">
+                  {[1, 2, 3].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setMilkSpoons(s)}
+                      className={`w-7 h-7 rounded-full text-xs font-mono transition-all cursor-pointer ${
+                        milkSpoons === s
+                          ? 'bg-[#140d09] text-[#fcfbf7]'
+                          : 'border border-[#c5a880]/30 text-[#6e635d]'
+                      }`}
+                    >
+                      {s}T
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Ready-to-buy starter pack callout */}
-          <div className="bg-[#f0e6e4] p-3.5 rounded-xl border border-[#d3c3c0] space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#785a00]">
-              <Package className="w-3.5 h-3.5" />
-              <span>Need the Traditional Stainless Steel Phin?</span>
+          {/* Press Tightness */}
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-[#140d09] block">
+              4. Gravity Press Disc Calibration:
+            </span>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              {[
+                { key: 'gentle', label: 'Gentle (Fast)' },
+                { key: 'medium', label: 'Medium (Ideal)' },
+                { key: 'firm', label: 'Firm (Slow)' },
+              ].map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => setPressTightness(p.key as any)}
+                  className={`py-2 px-1 text-center text-[11px] rounded-lg border transition-all cursor-pointer ${
+                    pressTightness === p.key
+                      ? 'border-[#c5a880] bg-[#fbf9f5] text-[#140d09] font-medium'
+                      : 'border-[#c5a880]/20 text-[#6e635d] hover:border-[#c5a880]/50'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
-            <p className="text-[11px] text-[#504442]">
-              Order our Authentic 6oz Phin Gravity Dripper (₹320) or Complete Barista Starter Bundle (₹890).
-            </p>
-            <button
-              onClick={handleAddStarterKitToCart}
-              className="mt-1 text-xs font-bold text-[#271310] underline underline-offset-2 hover:text-[#785a00]"
-            >
-              Add Starter Bundle to Cart →
-            </button>
           </div>
         </div>
       </div>
 
-      <HeritageDivider variant="geometric" />
+      <HeritageDivider variant="lotus" />
     </section>
   );
 };

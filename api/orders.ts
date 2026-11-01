@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
-import { getDbOrders, updateDbOrders, getDbProducts, updateDbProducts } from './_lib/db';
-import { isValidSession } from './_lib/auth-util';
-import { PlacedOrder, OrderState } from '../src/types';
+import type { Request, Response } from 'express';
+import { getDbOrders, updateDbOrders, getDbProducts, updateDbProducts } from './_lib/db.ts';
+import { isValidSession } from './_lib/auth-util.ts';
+import type { PlacedOrder, OrderState } from '../src/types.ts';
 
 export default async function handler(req: any, res: any) {
   return ordersHandler(req, res);

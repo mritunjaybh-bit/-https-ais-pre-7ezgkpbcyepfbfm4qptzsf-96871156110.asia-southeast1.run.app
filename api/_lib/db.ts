@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import crypto from 'crypto';
-import { ProductItem, PlacedOrder, EmailSubscriber } from '../../src/types';
-import { PRODUCT_ITEMS } from '../../src/data/coffeeData';
+import type { ProductItem, PlacedOrder, EmailSubscriber } from '../../src/types.ts';
+import { PRODUCT_ITEMS } from '../../src/data/coffeeData.ts';
 
 export type UserRole = 'owner' | 'staff';
 
@@ -71,7 +71,21 @@ export function verifyPassword(password: string, storedHash?: string): boolean {
   }
 }
 
-// Initial seed data: STRICTLY FRESH & EMPTY USERS
+// Registered Owner Account (Permanent Base Seed)
+const DEFAULT_OWNER_ACCOUNT: UserAccount = {
+  id: 'usr-owner-1790511787965-3e82c9a1',
+  username: 'Mritunjay',
+  email: 'mritunjay.bhardwaj@caphevietnam.in',
+  name: 'Mritunjay Bhardwaj',
+  role: 'owner',
+  passwordHash:
+    'd11f39bbae21d012247f56d456d9be55:9cd77a67670d24a29d18c1e9fe539d92f542c726633df65b98bde01ec89604f140af2e87215bc0f696bcfe908ab9fae82798505428e514820edd9083358ef9c8',
+  status: 'active',
+  createdAt: '2026-09-27T12:23:07.965Z',
+  lastLoginAt: '2026-09-27T12:25:10.137Z',
+};
+
+// Initial seed data: contains catalog products and verified configured owner account
 export function getInitialSeedData(): StoreDatabase {
   const seededProducts: ProductItem[] = PRODUCT_ITEMS.map((p, idx) => ({
     ...p,
@@ -83,9 +97,10 @@ export function getInitialSeedData(): StoreDatabase {
     products: seededProducts,
     orders: [],
     adminConfig: {
-      isSetupComplete: false,
+      isSetupComplete: true,
+      setupAt: '2026-09-27T12:23:07.966Z',
     },
-    users: [], // Zero accounts — fresh setup
+    users: [DEFAULT_OWNER_ACCOUNT],
     sessions: [],
     otps: {},
     subscribers: [],
@@ -159,6 +174,13 @@ export function loadDatabase(forceReload = false): StoreDatabase {
   }
 
   if (chosen) {
+    if (!chosen.users || chosen.users.length === 0) {
+      chosen.users = [DEFAULT_OWNER_ACCOUNT];
+      if (!chosen.adminConfig) {
+        chosen.adminConfig = { isSetupComplete: true, setupAt: '2026-09-27T12:23:07.966Z' };
+      }
+      chosen.adminConfig.isSetupComplete = true;
+    }
     dbCache = chosen;
     return chosen;
   }

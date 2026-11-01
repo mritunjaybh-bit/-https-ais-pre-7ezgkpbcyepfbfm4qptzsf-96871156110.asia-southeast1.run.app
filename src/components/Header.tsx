@@ -3,22 +3,12 @@ import { Logo } from './Logo';
 import { Currency, ActiveTab } from '../types';
 import {
   ShoppingBag,
-  Sparkles,
-  Coffee,
-  Compass,
-  Layers,
-  Flame,
-  MapPin,
   Globe,
   ChevronDown,
   Check,
   Clock,
-  Package,
-  Truck,
-  Mail,
   Volume2,
-  VolumeX,
-  BookOpen
+  VolumeX
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatCurrency';
 import { CURRENCY_RATES } from '../data/coffeeData';
@@ -66,35 +56,31 @@ export const Header: React.FC<HeaderProps> = ({
   const currencies: Currency[] = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'VND'];
 
   return (
-    <header className="sticky top-0 z-40 w-full max-w-full bg-[#fff8f6]/95 backdrop-blur-md border-b border-[#d3c3c0]/40 transition-colors duration-200 overflow-x-clip">
-      {/* Top Announcement Bar */}
-      <div className="w-full bg-[#271310] text-[#f4eceb] text-xs py-1.5 px-3 sm:px-4 font-medium tracking-wide flex items-center justify-between overflow-hidden">
-        <div className="hidden xl:flex items-center gap-2 text-[#feca4d] truncate shrink min-w-0">
-          <Truck className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">Fresh Single-Origin Ground Powders & Instant Coffee • Air Courier Dispatch Across India</span>
+    <header className="sticky top-0 z-40 w-full max-w-full bg-[#fcfbf7]/95 backdrop-blur-md border-b border-[#c5a880]/20 font-sans transition-colors duration-300">
+      {/* Editorial Luxury Top Announcement Bar */}
+      <div className="w-full bg-[#140d09] text-[#fcfbf7] text-[11px] py-2 px-4 font-light tracking-[0.2em] uppercase flex items-center justify-between border-b border-[#c5a880]/20">
+        <div className="hidden lg:flex items-center gap-2 text-[#c5a880]">
+          <span>Single-origin. Slow-roasted. Brewed in the Vietnamese tradition.</span>
         </div>
-        <div className="mx-auto flex items-center justify-center gap-1.5 text-[11px] sm:text-xs text-center shrink min-w-0 flex-wrap">
-          <span className="text-[#feca4d] font-semibold flex items-center gap-1">
-            <Mail className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden xs:inline">Customer Care & Support:</span>
-            <span className="xs:hidden">Support:</span>
-          </span>
+        <div className="mx-auto lg:mx-0 flex items-center gap-2 text-center">
+          <span className="text-[#8c827a]">Complimentary Shipping Above ₹799</span>
+          <span className="text-[#c5a880]">•</span>
           <a
             href="mailto:support@caphevietnam.in"
-            className="text-white hover:text-[#feca4d] underline font-medium transition-colors truncate"
+            className="text-[#e5ded8] hover:text-[#c5a880] underline underline-offset-2 transition-colors"
           >
             support@caphevietnam.in
           </a>
         </div>
-        <div className="hidden xl:flex items-center gap-4 text-[11px] text-[#ae8d87] shrink-0">
-          <span>Fresh Nitrogen Sealed</span>
+        <div className="hidden lg:flex items-center gap-3 text-[10px] text-[#c5a880] tracking-[0.25em]">
+          <span>Buôn Ma Thuột</span>
           <span>•</span>
-          <span>Free Shipping &gt; ₹799</span>
+          <span>Đà Lạt</span>
         </div>
       </div>
 
-      {/* Main Top Header Bar: Logo & Utility Controls */}
-      <div className="w-full max-w-[1200px] mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3 min-w-0">
+      {/* Main Top Header Bar: Logo & Restrained Luxury Tools */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
         {/* Brand Logo */}
         <div className="shrink-0">
           <Logo
@@ -105,31 +91,50 @@ export const Header: React.FC<HeaderProps> = ({
           />
         </div>
 
-        {/* Right Tools: Currency, Tracker, Music, Cart */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
+        {/* Right Tools: Discreet Music, Currency, Tracker, Cart */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Discreet Music Toggle */}
+          <button
+            id="header-music-toggle-btn"
+            type="button"
+            onClick={toggleMute}
+            title={!isMuted ? 'Mute ambient Vietnamese instrumental score' : 'Play ambient Vietnamese instrumental score'}
+            aria-label={!isMuted ? 'Mute background music' : 'Play background music'}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-[#c5a880]/30 hover:border-[#c5a880] text-[#6e635d] hover:text-[#140d09] transition-all duration-300 text-[11px] font-light tracking-wider uppercase cursor-pointer"
+          >
+            {!isMuted ? (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-[#c5a880]" />
+                <span className="hidden sm:inline">Sound: On</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-[#8c827a]" />
+                <span className="hidden sm:inline text-[#8c827a]">Sound</span>
+              </>
+            )}
+          </button>
+
           {/* Currency Dropdown Selector */}
           <div className="relative shrink-0" ref={currencyMenuRef}>
             <button
               id="currency-selector-button"
               type="button"
               onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
-              className="flex items-center gap-1 bg-[#faf2f0] hover:bg-[#eee3e1] border border-[#d3c3c0] px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#271310] transition-colors shadow-2xs cursor-pointer"
-              title="Select your preferred currency"
+              className="flex items-center gap-1 bg-white hover:bg-[#fbf9f5] border border-[#c5a880]/30 hover:border-[#c5a880] px-2.5 py-1.5 rounded-full text-xs font-light tracking-wider text-[#140d09] transition-colors cursor-pointer"
             >
-              <Globe className="w-3.5 h-3.5 text-[#785a00] shrink-0" />
-              <span className="text-[11px] sm:text-xs">{CURRENCY_RATES[currency]?.symbol || '₹'}</span>
-              <span className="hidden sm:inline text-xs">{currency}</span>
-              <ChevronDown className={`w-3 h-3 text-[#827472] transition-transform ${isCurrencyDropdownOpen ? 'rotate-180' : ''}`} />
+              <Globe className="w-3 h-3 text-[#c5a880] shrink-0" />
+              <span>{currency}</span>
+              <ChevronDown className={`w-3 h-3 text-[#8c827a] transition-transform duration-300 ${isCurrencyDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Currency Dropdown Menu */}
             {isCurrencyDropdownOpen && (
               <div
                 id="currency-dropdown-menu"
-                className="absolute right-0 mt-1.5 w-48 bg-[#fff8f6] border border-[#d3c3c0] rounded-xl shadow-xl py-1.5 z-50 text-xs animate-in fade-in slide-in-from-top-1 duration-150"
+                className="absolute right-0 mt-2 w-48 bg-[#fcfbf7] border border-[#c5a880]/40 rounded-xl shadow-xl py-2 z-50 text-xs animate-in fade-in duration-200"
               >
-                <div className="px-3 py-1 text-[10px] font-bold text-[#827472] uppercase tracking-wider border-b border-[#d3c3c0]/40">
-                  Select Currency (Default: INR)
+                <div className="px-3 py-1 text-[9px] font-medium text-[#c5a880] uppercase tracking-[0.2em] border-b border-[#c5a880]/20">
+                  Select Currency
                 </div>
                 {currencies.map((curr) => {
                   const meta = CURRENCY_RATES[curr];
@@ -143,17 +148,12 @@ export const Header: React.FC<HeaderProps> = ({
                         setCurrency(curr);
                         setIsCurrencyDropdownOpen(false);
                       }}
-                      className={`w-full px-3 py-2 text-left flex items-center justify-between hover:bg-[#faf2f0] transition-colors ${
-                        isSelected ? 'font-bold text-[#785a00] bg-[#feca4d]/10' : 'text-[#271310]'
+                      className={`w-full px-3 py-2 text-left flex items-center justify-between hover:bg-[#fbf9f5] transition-colors ${
+                        isSelected ? 'font-medium text-[#c5a880] bg-[#140d09]/5' : 'text-[#140d09]'
                       }`}
                     >
-                      <div className="flex flex-col">
-                        <span className="text-xs font-semibold">
-                          {curr} ({meta?.symbol})
-                        </span>
-                        <span className="text-[10px] text-[#827472]">{meta?.name}</span>
-                      </div>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-[#785a00]" />}
+                      <span className="text-xs">{curr} ({meta?.symbol})</span>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-[#c5a880]" />}
                     </button>
                   );
                 })}
@@ -161,74 +161,36 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Track Order Status Button */}
+          {/* Minimal Order Tracker Button */}
           <button
             id="header-track-order-btn"
             onClick={onOpenTracker}
-            title="Track real-time coffee delivery status"
-            className={`flex items-center gap-1.5 px-2 sm:px-2.5 md:px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors relative cursor-pointer border shrink-0 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-light tracking-wider uppercase rounded-full transition-all cursor-pointer border ${
               activeTab === 'track-order'
-                ? 'bg-[#271310] text-white border-[#271310] shadow-xs'
-                : 'text-[#271310] bg-[#faf2f0] hover:bg-[#eee3e1] border-[#d3c3c0]'
+                ? 'bg-[#140d09] text-[#fcfbf7] border-[#c5a880]'
+                : 'text-[#140d09] hover:border-[#c5a880] border-[#c5a880]/30'
             }`}
           >
-            <Clock className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'track-order' ? 'text-[#feca4d]' : 'text-[#785a00]'}`} />
-            <span className="hidden md:inline">Track Order</span>
+            <Clock className="w-3 h-3 text-[#c5a880]" />
+            <span className="hidden md:inline">Track</span>
             {activeOrdersCount > 0 && (
-              <span className="w-2 h-2 rounded-full bg-[#feca4d] animate-ping absolute -top-0.5 -right-0.5" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c5a880]" />
             )}
           </button>
 
-          {/* Vietnamese Background Ambient Music Mute/Unmute Toggle Button */}
-          <button
-            id="header-music-toggle-btn"
-            type="button"
-            onClick={toggleMute}
-            title={!isMuted ? 'Mute traditional Vietnamese instrumental music' : 'Play traditional Vietnamese music (Đàn Tranh & Đàn Bầu)'}
-            aria-label={!isMuted ? 'Mute background music' : 'Play background music'}
-            className={`flex items-center gap-1.5 px-2 sm:px-2.5 md:px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-200 shrink-0 cursor-pointer ${
-              !isMuted
-                ? 'bg-[#feca4d] text-[#271310] border-[#feca4d] shadow-xs hover:bg-[#ffc02e] active:scale-95'
-                : 'bg-[#faf2f0] text-[#504442] hover:text-[#271310] hover:bg-[#eee3e1] border-[#d3c3c0] active:scale-95'
-            }`}
-          >
-            {!isMuted ? (
-              <>
-                <Volume2 className="w-3.5 h-3.5 animate-pulse text-[#271310] shrink-0" />
-                <span className="hidden md:inline text-[11px] font-bold">♫ Music</span>
-              </>
-            ) : (
-              <>
-                <VolumeX className="w-3.5 h-3.5 text-[#827472] shrink-0" />
-                <span className="hidden md:inline text-[11px]">Music</span>
-              </>
-            )}
-          </button>
-
-          {/* Quick Flavor Finder Button */}
-          <button
-            id="header-taste-matcher-btn"
-            onClick={onOpenMatcher}
-            title="Discover your perfect Vietnamese coffee powder or instant mix"
-            className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#785a00] bg-[#feca4d]/20 hover:bg-[#feca4d]/30 border border-[#feca4d]/40 rounded-lg transition-colors shrink-0 cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5 shrink-0" />
-            <span>Flavor Finder</span>
-          </button>
-
-          {/* Shopping Cart Button */}
+          {/* Restrained Luxury Cart Button */}
           <button
             id="header-cart-button"
             onClick={onOpenCart}
-            aria-label="Open shopping cart"
-            className="relative flex items-center gap-1.5 sm:gap-2 bg-[#271310] text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg hover:bg-[#3e2723] active:scale-95 transition-all shadow-sm shrink-0 cursor-pointer"
+            aria-label="Open shopping bag"
+            className="flex items-center gap-2 bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] px-3.5 py-1.5 rounded-full transition-all cursor-pointer border border-[#c5a880]/40"
           >
-            <ShoppingBag className="w-4 h-4 text-[#feca4d] shrink-0" />
-            <span className="text-xs font-semibold hidden md:inline">
-              {cartCount > 0 ? formatPrice(cartTotalINR, currency) : 'Cart'}
+            <ShoppingBag className="w-3.5 h-3.5 text-[#c5a880]" />
+            <span className="text-xs font-light tracking-wider hidden sm:inline">
+              {cartCount > 0 ? formatPrice(cartTotalINR, currency) : 'Bag'}
             </span>
             {cartCount > 0 && (
-              <span className="bg-[#feca4d] text-[#271310] text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">
+              <span className="bg-[#c5a880] text-[#140d09] text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-full leading-none">
                 {cartCount}
               </span>
             )}
@@ -236,151 +198,50 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Primary Navigation Bar (Coffee Powders & Shop, Flavoured Coffees, etc.) */}
-      {/* Wrapped in a dedicated, scroll-contained container that wraps or scrolls horizontally within its own container without pushing the page width */}
-      <div className="w-full border-t border-[#d3c3c0]/30 bg-[#faf2f0]/95 backdrop-blur-xs overflow-hidden">
+      {/* Primary Navigation Bar: Refined Hairline Style */}
+      <div className="w-full border-t border-[#c5a880]/15 bg-[#fcfbf7]">
         <nav
           aria-label="Main Navigation"
-          className="w-full max-w-[1200px] mx-auto px-3 sm:px-6 py-1.5 flex items-center justify-start lg:justify-center gap-1.5 sm:gap-2 overflow-x-auto max-w-full no-scrollbar min-w-0"
+          className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-start lg:justify-center gap-4 sm:gap-8 overflow-x-auto no-scrollbar text-[11px] sm:text-xs tracking-[0.2em] uppercase font-light"
         >
-          <a
-            id="nav-tab-shop"
-            href="/"
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.button === 1) return;
-              e.preventDefault();
-              setActiveTab('shop');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
-              activeTab === 'shop'
-                ? 'bg-[#271310] text-white shadow-xs'
-                : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 shrink-0" />
-            <span>Coffee Powders & Shop</span>
-          </a>
+          {[
+            { id: 'shop', label: 'The Collection', href: '/' },
+            { id: 'flavoured', label: 'Flavoured Specialty', href: '/flavoured' },
+            { id: 'instant', label: 'Instant 3-in-1', href: '/instant' },
+            { id: 'brew-studio', label: 'Phin Ritual Studio', href: '/brew-studio' },
+            { id: 'flavor-matcher', label: 'Taste Matcher', href: '/taste-matcher' },
+            { id: 'heritage', label: 'Terroir & Story', href: '/heritage' },
+            { id: 'blog', label: 'Journal', href: '/blog' },
+          ].map((item) => {
+            const isActive =
+              item.id === 'blog'
+                ? activeTab === 'blog' || activeTab === 'blog-post'
+                : activeTab === item.id;
 
-          <a
-            id="nav-tab-flavoured"
-            href="/flavoured"
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.button === 1) return;
-              e.preventDefault();
-              setActiveTab('flavoured');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
-              activeTab === 'flavoured'
-                ? 'bg-[#785a00] text-white shadow-xs'
-                : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#feca4d] shrink-0" />
-            <span>Flavoured Coffees</span>
-            <span className="bg-[#feca4d] text-[#271310] text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded-full tracking-wider">
-              Egg & Chocolate
-            </span>
-          </a>
-
-          <a
-            id="nav-tab-instant"
-            href="/instant"
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.button === 1) return;
-              e.preventDefault();
-              setActiveTab('instant');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
-              activeTab === 'instant'
-                ? 'bg-[#271310] text-white shadow-xs'
-                : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
-            }`}
-          >
-            <Coffee className="w-3.5 h-3.5 text-[#785a00] shrink-0" />
-            <span>Instant & 3-in-1</span>
-          </a>
-
-          <a
-            id="nav-tab-brew-studio"
-            href="/brew-studio"
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.button === 1) return;
-              e.preventDefault();
-              setActiveTab('brew-studio');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
-              activeTab === 'brew-studio'
-                ? 'bg-[#785a00] text-white shadow-xs font-bold'
-                : 'bg-[#feca4d]/20 text-[#785a00] hover:bg-[#feca4d]/30 border border-[#feca4d]/40'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#feca4d] animate-pulse shrink-0" />
-            <span>Phin Brew Studio</span>
-            <span className="bg-[#feca4d] text-[#271310] text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded-full tracking-wider">
-              Interactive
-            </span>
-          </a>
-
-          <a
-            id="nav-tab-flavor-matcher"
-            href="/taste-matcher"
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.button === 1) return;
-              e.preventDefault();
-              setActiveTab('flavor-matcher');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
-              activeTab === 'flavor-matcher'
-                ? 'bg-[#271310] text-white shadow-xs'
-                : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 shrink-0" />
-            <span>Taste Matcher</span>
-          </a>
-
-          <a
-            id="nav-tab-heritage"
-            href="/heritage"
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.button === 1) return;
-              e.preventDefault();
-              setActiveTab('heritage');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
-              activeTab === 'heritage'
-                ? 'bg-[#271310] text-white shadow-xs'
-                : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
-            }`}
-          >
-            <Compass className="w-3.5 h-3.5 shrink-0" />
-            <span>Heritage & Guides</span>
-          </a>
-
-          <a
-            id="nav-tab-blog"
-            href="/blog"
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.button === 1) return;
-              e.preventDefault();
-              setActiveTab('blog');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer no-underline ${
-              activeTab === 'blog' || activeTab === 'blog-post'
-                ? 'bg-[#271310] text-white shadow-xs'
-                : 'bg-white/80 text-[#504442] hover:text-[#271310] hover:bg-[#eae0de] border border-[#d3c3c0]/40'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5 shrink-0" />
-            <span>Journal</span>
-          </a>
+            return (
+              <a
+                key={item.id}
+                id={`nav-tab-${item.id}`}
+                href={item.href}
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                  e.preventDefault();
+                  setActiveTab(item.id as ActiveTab);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`shrink-0 whitespace-nowrap py-1 relative transition-colors duration-300 no-underline cursor-pointer ${
+                  isActive
+                    ? 'text-[#140d09] font-medium'
+                    : 'text-[#8c827a] hover:text-[#140d09]'
+                }`}
+              >
+                {item.label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[#c5a880]" />
+                )}
+              </a>
+            );
+          })}
         </nav>
       </div>
     </header>

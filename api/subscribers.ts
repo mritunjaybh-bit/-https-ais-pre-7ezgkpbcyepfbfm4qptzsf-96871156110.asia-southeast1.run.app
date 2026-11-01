@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
-import { getDbSubscribers, addDbSubscriber } from './_lib/db';
-import { isValidSession } from './_lib/auth-util';
+import type { Request, Response } from 'express';
+import { getDbSubscribers, addDbSubscriber, getDbOrders } from './_lib/db.ts';
+import { isValidSession } from './_lib/auth-util.ts';
 
 export default async function handler(req: any, res: any) {
   return subscribersHandler(req, res);
@@ -32,7 +32,6 @@ export function subscribersHandler(req: Request, res: Response) {
 
     // Check if CSV export is requested
     if (req.query.format === 'csv') {
-      const { getDbOrders } = require('./_lib/db');
       const orders = getDbOrders() || [];
 
       const csvRows = [

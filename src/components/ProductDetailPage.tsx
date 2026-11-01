@@ -21,7 +21,8 @@ import {
   Plus,
   Minus,
   Share2,
-  AlertCircle,
+  Droplets,
+  BookOpen
 } from 'lucide-react';
 
 interface ProductDetailPageProps {
@@ -31,6 +32,7 @@ interface ProductDetailPageProps {
   onBuyNow: (item: CartItem) => void;
   onBackToShop: () => void;
   onSelectRelatedProduct: (product: ProductItem) => void;
+  onOpenBrewStudio?: () => void;
 }
 
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
@@ -40,6 +42,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   onBuyNow,
   onBackToShop,
   onSelectRelatedProduct,
+  onOpenBrewStudio,
 }) => {
   const [selectedSize, setSelectedSize] = useState<PackageSize>(
     product.availableSizes[0]?.size || '250g Valve Pouch'
@@ -51,25 +54,21 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const [addedNotice, setAddedNotice] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Sync state when product prop changes
   useEffect(() => {
     setSelectedSize(product.availableSizes[0]?.size || '250g Valve Pouch');
     setSelectedGrind(product.availableGrinds ? product.availableGrinds[0] : undefined);
     setQuantity(1);
     setAddedNotice(false);
 
-    // Dynamic document title update
     if (typeof document !== 'undefined') {
-      document.title = `${product.name} | Cà Phê Authentic Vietnamese Coffee`;
+      document.title = `${product.name} | Cà Phê Vietnamese Artisanal Roasters`;
     }
 
-    // Scroll to top
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [product.id]);
 
-  // Read latest live product data (for dynamic admin price/stock edits)
   const liveProduct = getProductById(product.id) || product;
   const isOutOfStock = (liveProduct.stockQuantity ?? 50) <= 0 || liveProduct.isOutOfStock;
 
@@ -78,136 +77,144 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const unitPrice = Math.round(liveProduct.basePriceINR * (currentSizeObj?.priceMultiplier || 1));
   const totalPrice = unitPrice * quantity;
 
-  const buildCartItem = (): CartItem => ({
-    id: `${liveProduct.id}-${selectedSize}-${selectedGrind || 'none'}-${Date.now()}`,
-    productId: liveProduct.id,
-    name: liveProduct.name,
-    vietnameseName: liveProduct.vietnameseName,
-    unitPriceINR: unitPrice,
-    quantity,
-    imageUrl: liveProduct.imageUrl,
-    selectedSize,
-    selectedGrind,
-    category: liveProduct.category,
-  });
+  const recipe = liveProduct.brewRecipe;
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
-    const item = buildCartItem();
-    onAddToCart(item);
+    const cartItem: CartItem = {
+      id: `${liveProduct.id}-${selectedSize}-${selectedGrind || 'none'}-${Date.now()}`,
+      productId: liveProduct.id,
+      name: liveProduct.name,
+      vietnameseName: liveProduct.vietnameseName,
+      unitPriceINR: unitPrice,
+      quantity,
+      imageUrl: liveProduct.imageUrl,
+      selectedSize,
+      selectedGrind,
+      category: liveProduct.category,
+    };
+
+    onAddToCart(cartItem);
     setAddedNotice(true);
-    setTimeout(() => {
-      setAddedNotice(false);
-    }, 2000);
+    setTimeout(() => setAddedNotice(false), 2000);
   };
 
   const handleBuyNow = () => {
     if (isOutOfStock) return;
-    const item = buildCartItem();
-    onBuyNow(item);
+    const cartItem: CartItem = {
+      id: `${liveProduct.id}-${selectedSize}-${selectedGrind || 'none'}-${Date.now()}`,
+      productId: liveProduct.id,
+      name: liveProduct.name,
+      vietnameseName: liveProduct.vietnameseName,
+      unitPriceINR: unitPrice,
+      quantity,
+      imageUrl: liveProduct.imageUrl,
+      selectedSize,
+      selectedGrind,
+      category: liveProduct.category,
+    };
+
+    onBuyNow(cartItem);
   };
 
   const handleShare = () => {
-    if (typeof window !== 'undefined') {
-      navigator.clipboard?.writeText(window.location.href);
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
       setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
+      setTimeout(() => setCopiedLink(false), 2500);
     }
   };
 
-  // 3 Complementary products from Dak Lak & Da Lat
-  const relatedProducts = PRODUCT_ITEMS.filter((p) => p.id !== product.id).slice(0, 3);
+  const relatedProducts = PRODUCT_ITEMS.filter(
+    (item) => item.id !== product.id && (item.category === product.category || item.flavorType === product.flavorType)
+  ).slice(0, 3);
 
   return (
-    <div className="w-full max-w-full overflow-hidden bg-[#fff8f6] py-6 sm:py-10">
-      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 space-y-10">
-        {/* Navigation Breadcrumb Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d3c3c0]/60 pb-4">
-          <div className="flex items-center gap-2 text-xs">
-            <button
-              onClick={onBackToShop}
-              className="inline-flex items-center gap-1.5 font-bold text-[#785a00] hover:text-[#271310] transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Catalog</span>
-            </button>
-            <ChevronRight className="w-3.5 h-3.5 text-[#827472]" />
-            <span className="text-[#827472] font-medium capitalize">
-              {product.category.replace('-', ' ')}
-            </span>
-            <ChevronRight className="w-3.5 h-3.5 text-[#827472] hidden sm:inline" />
-            <span className="text-[#504442] font-semibold truncate max-w-[200px] sm:max-w-[320px] hidden sm:inline">
-              {product.name}
-            </span>
-          </div>
+    <div className="w-full min-h-screen bg-[#fcfbf7] font-sans text-[#140d09] pb-24">
+      {/* Editorial Luxury Top Bar */}
+      <div className="border-b border-[#c5a880]/20 bg-[#fcfbf7]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between text-xs">
+          <button
+            onClick={onBackToShop}
+            className="flex items-center gap-2 text-[#6e635d] hover:text-[#140d09] font-medium tracking-wider uppercase transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-[#c5a880]" />
+            <span>Return to Catalog</span>
+          </button>
 
           <button
             onClick={handleShare}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#504442] hover:text-[#271310] bg-white hover:bg-[#faf2f0] border border-[#d3c3c0] px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-            title="Share this product"
+            className="flex items-center gap-1.5 text-[#6e635d] hover:text-[#140d09] font-medium tracking-wider uppercase transition-colors cursor-pointer"
           >
             {copiedLink ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-emerald-700 font-bold">Link Copied!</span>
+                <Check className="w-3.5 h-3.5 text-[#c5a880]" />
+                <span className="text-[#c5a880]">Link Saved</span>
               </>
             ) : (
               <>
-                <Share2 className="w-3.5 h-3.5 text-[#785a00]" />
-                <span>Share Product</span>
+                <Share2 className="w-3.5 h-3.5 text-[#c5a880]" />
+                <span>Share Piece</span>
               </>
             )}
           </button>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-16">
         {/* Main Product Showcase Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
           {/* Left Column: Visual Showcase */}
-          <div className="lg:col-span-6 space-y-4">
-            <div className="relative aspect-[4/3] sm:aspect-square w-full rounded-2xl overflow-hidden border border-[#d3c3c0]/80 shadow-sm bg-[#faf2f0]">
+          <div className="lg:col-span-6 space-y-6">
+            <div className="relative aspect-[4/3] sm:aspect-square w-full rounded-2xl overflow-hidden border border-[#c5a880]/30 bg-[#f7f4ee]">
               <img
                 src={product.imageUrl}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
 
-              {/* Top Badge */}
-              {product.badge && (
-                <div className="absolute top-4 left-4 bg-[#271310]/95 backdrop-blur-xs text-[#feca4d] text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-md border border-[#feca4d]/40 shadow-sm">
-                  {product.badge}
-                </div>
+              {/* Status / Origin Badge */}
+              <div className="absolute top-4 left-4 flex gap-2">
+                {product.originRegion && (
+                  <span className="bg-[#140d09]/90 text-[#fcfbf7] text-[9px] font-medium tracking-[0.2em] uppercase px-3 py-1 rounded border border-[#c5a880]/40">
+                    {product.originRegion}
+                  </span>
+                )}
+                {product.badge && (
+                  <span className="bg-white/95 text-[#140d09] text-[9px] font-medium tracking-[0.15em] uppercase px-3 py-1 rounded border border-[#c5a880]/30">
+                    {product.badge}
+                  </span>
+                )}
+              </div>
+
+              {/* Jump to Brew Recipe Floating Pill */}
+              {recipe && (
+                <a
+                  href="#brew-recipe-section"
+                  className="absolute bottom-4 right-4 bg-white/95 text-[#140d09] hover:bg-[#140d09] hover:text-[#c5a880] text-[10px] font-medium tracking-[0.15em] uppercase px-3 py-1.5 rounded-full border border-[#c5a880] shadow-xs transition-all duration-300 flex items-center gap-1.5 cursor-pointer backdrop-blur-xs"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-[#c5a880]" />
+                  <span>Brew Recipe Below ↓</span>
+                </a>
               )}
-
-              {/* Energy / Caffeine Score */}
-              <div className="absolute bottom-4 left-4 bg-[#180b09]/85 backdrop-blur-xs text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-white/20 shadow-sm">
-                <Zap className="w-3.5 h-3.5 text-[#feca4d] fill-[#feca4d]" />
-                <span>Caffeine Kick: {product.caffeineScore}/5</span>
-              </div>
-
-              {/* Rating Badge */}
-              <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-xs text-[#271310] text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5">
-                <Star className="w-3.5 h-3.5 text-[#785a00] fill-[#785a00]" />
-                <span>{product.rating.toFixed(1)}</span>
-                <span className="text-[#827472] text-[11px]">({product.reviewsCount} reviews)</span>
-              </div>
             </div>
 
-            {/* Quick Micro-Badges */}
-            <div className="grid grid-cols-3 gap-2.5 pt-1">
-              <div className="bg-white p-2.5 rounded-xl border border-[#d3c3c0]/60 text-center space-y-0.5">
-                <ShieldCheck className="w-4 h-4 text-[#785a00] mx-auto" />
-                <span className="text-[10px] font-bold text-[#271310] block">100% Direct-Trade</span>
-                <span className="text-[9px] text-[#827472] block">Highland Estates</span>
+            {/* House Quality Standards */}
+            <div className="grid grid-cols-3 gap-3 pt-1">
+              <div className="bg-white p-3 rounded-xl border border-[#c5a880]/20 text-center space-y-1">
+                <ShieldCheck className="w-4 h-4 text-[#c5a880] mx-auto" />
+                <span className="text-[10px] font-medium text-[#140d09] block uppercase tracking-wider">Direct Origin</span>
+                <span className="text-[9px] text-[#8c827a] block font-light">Central Highlands</span>
               </div>
-              <div className="bg-white p-2.5 rounded-xl border border-[#d3c3c0]/60 text-center space-y-0.5">
-                <Coffee className="w-4 h-4 text-[#785a00] mx-auto" />
-                <span className="text-[10px] font-bold text-[#271310] block">Slow Micro-Roast</span>
-                <span className="text-[9px] text-[#827472] block">Batch Roasted Weekly</span>
+              <div className="bg-white p-3 rounded-xl border border-[#c5a880]/20 text-center space-y-1">
+                <Coffee className="w-4 h-4 text-[#c5a880] mx-auto" />
+                <span className="text-[10px] font-medium text-[#140d09] block uppercase tracking-wider">Slow Roasted</span>
+                <span className="text-[9px] text-[#8c827a] block font-light">Heritage Butter Drum</span>
               </div>
-              <div className="bg-white p-2.5 rounded-xl border border-[#d3c3c0]/60 text-center space-y-0.5">
-                <Truck className="w-4 h-4 text-[#785a00] mx-auto" />
-                <span className="text-[10px] font-bold text-[#271310] block">Express Delivery</span>
-                <span className="text-[9px] text-[#827472] block">Free above ₹799</span>
+              <div className="bg-white p-3 rounded-xl border border-[#c5a880]/20 text-center space-y-1">
+                <Truck className="w-4 h-4 text-[#c5a880] mx-auto" />
+                <span className="text-[10px] font-medium text-[#140d09] block uppercase tracking-wider">Fresh Seal</span>
+                <span className="text-[9px] text-[#8c827a] block font-light">1-Way Degassing Valve</span>
               </div>
             </div>
           </div>
@@ -215,54 +222,51 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           {/* Right Column: Pricing, Grind/Size Selection & Actions */}
           <div className="lg:col-span-6 space-y-6">
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs uppercase font-bold tracking-wider text-[#785a00]">
+              <div className="flex items-center gap-2 text-[10px] uppercase font-medium tracking-[0.2em] text-[#c5a880]">
                 <span>
                   {product.category === 'flavoured-coffee'
-                    ? `Flavoured Coffee • ${product.flavorType || 'Specialty'}`
+                    ? product.flavorType || 'Flavoured Specialty'
                     : product.category === 'coffee-powder'
-                    ? 'Ground Coffee Powder'
+                    ? 'Ground Phin Powder'
                     : product.category === 'instant-coffee'
-                    ? 'Instant Coffee'
+                    ? 'Instant 3-in-1'
                     : product.category === 'whole-bean'
-                    ? 'Whole Roasted Beans'
+                    ? 'Whole Roasted Bean'
                     : 'Brewing Hardware'}
                 </span>
                 {product.roastLevel && (
                   <>
                     <span>•</span>
-                    <span className="text-[#827472]">{product.roastLevel} Roast</span>
+                    <span className="text-[#8c827a]">{product.roastLevel} Roast</span>
                   </>
                 )}
               </div>
 
-              <h1
-                className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#271310] leading-tight font-serif"
-                style={{ fontFamily: 'Playfair Display, serif' }}
-              >
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal text-[#140d09] leading-tight font-serif">
                 {product.name}
               </h1>
 
-              <p className="text-sm font-medium text-[#785a00] italic">
+              <p className="text-sm font-serif italic text-[#c5a880]">
                 {product.vietnameseName}
               </p>
 
-              <p className="text-xs sm:text-sm text-[#504442] leading-relaxed pt-1">
+              <p className="text-xs sm:text-sm text-[#6e635d] font-light leading-relaxed pt-1">
                 {product.tagline}
               </p>
             </div>
 
             {/* Price Display */}
-            <div className="p-4 rounded-xl bg-white border border-[#d3c3c0]/70 flex items-center justify-between">
+            <div className="p-5 rounded-xl bg-white border border-[#c5a880]/30 flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold text-[#827472] uppercase tracking-wider block">
-                  Price ({selectedSize})
+                <span className="text-[9px] font-light text-[#8c827a] uppercase tracking-[0.2em] block mb-1">
+                  Selection ({selectedSize})
                 </span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl sm:text-3xl font-bold text-[#271310] font-serif">
+                  <span className="text-2xl sm:text-3xl font-normal text-[#140d09] font-serif">
                     {formatPrice(totalPrice, currency)}
                   </span>
                   {quantity > 1 && (
-                    <span className="text-xs text-[#827472]">
+                    <span className="text-xs text-[#8c827a] font-light">
                       ({formatPrice(unitPrice, currency)} each)
                     </span>
                   )}
@@ -271,12 +275,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
               <div className="text-right">
                 {isOutOfStock ? (
-                  <span className="text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-300 px-2.5 py-1 rounded-full inline-block">
-                    Out of Stock • Roasting Next Batch
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-[#8c827a] bg-[#fbf9f5] border border-[#c5a880]/30 px-3 py-1 rounded-full inline-block">
+                    Sold Out
                   </span>
                 ) : (
-                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full inline-block">
-                    In Stock • Freshly Packed
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-[#140d09] bg-[#fbf9f5] border border-[#c5a880]/40 px-3 py-1 rounded-full inline-block">
+                    In Stock • Fresh Batch
                   </span>
                 )}
               </div>
@@ -285,9 +289,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             {/* Package Size Selector */}
             {product.availableSizes.length > 0 && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#827472]">
-                  <span>1. Choose Package Size:</span>
-                  <span className="text-[#785a00]">{selectedSize}</span>
+                <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.15em] text-[#8c827a]">
+                  <span>1. Select Size:</span>
+                  <span className="text-[#140d09] font-medium">{selectedSize}</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {product.availableSizes.map((s) => {
@@ -298,20 +302,18 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                         key={s.size}
                         type="button"
                         onClick={() => setSelectedSize(s.size)}
-                        className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                           isActive
-                            ? 'bg-[#271310] text-white border-[#271310] shadow-sm'
-                            : 'bg-white text-[#271310] border-[#d3c3c0] hover:bg-[#faf2f0]'
+                            ? 'border-[#c5a880] bg-[#fbf9f5]'
+                            : 'border-[#c5a880]/20 bg-white hover:border-[#c5a880]/50'
                         }`}
                       >
-                        <div className="text-xs font-bold leading-tight truncate">{s.size}</div>
-                        <div
-                          className={`text-[11px] mt-0.5 font-semibold ${
-                            isActive ? 'text-[#feca4d]' : 'text-[#785a00]'
-                          }`}
-                        >
+                        <span className="text-xs font-serif text-[#140d09] block truncate">
+                          {s.size.replace(' Valve Pouch', '').replace(' Fresh Pack', '')}
+                        </span>
+                        <span className="text-[11px] font-mono text-[#c5a880] mt-0.5 block">
                           {formatPrice(calculatedSizePrice, currency)}
-                        </div>
+                        </span>
                       </button>
                     );
                   })}
@@ -322,25 +324,25 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             {/* Grind Option Selector */}
             {product.availableGrinds && product.availableGrinds.length > 0 && (
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#827472] block">
-                  2. Select Grind Coarseness:
-                </label>
+                <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.15em] text-[#8c827a]">
+                  <span>2. Grind Calibration:</span>
+                  <span className="text-[#140d09] font-medium">{selectedGrind}</span>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {product.availableGrinds.map((g) => {
-                    const isGrindActive = selectedGrind === g;
+                    const isActive = selectedGrind === g;
                     return (
                       <button
                         key={g}
                         type="button"
                         onClick={() => setSelectedGrind(g)}
-                        className={`px-3 py-2 rounded-xl text-xs font-medium text-left border transition-all cursor-pointer flex items-center justify-between ${
-                          isGrindActive
-                            ? 'bg-[#785a00] text-white border-[#785a00] font-bold shadow-2xs'
-                            : 'bg-white text-[#504442] border-[#d3c3c0] hover:bg-[#faf2f0]'
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                          isActive
+                            ? 'border-[#c5a880] bg-[#fbf9f5]'
+                            : 'border-[#c5a880]/20 bg-white hover:border-[#c5a880]/50'
                         }`}
                       >
-                        <span className="truncate">{g}</span>
-                        {isGrindActive && <Check className="w-3.5 h-3.5 shrink-0" />}
+                        <span className="text-xs font-serif text-[#140d09] block">{g}</span>
                       </button>
                     );
                   })}
@@ -348,95 +350,80 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               </div>
             )}
 
-            {/* Quantity Selector & Action Buttons */}
+            {/* Quantity & CTA Actions */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center gap-3">
-                <div className="flex items-center border border-[#d3c3c0] bg-white rounded-xl overflow-hidden shadow-2xs">
+                <div className="flex items-center border border-[#c5a880]/30 rounded-xl bg-white p-1">
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="px-3 py-2.5 text-[#504442] hover:bg-[#faf2f0] transition-colors cursor-pointer"
-                    aria-label="Decrease quantity"
+                    disabled={quantity <= 1 || isOutOfStock}
+                    className="w-9 h-9 flex items-center justify-center text-[#6e635d] hover:text-[#140d09] disabled:opacity-30 cursor-pointer"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="px-4 py-2 text-xs font-bold text-[#271310] min-w-[36px] text-center">
+                  <span className="w-10 text-center font-mono text-sm font-medium text-[#140d09]">
                     {quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="px-3 py-2.5 text-[#504442] hover:bg-[#faf2f0] transition-colors cursor-pointer"
-                    aria-label="Increase quantity"
+                    disabled={isOutOfStock}
+                    className="w-9 h-9 flex items-center justify-center text-[#6e635d] hover:text-[#140d09] disabled:opacity-30 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                {/* Add to Cart Button */}
-                {isOutOfStock ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="flex-1 py-3 px-5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 bg-stone-200 text-stone-500 border border-stone-300 cursor-not-allowed"
-                  >
-                    <AlertCircle className="w-4 h-4" />
-                    <span>Out of Stock</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    id="detail-add-to-cart-btn"
-                    onClick={handleAddToCart}
-                    className={`flex-1 py-3 px-5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer active:scale-98 ${
-                      addedNotice
-                        ? 'bg-emerald-700 text-white'
-                        : 'bg-[#785a00] hover:bg-[#8e6b00] text-white'
-                    }`}
-                  >
-                    {addedNotice ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        <span>Added to Cart!</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingBag className="w-4 h-4" />
-                        <span>Add to Cart ({formatPrice(totalPrice, currency)})</span>
-                      </>
-                    )}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  id="detail-add-to-cart-btn"
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock}
+                  className={`flex-1 py-3.5 px-6 rounded-xl font-medium text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    isOutOfStock
+                      ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                      : addedNotice
+                      ? 'bg-[#140d09] text-[#c5a880] border border-[#c5a880]'
+                      : 'bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] border border-[#c5a880]/40'
+                  }`}
+                >
+                  {addedNotice ? (
+                    <>
+                      <Check className="w-4 h-4 text-[#c5a880]" />
+                      <span>Added to Bag</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag className="w-4 h-4 text-[#c5a880]" />
+                      <span>Add to Bag ({formatPrice(totalPrice, currency)})</span>
+                    </>
+                  )}
+                </button>
               </div>
 
-              {/* Buy Now Button or Out of Stock Notice */}
-              {isOutOfStock ? (
-                <div className="w-full py-2.5 px-4 rounded-xl text-xs bg-amber-50 border border-amber-200 text-amber-900 text-center font-medium">
-                  🌿 This roast is currently sold out. Our master roasters in Dak Lak are preparing the next harvest batch!
-                </div>
-              ) : (
+              {!isOutOfStock && (
                 <button
                   type="button"
                   id="detail-buy-now-btn"
                   onClick={handleBuyNow}
-                  className="w-full py-3 px-5 rounded-xl font-bold text-xs bg-[#271310] hover:bg-[#3e2723] active:scale-98 text-[#feca4d] border border-[#feca4d]/30 flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer"
+                  className="w-full py-3.5 px-6 rounded-xl font-medium text-xs uppercase tracking-[0.2em] bg-white hover:bg-[#fbf9f5] text-[#140d09] border border-[#c5a880] flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
-                  <Zap className="w-4 h-4 fill-[#feca4d]" />
-                  <span>Buy Now with Instant Express Checkout →</span>
+                  <span>Direct Express Checkout →</span>
                 </button>
               )}
             </div>
 
-            {/* Tasting Notes Chips */}
-            <div className="pt-3 border-t border-[#d3c3c0]/50 space-y-2">
-              <span className="text-[11px] font-bold text-[#827472] uppercase tracking-wider block">
+            {/* Tasting Notes */}
+            <div className="pt-4 border-t border-[#c5a880]/20 space-y-2">
+              <span className="text-[10px] font-medium text-[#c5a880] uppercase tracking-[0.2em] block">
                 Tasting Notes:
               </span>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {product.tastingNotes.map((note, idx) => (
                   <span
                     key={idx}
-                    className="text-xs bg-white border border-[#d3c3c0] text-[#271310] px-3 py-1 rounded-full font-medium shadow-2xs"
+                    className="text-xs bg-white border border-[#c5a880]/30 text-[#140d09] px-3 py-1 rounded-full font-light"
                   >
                     {note}
                   </span>
@@ -446,29 +433,162 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           </div>
         </div>
 
-        {/* Detailed Story, Origin & Brewing Guide Section */}
-        <div className="bg-white rounded-2xl border border-[#d3c3c0]/80 p-6 sm:p-8 space-y-8 shadow-xs">
+        {/* Dedicated Brew Recipe Section (Requirement: Same recipe appears on the product detail page) */}
+        {recipe && (
+          <section id="brew-recipe-section" className="bg-[#fbf9f5] border border-[#c5a880]/30 rounded-2xl p-6 sm:p-10 lg:p-12 space-y-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#c5a880]/20 pb-6">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.25em] text-[#c5a880] mb-2">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Artisanal Barista Guide</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-normal text-[#140d09] font-serif">
+                  {recipe.name}
+                </h2>
+                <p className="text-xs sm:text-sm text-[#6e635d] font-light mt-1">
+                  Master the optimal extraction calibrated specifically for this roast profile.
+                </p>
+              </div>
+
+              {/* Badges */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider bg-white border border-[#c5a880]/40 text-[#140d09]">
+                  Best For: {recipe.bestFor}
+                </span>
+                <span className="px-3 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider bg-[#140d09] text-[#c5a880] border border-[#c5a880]/40">
+                  Temp: {recipe.waterTemp}
+                </span>
+                <span className="px-3 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider bg-white border border-[#c5a880]/40 text-[#6e635d]">
+                  Time: {recipe.prepTime}
+                </span>
+              </div>
+            </div>
+
+            {/* Ingredients & Equipment Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Ingredients */}
+              <div className="bg-white rounded-xl p-6 border border-[#c5a880]/25 space-y-4">
+                <div className="flex items-center justify-between border-b border-[#c5a880]/20 pb-2">
+                  <h3 className="text-sm font-medium uppercase tracking-[0.15em] text-[#140d09] font-serif">
+                    Ingredients & Ratios
+                  </h3>
+                  {recipe.servingTemp && (
+                    <span className="text-[10px] text-[#c5a880] tracking-wider uppercase font-mono">
+                      {recipe.servingTemp}
+                    </span>
+                  )}
+                </div>
+                <ul className="space-y-2.5">
+                  {recipe.ingredients.map((ing, idx) => (
+                    <li key={idx} className="flex items-center justify-between text-xs">
+                      <span className="text-[#140d09] font-light">{ing.item}</span>
+                      <span className="font-mono text-[#c5a880] font-medium">{ing.quantity}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Equipment */}
+              <div className="bg-white rounded-xl p-6 border border-[#c5a880]/25 space-y-4">
+                <div className="border-b border-[#c5a880]/20 pb-2">
+                  <h3 className="text-sm font-medium uppercase tracking-[0.15em] text-[#140d09] font-serif">
+                    Recommended Equipment
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {recipe.equipment.map((eq, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-[#fbf9f5] border border-[#c5a880]/30 text-[#140d09] px-3 py-1.5 rounded-lg font-light flex items-center gap-1.5"
+                    >
+                      <Coffee className="w-3 h-3 text-[#c5a880]" />
+                      <span>{eq}</span>
+                    </span>
+                  ))}
+                </div>
+                {onOpenBrewStudio && (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={onOpenBrewStudio}
+                      className="text-xs text-[#c5a880] hover:text-[#140d09] font-medium tracking-wider uppercase underline underline-offset-4 cursor-pointer"
+                    >
+                      Open Interactive Phin Gravity Simulator →
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Step by Step Method */}
+            <div className="space-y-4">
+              <h3 className="text-base font-medium uppercase tracking-[0.15em] text-[#140d09] font-serif">
+                Brewing Method
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {recipe.steps.map((st) => (
+                  <div
+                    key={st.stepNumber}
+                    className="p-5 rounded-xl bg-white border border-[#c5a880]/25 space-y-2"
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-serif text-[#140d09] font-medium">
+                        Step 0{st.stepNumber} • {st.title}
+                      </span>
+                      {(st.duration || (st as any).timing) && (
+                        <span className="text-[10px] font-mono text-[#c5a880] tracking-wider uppercase bg-[#fbf9f5] px-2 py-0.5 rounded border border-[#c5a880]/20">
+                          {st.duration || (st as any).timing}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#6e635d] font-light leading-relaxed">
+                      {st.instruction}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Barista Tip Callout */}
+            {recipe.baristaTip && (
+              <div className="p-5 rounded-xl bg-[#140d09] text-[#fcfbf7] border border-[#c5a880]/40 flex items-start gap-4">
+                <Sparkles className="w-5 h-5 text-[#c5a880] shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="text-[9px] uppercase tracking-[0.2em] font-medium text-[#c5a880] block">
+                    Barista Secret
+                  </span>
+                  <p className="text-xs text-[#e5ded8] font-light leading-relaxed">
+                    {recipe.baristaTip}
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Detailed Story & Terroir Section */}
+        <div className="bg-white rounded-2xl border border-[#c5a880]/30 p-8 sm:p-12 space-y-8">
           <div>
-            <h2
-              className="text-xl sm:text-2xl font-bold text-[#271310] font-serif mb-3"
-              style={{ fontFamily: 'Playfair Display, serif' }}
-            >
+            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c5a880] block mb-2">
+              Heritage & Terroir
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-normal text-[#140d09] font-serif mb-4">
               About This Roast
             </h2>
-            <p className="text-sm sm:text-[15px] text-[#3c302d] leading-relaxed">
+            <p className="text-sm text-[#4a423e] font-light leading-relaxed max-w-3xl">
               {product.description}
             </p>
           </div>
 
           {/* Terroir & Origin Spec Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-[#d3c3c0]/50">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-[#c5a880]/20">
             {product.originRegion && (
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-xs text-[#785a00] font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-[10px] text-[#c5a880] font-medium uppercase tracking-wider">
                   <MapPin className="w-3.5 h-3.5" />
                   <span>Origin</span>
                 </div>
-                <div className="text-xs font-semibold text-[#271310]">
+                <div className="text-xs font-serif text-[#140d09]">
                   {product.originRegion}
                 </div>
               </div>
@@ -476,11 +596,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
             {product.elevation && (
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-xs text-[#785a00] font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-[10px] text-[#c5a880] font-medium uppercase tracking-wider">
                   <Mountain className="w-3.5 h-3.5" />
                   <span>Elevation</span>
                 </div>
-                <div className="text-xs font-semibold text-[#271310]">
+                <div className="text-xs font-serif text-[#140d09]">
                   {product.elevation}
                 </div>
               </div>
@@ -488,11 +608,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
             {product.process && (
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-xs text-[#785a00] font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-[10px] text-[#c5a880] font-medium uppercase tracking-wider">
                   <Layers className="w-3.5 h-3.5" />
                   <span>Processing</span>
                 </div>
-                <div className="text-xs font-semibold text-[#271310]">
+                <div className="text-xs font-serif text-[#140d09]">
                   {product.process}
                 </div>
               </div>
@@ -500,100 +620,77 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
 
             {product.shelfLife && (
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-xs text-[#785a00] font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-1.5 text-[10px] text-[#c5a880] font-medium uppercase tracking-wider">
                   <Clock className="w-3.5 h-3.5" />
-                  <span>Freshness Shelf Life</span>
+                  <span>Peak Freshness</span>
                 </div>
-                <div className="text-xs font-semibold text-[#271310]">
+                <div className="text-xs font-serif text-[#140d09]">
                   {product.shelfLife}
                 </div>
               </div>
             )}
           </div>
-
-          {/* Masterclass Brewing Recommendation */}
-          {product.brewingRecommendation && (
-            <div className="p-4 sm:p-5 rounded-xl bg-[#faf2f0] border-l-4 border-[#785a00] border-t border-r border-b border-[#d3c3c0]/60 space-y-1.5">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#785a00] uppercase tracking-wider">
-                <Sparkles className="w-4 h-4 text-[#785a00]" />
-                <span>Barista Brewing Recommendation</span>
-              </div>
-              <p className="text-xs sm:text-sm text-[#3c302d] leading-relaxed">
-                {product.brewingRecommendation}
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Complementary & Related Roastery Selections */}
         {relatedProducts.length > 0 && (
-          <div className="space-y-6 pt-4">
-            <div className="flex items-center justify-between">
+          <div className="space-y-8 pt-4">
+            <div className="flex items-center justify-between border-b border-[#c5a880]/20 pb-4">
               <div>
-                <h3
-                  className="text-xl sm:text-2xl font-bold text-[#271310] font-serif"
-                  style={{ fontFamily: 'Playfair Display, serif' }}
-                >
-                  Explore Other Roastery Releases
+                <h3 className="text-xl sm:text-2xl font-normal text-[#140d09] font-serif">
+                  Complementary Creations
                 </h3>
-                <p className="text-xs text-[#827472]">
-                  Fresh batches direct from Dak Lak & Da Lat family estates
+                <p className="text-xs text-[#8c827a] font-light">
+                  Fresh harvests from the highland estates
                 </p>
               </div>
 
               <button
                 onClick={onBackToShop}
-                className="text-xs font-bold text-[#785a00] hover:text-[#271310] transition-colors cursor-pointer"
+                className="text-xs font-medium text-[#c5a880] hover:text-[#140d09] uppercase tracking-wider transition-colors cursor-pointer"
               >
-                View All Coffees →
+                View Full Collection →
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
               {relatedProducts.map((rel) => (
-                <a
+                <div
                   key={rel.id}
-                  href={`/product/${rel.id}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onSelectRelatedProduct(rel);
-                  }}
-                  className="bg-white rounded-2xl border border-[#d3c3c0]/80 overflow-hidden shadow-2xs hover:shadow-md transition-all duration-300 group cursor-pointer flex flex-col justify-between"
+                  onClick={() => onSelectRelatedProduct(rel)}
+                  className="bg-white rounded-xl border border-[#c5a880]/20 overflow-hidden hover:border-[#c5a880]/60 transition-all duration-300 group cursor-pointer flex flex-col justify-between"
                 >
-                  <div className="relative aspect-[16/11] bg-[#faf2f0] overflow-hidden">
+                  <div className="relative aspect-[4/3] bg-[#fbf9f5] overflow-hidden">
                     <img
                       src={rel.imageUrl}
                       alt={rel.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
                     />
-                    <div className="absolute top-2.5 left-2.5 bg-[#271310]/90 text-[#feca4d] text-[9px] font-bold uppercase px-2 py-0.5 rounded">
+                    <div className="absolute top-2.5 left-2.5 bg-[#140d09]/90 text-[#fcfbf7] text-[8px] uppercase tracking-[0.15em] px-2 py-0.5 rounded border border-[#c5a880]/30">
                       {rel.roastLevel || 'Artisan Roast'}
                     </div>
                   </div>
 
-                  <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
                     <div>
-                      <h4
-                        className="text-sm font-bold text-[#271310] group-hover:text-[#785a00] transition-colors line-clamp-1 font-serif"
-                        style={{ fontFamily: 'Playfair Display, serif' }}
-                      >
+                      <h4 className="text-sm font-normal text-[#140d09] group-hover:text-[#c5a880] transition-colors line-clamp-1 font-serif">
                         {rel.name}
                       </h4>
-                      <p className="text-[11px] text-[#504442] line-clamp-2 mt-1">
+                      <p className="text-[11px] text-[#6e635d] font-light line-clamp-2 mt-1">
                         {rel.tagline}
                       </p>
                     </div>
 
-                    <div className="pt-2 border-t border-[#d3c3c0]/40 flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#271310]">
+                    <div className="pt-3 border-t border-[#c5a880]/20 flex items-center justify-between">
+                      <span className="text-xs font-normal text-[#140d09] font-serif">
                         {formatPrice(rel.basePriceINR, currency)}
                       </span>
-                      <span className="text-[11px] font-bold text-[#785a00] group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                        View Roast →
+                      <span className="text-[10px] uppercase tracking-wider font-medium text-[#c5a880] flex items-center gap-1">
+                        Explore →
                       </span>
                     </div>
                   </div>
-                </a>
+                </div>
               ))}
             </div>
           </div>

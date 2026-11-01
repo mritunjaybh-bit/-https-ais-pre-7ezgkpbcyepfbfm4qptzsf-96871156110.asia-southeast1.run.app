@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
-import { getDbProducts, updateDbProducts } from './_lib/db';
-import { isValidSession } from './_lib/auth-util';
-import { ProductItem } from '../src/types';
-import { PRODUCT_ITEMS } from '../src/data/coffeeData';
+import type { Request, Response } from 'express';
+import { getDbProducts, updateDbProducts } from './_lib/db.ts';
+import { isValidSession } from './_lib/auth-util.ts';
+import type { ProductItem } from '../src/types.ts';
+import { PRODUCT_ITEMS } from '../src/data/coffeeData.ts';
 
 export default async function handler(req: any, res: any) {
   // CORS Headers

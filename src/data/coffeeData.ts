@@ -1,4 +1,5 @@
-import { ProductItem } from '../types';
+import type { ProductItem } from '../types.ts';
+import { BREW_RECIPES } from './brewRecipes.ts';
 
 export const PRODUCT_ITEMS: ProductItem[] = [
   // ==================== FLAVOURED VIETNAMESE COFFEE (Cà Phê Hương Vị) ====================
@@ -771,14 +772,28 @@ export const CURRENCY_RATES: Record<
   VND: { symbol: '₫', rate: 300, label: 'VND (₫)', name: 'Vietnamese Dong' }
 };
 
-let liveProductsCache: ProductItem[] = [...PRODUCT_ITEMS];
+// Initialize recipes on bundled products
+PRODUCT_ITEMS.forEach((p) => {
+  if (!p.brewRecipe && BREW_RECIPES[p.id]) {
+    p.brewRecipe = BREW_RECIPES[p.id];
+  }
+});
+
+let liveProductsCache: ProductItem[] = PRODUCT_ITEMS.map((p) => ({
+  ...p,
+  brewRecipe: p.brewRecipe || BREW_RECIPES[p.id],
+}));
 
 export function syncLiveProducts(newProducts: ProductItem[]) {
   if (!Array.isArray(newProducts) || newProducts.length === 0) return;
-  liveProductsCache = newProducts;
+  const enriched = newProducts.map((p) => ({
+    ...p,
+    brewRecipe: p.brewRecipe || BREW_RECIPES[p.id],
+  }));
+  liveProductsCache = enriched;
   
   // Mutate PRODUCT_ITEMS in-place for backwards compatibility
-  newProducts.forEach((newP) => {
+  enriched.forEach((newP) => {
     const idx = PRODUCT_ITEMS.findIndex((p) => p.id === newP.id);
     if (idx !== -1) {
       PRODUCT_ITEMS[idx] = { ...PRODUCT_ITEMS[idx], ...newP };
@@ -788,7 +803,7 @@ export function syncLiveProducts(newProducts: ProductItem[]) {
   });
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('caphe_products_updated', { detail: newProducts }));
+    window.dispatchEvent(new CustomEvent('caphe_products_updated', { detail: enriched }));
   }
 }
 
@@ -799,7 +814,7 @@ export async function fetchLiveProducts(): Promise<ProductItem[]> {
       const data = await res.json();
       if (Array.isArray(data.products)) {
         syncLiveProducts(data.products);
-        return data.products;
+        return liveProductsCache;
       }
     }
   } catch (err) {
@@ -812,8 +827,11 @@ export function getProductById(id: string): ProductItem | undefined {
   if (!id) return undefined;
   const clean = id.toLowerCase().trim();
   const foundLive = liveProductsCache.find((p) => p.id.toLowerCase() === clean);
-  if (foundLive) return foundLive;
-  return PRODUCT_ITEMS.find((p) => p.id.toLowerCase() === clean);
+  const item = foundLive || PRODUCT_ITEMS.find((p) => p.id.toLowerCase() === clean);
+  if (item && !item.brewRecipe && BREW_RECIPES[item.id]) {
+    item.brewRecipe = BREW_RECIPES[item.id];
+  }
+  return item;
 }
 
 // Auto-trigger live fetch on browser load
