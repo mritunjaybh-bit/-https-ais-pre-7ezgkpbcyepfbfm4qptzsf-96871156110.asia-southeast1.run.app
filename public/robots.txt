@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /mritunjay-admin-orders
+Disallow: /setup
+Disallow: /api/admin
+
+Sitemap: https://www.caphevietnam.in/sitemap.xml

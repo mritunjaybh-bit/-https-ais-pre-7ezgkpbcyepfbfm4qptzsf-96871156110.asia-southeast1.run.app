@@ -12,7 +12,8 @@ import {
   PlacedOrder,
   OrderState,
   ProductCategory,
-  BlogPost
+  BlogPost,
+  SiteSettings
 } from './types';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
@@ -29,6 +30,11 @@ import { OnePageCheckout } from './components/OnePageCheckout';
 import { TrackOrderPage } from './components/TrackOrderPage';
 import { AdminPortal } from './components/AdminPortal';
 import { OrderConfirmationModal } from './components/OrderConfirmationModal';
+import { CirclePage } from './components/CirclePage';
+import { CircleTermsPage } from './components/CircleTermsPage';
+import { LegalPagesModal, LegalDocType } from './components/LegalPagesModal';
+import { CookieConsent } from './components/CookieConsent';
+import { PreOrderModal } from './components/PreOrderModal';
 import { Footer } from './components/Footer';
 import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 import { CoffeeMasterChat } from './components/CoffeeMasterChat';
@@ -46,6 +52,12 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
   const [recipeModalProduct, setRecipeModalProduct] = useState<ProductItem | null>(null);
   const [selectedBlogPost, setSelectedBlogPost] = useState<BlogPost | null>(null);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | undefined>(undefined);
+  const [legalModal, setLegalModal] = useState<{ isOpen: boolean; doc: LegalDocType }>({
+    isOpen: false,
+    doc: 'privacy',
+  });
+  const [preOrderProduct, setPreOrderProduct] = useState<ProductItem | null>(null);
 
   // Initial cart starts empty
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -254,8 +266,10 @@ export default function App() {
         window.history.pushState({}, '', '/brew-studio');
       } else if (tab === 'flavor-matcher') {
         window.history.pushState({}, '', '/taste-matcher');
-      } else if (tab === 'heritage') {
-        window.history.pushState({}, '', '/heritage');
+      } else if (tab === 'circle') {
+        window.history.pushState({}, '', '/circle');
+      } else if (tab === 'circle-terms') {
+        window.history.pushState({}, '', '/circle-terms');
       } else if (tab === 'product-detail' && selectedProduct) {
         window.history.pushState({}, '', `/product/${selectedProduct.id}`);
       } else {
@@ -297,7 +311,27 @@ export default function App() {
     }
   };
 
-  // Listen to browser URL routing (e.g. /mritunjay-admin-orders, /product/{id}, /checkout, /blog, /blog/{slug}, /instant, /brew-studio, /taste-matcher, /heritage, /order/{order_id}, /track)
+  // Fetch siteSettings on mount and keep updated
+  useEffect(() => {
+    fetch('/api/products')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.siteSettings) {
+          setSiteSettings(data.siteSettings);
+        }
+      })
+      .catch(() => {});
+
+    const handleSettingsUpdated = (e: any) => {
+      if (e?.detail) setSiteSettings(e.detail);
+    };
+    window.addEventListener('caphe_site_settings_updated', handleSettingsUpdated as EventListener);
+    return () => {
+      window.removeEventListener('caphe_site_settings_updated', handleSettingsUpdated as EventListener);
+    };
+  }, []);
+
+  // Listen to browser URL routing
   useEffect(() => {
     const handleUrlRoute = () => {
       try {
@@ -329,6 +363,46 @@ export default function App() {
           return;
         }
 
+        // Cà Phê Circle Loyalty Program
+        if (path === '/circle' || path.startsWith('/circle') || path === '/rewards' || path === '/loyalty') {
+          setActiveTab('circle');
+          return;
+        }
+        if (path === '/circle-terms' || path === '/loyalty-terms') {
+          setActiveTab('circle-terms');
+          return;
+        }
+
+        // Direct Legal Policies
+        if (path === '/privacy' || path === '/privacy-policy') {
+          setLegalModal({ isOpen: true, doc: 'privacy' });
+          return;
+        }
+        if (path === '/terms' || path === '/terms-of-service') {
+          setLegalModal({ isOpen: true, doc: 'terms' });
+          return;
+        }
+        if (path === '/refunds' || path === '/returns') {
+          setLegalModal({ isOpen: true, doc: 'refunds' });
+          return;
+        }
+        if (path === '/shipping' || path === '/delivery') {
+          setLegalModal({ isOpen: true, doc: 'shipping' });
+          return;
+        }
+        if (path === '/contact') {
+          setLegalModal({ isOpen: true, doc: 'contact' });
+          return;
+        }
+        if (path === '/faq') {
+          setLegalModal({ isOpen: true, doc: 'faq' });
+          return;
+        }
+        if (path === '/about' || path === '/story') {
+          setLegalModal({ isOpen: true, doc: 'about' });
+          return;
+        }
+
         // Dedicated product page route (/product/{id} or /item/{id})
         if (path.startsWith('/product/') || path.startsWith('/item/')) {
           const match = path.match(/^\/(?:product|item)\/([^/]+)/i);
@@ -341,7 +415,6 @@ export default function App() {
               return;
             }
           }
-          // Fallback to shop if product not found
           setSelectedProduct(null);
           setActiveTab('shop');
           return;
@@ -395,7 +468,6 @@ export default function App() {
               return;
             }
           }
-          // Fallback to blog listing if slug not matched
           setSelectedBlogPost(null);
           setActiveTab('blog');
           return;
@@ -501,6 +573,7 @@ export default function App() {
           onOpenMatcher={() => handleSelectTab('flavor-matcher')}
           onOpenTracker={() => handleTrackOrder()}
           activeOrdersCount={activeOrdersCount}
+          siteSettings={siteSettings}
         />
 
       {/* On-Page Success Banner: Customer-Friendly Confirmation */}
@@ -563,7 +636,9 @@ export default function App() {
             currency={currency}
             onOpenProductModal={handleSelectProduct}
             onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
+            onOpenPreOrderModal={(prod) => setPreOrderProduct(prod)}
             onAddToCart={handleAddToCart}
+            siteSettings={siteSettings}
           />
         )}
 
@@ -574,7 +649,9 @@ export default function App() {
             initialCategory="flavoured-coffee"
             onOpenProductModal={handleSelectProduct}
             onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
+            onOpenPreOrderModal={(prod) => setPreOrderProduct(prod)}
             onAddToCart={handleAddToCart}
+            siteSettings={siteSettings}
           />
         )}
 
@@ -585,7 +662,9 @@ export default function App() {
             initialCategory="instant-coffee"
             onOpenProductModal={handleSelectProduct}
             onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
+            onOpenPreOrderModal={(prod) => setPreOrderProduct(prod)}
             onAddToCart={handleAddToCart}
+            siteSettings={siteSettings}
           />
         )}
 
@@ -602,6 +681,7 @@ export default function App() {
             onBackToShop={() => handleSelectTab('shop')}
             onSelectRelatedProduct={handleSelectProduct}
             onOpenBrewStudio={() => handleSelectTab('brew-studio')}
+            siteSettings={siteSettings}
           />
         )}
 
@@ -659,10 +739,27 @@ export default function App() {
             onRemoveItem={handleRemoveItem}
             onBackToShop={() => handleSelectTab('shop')}
             onOrderPlaced={handleCheckout}
+            siteSettings={siteSettings}
           />
         )}
 
-        {/* Tab 8: Customer Read-Only Tracking Page (Requires Order ID + Contact Verification) */}
+        {/* Tab 10: Cà Phê Circle Loyalty Experience */}
+        {activeTab === 'circle' && (
+          <CirclePage
+            onBackToShop={() => handleSelectTab('shop')}
+            onOpenTerms={() => handleSelectTab('circle-terms')}
+          />
+        )}
+
+        {/* Tab 11: Cà Phê Circle Legal Terms & Rules */}
+        {activeTab === 'circle-terms' && (
+          <CircleTermsPage
+            onBackToCircle={() => handleSelectTab('circle')}
+            onNavigateToShop={() => handleSelectTab('shop')}
+          />
+        )}
+
+        {/* Tab 12: Customer Read-Only Tracking Page (Requires Order ID + Contact Verification) */}
         {activeTab === 'track-order' && (
           <TrackOrderPage
             currency={currency}
@@ -681,6 +778,8 @@ export default function App() {
           onClose={() => setSelectedProduct(null)}
           onAddToCart={handleAddToCart}
           onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
+          onOpenPreOrderModal={(prod) => setPreOrderProduct(prod)}
+          siteSettings={siteSettings}
         />
       )}
 
@@ -712,6 +811,30 @@ export default function App() {
       <Footer
         onSelectTab={handleSelectTab}
         onOpenTracker={() => handleTrackOrder()}
+        siteSettings={siteSettings}
+        onOpenLegalDoc={(doc) => setLegalModal({ isOpen: true, doc })}
+      />
+
+      {/* Cà Phê Transparent Legal Policies Modal */}
+      <LegalPagesModal
+        isOpen={legalModal.isOpen}
+        onClose={() => setLegalModal((prev) => ({ ...prev, isOpen: false }))}
+        initialDoc={legalModal.doc}
+        siteSettings={siteSettings}
+      />
+
+      {/* Pre-Order / Waitlist Reservation Modal */}
+      <PreOrderModal
+        product={preOrderProduct}
+        isOpen={!!preOrderProduct}
+        onClose={() => setPreOrderProduct(null)}
+        onSuccess={() => setPreOrderProduct(null)}
+      />
+
+      {/* Cookie Consent Banner */}
+      <CookieConsent
+        metaPixelId={siteSettings?.metaPixelId}
+        onOpenPrivacyPolicy={() => setLegalModal({ isOpen: true, doc: 'privacy' })}
       />
 
       {/* Traditional Vietnamese Ambient Background Music Player */}

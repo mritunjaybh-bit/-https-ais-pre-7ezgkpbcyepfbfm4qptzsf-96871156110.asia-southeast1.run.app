@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ProductItem, ProductCategory, Currency, PackageSize, GrindOption, CartItem } from '../types';
+import { ProductItem, ProductCategory, Currency, PackageSize, GrindOption, CartItem, SiteSettings } from '../types';
 import { PRODUCT_ITEMS, fetchLiveProducts } from '../data/coffeeData';
 import { formatPrice } from '../utils/formatCurrency';
 import { HeritageDivider } from './HeritageDivider';
@@ -9,7 +9,9 @@ import {
   ArrowRight,
   ShieldCheck,
   Sparkles,
-  Package
+  Package,
+  Heart,
+  CalendarClock
 } from 'lucide-react';
 
 interface ProductCatalogSectionProps {
@@ -18,6 +20,8 @@ interface ProductCatalogSectionProps {
   onOpenRecipeModal?: (item: ProductItem) => void;
   onAddToCart?: (item: CartItem) => void;
   onQuickAddToCart?: (item: ProductItem, size: PackageSize, grind?: GrindOption) => void;
+  onOpenPreOrderModal?: (item: ProductItem) => void;
+  siteSettings?: SiteSettings;
   defaultCategory?: ProductCategory;
   initialCategory?: ProductCategory;
 }
@@ -28,6 +32,8 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
   onOpenRecipeModal,
   onAddToCart,
   onQuickAddToCart,
+  onOpenPreOrderModal,
+  siteSettings,
   defaultCategory = 'all',
   initialCategory,
 }) => {
@@ -35,6 +41,19 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFlavor, setSelectedFlavor] = useState<string>('all');
   const [roastFilter, setRoastFilter] = useState<'all' | 'Dark' | 'Medium' | 'French Butter Roast'>('all');
+  const [strengthFilter, setStrengthFilter] = useState<'all' | 'mild' | 'balanced' | 'bold'>('all');
+  const [priceSort, setPriceSort] = useState<'default' | 'low-high' | 'high-low'>('default');
+  const [showWishlistOnly, setShowWishlistOnly] = useState<boolean>(false);
+  const [wishlist, setWishlist] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem('caphe_wishlist');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [productsList, setProductsList] = useState<ProductItem[]>(PRODUCT_ITEMS);
 
   useEffect(() => {
@@ -55,6 +74,17 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
       window.removeEventListener('caphe_products_updated', handleUpdate as EventListener);
     };
   }, []);
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist((prev) => {
+      const exists = prev.includes(productId);
+      const updated = exists ? prev.filter((id) => id !== productId) : [...prev, productId];
+      try {
+        localStorage.setItem('caphe_wishlist', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
 
   const categories: { key: ProductCategory; label: string; sub: string }[] = [
     { key: 'all', label: 'All Creations', sub: 'The Full House Collection' },
@@ -78,8 +108,9 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
   ];
 
   const filteredProducts = useMemo(() => {
-    return productsList.filter((item) => {
+    let result = productsList.filter((item) => {
       if (item.isActive === false) return false;
+      if (showWishlistOnly && !wishlist.includes(item.id)) return false;
       if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
       if (selectedFlavor !== 'all' && item.flavorType !== selectedFlavor) return false;
       if (searchQuery.trim()) {
@@ -96,9 +127,30 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
       if (roastFilter !== 'all' && item.roastLevel !== roastFilter) {
         return false;
       }
+      if (strengthFilter === 'mild' && (item.caffeineScore || 3) > 2) return false;
+      if (strengthFilter === 'balanced' && (item.caffeineScore || 3) !== 3) return false;
+      if (strengthFilter === 'bold' && (item.caffeineScore || 3) < 4) return false;
       return true;
     });
-  }, [productsList, selectedCategory, selectedFlavor, searchQuery, roastFilter]);
+
+    if (priceSort === 'low-high') {
+      result = [...result].sort((a, b) => a.basePriceINR - b.basePriceINR);
+    } else if (priceSort === 'high-low') {
+      result = [...result].sort((a, b) => b.basePriceINR - a.basePriceINR);
+    }
+
+    return result;
+  }, [
+    productsList,
+    selectedCategory,
+    selectedFlavor,
+    searchQuery,
+    roastFilter,
+    strengthFilter,
+    priceSort,
+    showWishlistOnly,
+    wishlist,
+  ]);
 
   return (
     <section id="shop-catalog" className="w-full max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8 font-sans">
@@ -114,6 +166,13 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
         <p className="text-xs sm:text-sm text-[#6e635d] font-light leading-relaxed max-w-md mx-auto">
           Single-origin terroirs from Buôn Ma Thuột and Đà Lạt. Slow-roasted in the Vietnamese heritage tradition.
         </p>
+
+        {siteSettings?.preOrderMode && (
+          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#140d09] text-[#c5a880] border border-[#c5a880]/40 text-xs">
+            <CalendarClock className="w-3.5 h-3.5 text-[#c5a880]" />
+            <span>Pre-Order Mode Active • Harvest Reservations Open</span>
+          </div>
+        )}
       </div>
 
       {/* Category Navigation Bar - Minimalist Hairline Style */}
@@ -165,8 +224,8 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
           </div>
         )}
 
-        {/* Refined Search and Roast Filters */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 mt-2">
+        {/* Refined Search, Roast, Strength & Wishlist Bar */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 pt-4 mt-2">
           {/* Subtle Minimal Search Box */}
           <div className="relative flex-1 max-w-md">
             <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8c827a]" />
@@ -179,27 +238,46 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
             />
           </div>
 
-          {/* Roast Filter Buttons */}
-          <div className="flex items-center gap-2 text-xs overflow-x-auto no-scrollbar">
-            <span className="text-[#8c827a] text-[10px] uppercase tracking-[0.15em]">Roast:</span>
-            {[
-              { key: 'all', label: 'All' },
-              { key: 'Dark', label: 'Dark' },
-              { key: 'French Butter Roast', label: 'French Butter' },
-              { key: 'Medium', label: 'Medium' },
-            ].map((r) => (
-              <button
-                key={r.key}
-                onClick={() => setRoastFilter(r.key as any)}
-                className={`px-3 py-1 rounded-full text-[11px] tracking-wider transition-all cursor-pointer ${
-                  roastFilter === r.key
-                    ? 'bg-[#140d09] text-[#fcfbf7]'
-                    : 'text-[#6e635d] hover:text-[#140d09] border border-[#c5a880]/20'
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
+          {/* Quick Filter Group: Strength, Sort, Wishlist */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {/* Strength Selector */}
+            <select
+              aria-label="Filter products by caffeine intensity"
+              value={strengthFilter}
+              onChange={(e) => setStrengthFilter(e.target.value as any)}
+              className="bg-[#fbf9f5] border border-[#c5a880]/30 rounded-full px-3 py-1.5 text-[11px] text-[#140d09] focus:outline-none focus:border-[#c5a880] cursor-pointer"
+            >
+              <option value="all">All Strengths</option>
+              <option value="mild">Mild (Level 1-2)</option>
+              <option value="balanced">Balanced (Level 3)</option>
+              <option value="bold">Bold & Intense (Level 4-5)</option>
+            </select>
+
+            {/* Price Sorter */}
+            <select
+              aria-label="Sort products by price or default order"
+              value={priceSort}
+              onChange={(e) => setPriceSort(e.target.value as any)}
+              className="bg-[#fbf9f5] border border-[#c5a880]/30 rounded-full px-3 py-1.5 text-[11px] text-[#140d09] focus:outline-none focus:border-[#c5a880] cursor-pointer"
+            >
+              <option value="default">Curated Order</option>
+              <option value="low-high">Price: Low to High</option>
+              <option value="high-low">Price: High to Low</option>
+            </select>
+
+            {/* Wishlist Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setShowWishlistOnly(!showWishlistOnly)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] tracking-wider uppercase transition-all cursor-pointer border ${
+                showWishlistOnly
+                  ? 'bg-[#140d09] text-[#fcfbf7] border-[#c5a880]'
+                  : 'bg-transparent text-[#6e635d] border-[#c5a880]/30 hover:border-[#c5a880]'
+              }`}
+            >
+              <Heart className={`w-3 h-3 ${wishlist.length > 0 ? 'fill-[#c5a880] text-[#c5a880]' : ''}`} />
+              <span>Wishlist ({wishlist.length})</span>
+            </button>
           </div>
         </div>
       </div>
@@ -208,6 +286,9 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
         {filteredProducts.map((product) => {
           const isOutOfStock = (product.stockQuantity ?? 50) <= 0 || product.isOutOfStock;
+          const isPreOrderActive = siteSettings?.preOrderMode || isOutOfStock;
+          const isWishlisted = wishlist.includes(product.id);
+          const hasImageError = imageErrors[product.id];
 
           return (
             <div
@@ -226,21 +307,37 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
                   }}
                   className="block w-full h-full cursor-pointer"
                 >
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    loading="lazy"
-                    className={`w-full h-full object-cover group-hover:scale-103 transition-transform duration-700 ease-out ${
-                      isOutOfStock ? 'grayscale-[30%] opacity-90' : ''
-                    }`}
-                  />
+                  {!hasImageError ? (
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      loading="lazy"
+                      onError={() => setImageErrors((prev) => ({ ...prev, [product.id]: true }))}
+                      className={`w-full h-full object-cover group-hover:scale-103 transition-transform duration-700 ease-out ${
+                        isOutOfStock ? 'grayscale-[30%] opacity-90' : ''
+                      }`}
+                    />
+                  ) : (
+                    /* Elegant Luxury Monogram Fallback if image fails to load */
+                    <div className="w-full h-full bg-[#140d09] flex flex-col items-center justify-center p-6 text-center border-b border-[#c5a880]/30">
+                      <div className="w-16 h-16 rounded-full border border-[#c5a880]/40 flex items-center justify-center mb-3">
+                        <span className="font-serif text-2xl text-[#c5a880] tracking-widest font-light">CP</span>
+                      </div>
+                      <span className="text-xs uppercase tracking-[0.25em] text-[#c5a880] font-medium block">
+                        Cà Phê Vietnam
+                      </span>
+                      <span className="text-[10px] text-[#8c827a] font-serif italic mt-1">
+                        {product.vietnameseName}
+                      </span>
+                    </div>
+                  )}
                 </a>
 
                 {/* Top Status Indicators */}
                 <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 pointer-events-none">
-                  {isOutOfStock ? (
-                    <span className="bg-[#140d09]/90 text-[#fcfbf7] text-[9px] font-medium tracking-[0.2em] uppercase px-2.5 py-1 rounded border border-white/20">
-                      Sold Out
+                  {isPreOrderActive ? (
+                    <span className="bg-[#140d09]/90 text-[#c5a880] text-[9px] font-medium tracking-[0.2em] uppercase px-2.5 py-1 rounded border border-[#c5a880]/40 backdrop-blur-xs">
+                      {isOutOfStock ? 'Pre-Order / Waitlist' : 'Pre-Order Open'}
                     </span>
                   ) : product.originRegion ? (
                     <span className="bg-white/90 backdrop-blur-xs text-[#140d09] text-[9px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded border border-[#c5a880]/30">
@@ -249,19 +346,34 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
                   ) : null}
                 </div>
 
-                {/* Elegant Outlined '☕ Recipe' Badge Button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onOpenRecipeModal?.(product);
-                  }}
-                  title={`View brew recipe for ${product.name}`}
-                  className="absolute top-3 right-3 bg-white/95 hover:bg-[#140d09] text-[#140d09] hover:text-[#c5a880] text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full border border-[#c5a880] shadow-xs transition-all duration-300 flex items-center gap-1.5 cursor-pointer backdrop-blur-xs"
-                >
-                  <span>☕ Recipe</span>
-                </button>
+                {/* Top Right Controls: Wishlist Heart + Recipe Tag */}
+                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleWishlist(product.id);
+                    }}
+                    title={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                    className="w-7 h-7 rounded-full bg-white/95 hover:bg-white text-[#140d09] flex items-center justify-center border border-[#c5a880]/50 shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-[#c5a880] text-[#c5a880]' : 'text-[#8c827a]'}`} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onOpenRecipeModal?.(product);
+                    }}
+                    title={`View brew recipe for ${product.name}`}
+                    className="bg-white/95 hover:bg-[#140d09] text-[#140d09] hover:text-[#c5a880] text-[10px] font-medium tracking-[0.15em] uppercase px-2.5 py-1 rounded-full border border-[#c5a880] shadow-xs transition-all duration-300 flex items-center gap-1.5 cursor-pointer backdrop-blur-xs"
+                  >
+                    <span>☕ Recipe</span>
+                  </button>
+                </div>
 
                 {/* Subtle Roast Tag */}
                 {product.roastLevel && (
@@ -338,21 +450,25 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onOpenRecipeModal?.(product)}
-                      className="text-[11px] text-[#c5a880] hover:text-[#140d09] font-medium tracking-wider uppercase underline underline-offset-4 transition-colors cursor-pointer"
-                    >
-                      Recipe
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onOpenProductModal(product)}
-                      className="px-3.5 py-1.5 rounded-full text-xs font-medium tracking-wider uppercase bg-[#140d09] text-[#fcfbf7] hover:bg-[#2b1f1a] transition-all flex items-center gap-1 cursor-pointer border border-[#c5a880]/40"
-                    >
-                      <span>Explore</span>
-                      <ArrowRight className="w-3 h-3 text-[#c5a880]" />
-                    </button>
+                    {isPreOrderActive ? (
+                      <button
+                        type="button"
+                        onClick={() => onOpenPreOrderModal?.(product)}
+                        className="px-3.5 py-1.5 rounded-full text-xs font-medium tracking-wider uppercase bg-[#140d09] text-[#c5a880] hover:bg-[#2b1f1a] transition-all flex items-center gap-1 cursor-pointer border border-[#c5a880]/50"
+                      >
+                        <CalendarClock className="w-3 h-3 text-[#c5a880]" />
+                        <span>Pre-Order</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onOpenProductModal(product)}
+                        className="px-3.5 py-1.5 rounded-full text-xs font-medium tracking-wider uppercase bg-[#140d09] text-[#fcfbf7] hover:bg-[#2b1f1a] transition-all flex items-center gap-1 cursor-pointer border border-[#c5a880]/40"
+                      >
+                        <span>Explore</span>
+                        <ArrowRight className="w-3 h-3 text-[#c5a880]" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

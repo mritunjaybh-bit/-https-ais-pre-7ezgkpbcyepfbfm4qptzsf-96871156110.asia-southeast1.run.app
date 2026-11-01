@@ -51,6 +51,7 @@ interface OnePageCheckoutProps {
     emailMessage?: string;
     items?: CartItem[];
   }) => void;
+  siteSettings?: any;
 }
 
 export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
@@ -60,6 +61,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
   onRemoveItem,
   onBackToShop,
   onOrderPlaced,
+  siteSettings,
 }) => {
   const [shippingType, setShippingType] = useState<'standard' | 'express'>('standard');
   const [shippingAddress, setShippingAddress] = useState<string>('');
@@ -67,9 +69,14 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
   const [customerName, setCustomerName] = useState<string>('');
   const [customerPhone, setCustomerPhone] = useState<string>('');
   const [customerEmail, setCustomerEmail] = useState<string>('');
+  const [marketingEmailConsent, setMarketingEmailConsent] = useState<boolean>(false);
+  const [marketingWhatsAppConsent, setMarketingWhatsAppConsent] = useState<boolean>(false);
+  const [circleBeansBalance, setCircleBeansBalance] = useState<number | null>(null);
+  const [circleBeansRedeemed, setCircleBeansRedeemed] = useState<number>(0);
+  const [circleBeansLoading, setCircleBeansLoading] = useState<boolean>(false);
   const [promoCode, setPromoCode] = useState<string>('');
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('online');
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('cod');
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoSuccess, setPromoSuccess] = useState<string | null>(null);
   const [includeGiftWrap, setIncludeGiftWrap] = useState<boolean>(false);
@@ -81,7 +88,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
   const [stepMessage, setStepMessage] = useState<string | null>(null);
 
   const subtotalINR = items.reduce((sum, item) => sum + item.unitPriceINR * item.quantity, 0);
-  const freeShippingThreshold = 799;
+  const freeShippingThreshold = siteSettings?.freeShippingThreshold || 799;
   const isFreeShipping = subtotalINR >= freeShippingThreshold;
   const shippingFeeINR = isFreeShipping
     ? shippingType === 'express'
@@ -131,7 +138,47 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
     }
   };
 
-  const finalTotalINR = Math.max(0, subtotalINR + shippingFeeINR - appliedDiscount);
+  const beansDiscount = Math.round((circleBeansRedeemed / 100) * 50);
+  const finalTotalINR = Math.max(0, subtotalINR + shippingFeeINR - appliedDiscount - beansDiscount);
+
+  const handleLookupBeans = async () => {
+    if (!customerEmail || !customerEmail.includes('@')) {
+      setPromoError('Please enter a valid email address in the delivery form first.');
+      return;
+    }
+    setCircleBeansLoading(true);
+    setPromoError(null);
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'circle-member', email: customerEmail.trim().toLowerCase() }),
+      });
+      const data = await res.json();
+      if (data?.member) {
+        setCircleBeansBalance(data.member.beansBalance || 0);
+      } else {
+        setCircleBeansBalance(0);
+      }
+    } catch {
+      setCircleBeansBalance(0);
+    } finally {
+      setCircleBeansLoading(false);
+    }
+  };
+
+  const handleApplyBeans = (beansCount: number) => {
+    const maxDiscountAllowed = Math.round(subtotalINR * 0.3); // max 30% discount
+    const potentialDiscount = Math.round((beansCount / 100) * 50);
+    if (potentialDiscount > maxDiscountAllowed) {
+      const adjustedBeans = Math.floor((maxDiscountAllowed / 50) * 100);
+      setCircleBeansRedeemed(adjustedBeans);
+      setPromoSuccess(`Applied ${adjustedBeans} Beans (₹${Math.round((adjustedBeans / 100) * 50)} discount, maximum 30% per order).`);
+    } else {
+      setCircleBeansRedeemed(beansCount);
+      setPromoSuccess(`Applied ${beansCount} Beans (₹${potentialDiscount} discount)!`);
+    }
+  };
 
   // Form Validation
   const validateForm = (): string | null => {
@@ -201,7 +248,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
         customerPhone: cleanCustomerPhone,
         customerEmail: cleanCustomerEmail,
         giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
-        discountINR: appliedDiscount,
+        discountINR: appliedDiscount + beansDiscount,
         finalTotalINR,
         items: [...items],
         createdAt: Date.now(),
@@ -219,6 +266,28 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
         await saveOrderAsync(placedOrderData);
       } catch (saveErr) {
         console.warn('[Checkout] Preliminary order save warning:', saveErr);
+      }
+
+      // Background subscriber registration & circle beans redemption
+      if (marketingEmailConsent) {
+        fetch('/api/subscribers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanCustomerEmail, source: 'checkout_consent' }),
+        }).catch(() => {});
+      }
+      if (circleBeansRedeemed > 0) {
+        fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'circle-redeem',
+            email: cleanCustomerEmail,
+            beans: circleBeansRedeemed,
+            orderId,
+            orderTotal: finalTotalINR,
+          }),
+        }).catch(() => {});
       }
 
       // 2. Dispatch confirmation emails
@@ -291,7 +360,8 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
       console.error('[Checkout] Razorpay payment aborted or failed:', paymentErr);
       setIsSubmitting(false);
       setCheckoutStep('error');
-      setStepMessage(paymentErr?.message || 'Payment was cancelled or unsuccessful. Please try again.');
+      setStepMessage('Online payment is temporarily unavailable. Please choose Cash on Delivery.');
+      setPaymentMethod('cod');
       return;
     }
 
@@ -305,7 +375,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
       customerPhone: cleanCustomerPhone,
       customerEmail: cleanCustomerEmail,
       giftMessage: includeGiftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
-      discountINR: appliedDiscount,
+      discountINR: appliedDiscount + beansDiscount,
       finalTotalINR,
       items: [...items],
       createdAt: Date.now(),
@@ -323,6 +393,28 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
       await saveOrderAsync(onlineOrderData);
     } catch (saveErr) {
       console.warn('[Checkout] Preliminary online order save warning:', saveErr);
+    }
+
+    // Background subscriber registration & circle beans redemption
+    if (marketingEmailConsent) {
+      fetch('/api/subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanCustomerEmail, source: 'checkout_consent' }),
+      }).catch(() => {});
+    }
+    if (circleBeansRedeemed > 0) {
+      fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'circle-redeem',
+          email: cleanCustomerEmail,
+          beans: circleBeansRedeemed,
+          orderId,
+          orderTotal: finalTotalINR,
+        }),
+      }).catch(() => {});
     }
 
     // Step 4: Send Confirmation Emails
@@ -703,6 +795,31 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
                   />
                 )}
               </div>
+
+              {/* Marketing & Dispatch Communication Consent (Unticked by default) */}
+              <div className="pt-3 border-t border-[#f4ecea] space-y-2">
+                <span className="text-[10px] font-bold text-[#827472] uppercase block">
+                  Communication Preferences:
+                </span>
+                <label className="flex items-start gap-2 cursor-pointer text-xs text-[#504442]">
+                  <input
+                    type="checkbox"
+                    checked={marketingEmailConsent}
+                    onChange={(e) => setMarketingEmailConsent(e.target.checked)}
+                    className="mt-0.5 rounded border-[#d3c3c0] text-[#785a00] focus:ring-0 cursor-pointer"
+                  />
+                  <span>Receive private roastery notices, single-origin harvest releases, and tasting dispatches via Email.</span>
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer text-xs text-[#504442]">
+                  <input
+                    type="checkbox"
+                    checked={marketingWhatsAppConsent}
+                    onChange={(e) => setMarketingWhatsAppConsent(e.target.checked)}
+                    className="mt-0.5 rounded border-[#d3c3c0] text-[#785a00] focus:ring-0 cursor-pointer"
+                  />
+                  <span>Receive real-time courier dispatch and live tracking updates via WhatsApp.</span>
+                </label>
+              </div>
             </div>
 
             {/* Section 3: Payment Method Selection */}
@@ -827,6 +944,61 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
                 )}
               </div>
 
+              {/* Cà Phê Circle Beans Loyalty Redemption Widget */}
+              <div className="p-3.5 rounded-xl bg-[#faf2f0] border border-[#c5a880]/30 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-[#785a00] uppercase tracking-wider">
+                    Cà Phê Circle Beans:
+                  </span>
+                  {circleBeansBalance !== null && (
+                    <span className="text-xs font-mono font-bold text-[#271310]">
+                      Balance: {circleBeansBalance} Beans
+                    </span>
+                  )}
+                </div>
+
+                {circleBeansBalance === null ? (
+                  <button
+                    type="button"
+                    onClick={handleLookupBeans}
+                    disabled={circleBeansLoading}
+                    className="w-full py-2 px-3 rounded-lg bg-white border border-[#c5a880]/50 hover:bg-[#fbf9f5] text-xs text-[#271310] font-medium transition-colors cursor-pointer text-center"
+                  >
+                    {circleBeansLoading ? 'Checking Beans...' : 'Redeem Circle Beans with Email'}
+                  </button>
+                ) : circleBeansBalance > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-[#504442]">
+                      Available: <strong>{circleBeansBalance} Beans</strong> (Worth ₹{Math.round((circleBeansBalance / 100) * 50)} off).
+                    </p>
+                    {circleBeansRedeemed > 0 ? (
+                      <div className="flex items-center justify-between text-xs text-emerald-800 font-semibold bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                        <span>Redeemed {circleBeansRedeemed} Beans (-₹{beansDiscount})</span>
+                        <button
+                          type="button"
+                          onClick={() => setCircleBeansRedeemed(0)}
+                          className="text-[11px] text-rose-700 underline cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleApplyBeans(circleBeansBalance)}
+                        className="w-full py-2 px-3 rounded-lg bg-[#271310] hover:bg-[#3d201c] text-white text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        Apply Beans to Order
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-[#827472]">
+                    No Beans found for this email. Complete an order to begin earning Beans!
+                  </p>
+                )}
+              </div>
+
               {/* Price Calculation Breakdown */}
               <div className="space-y-2 text-xs text-[#504442] border-t border-[#f4ecea] pt-3">
                 <div className="flex justify-between">
@@ -851,12 +1023,21 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
                     <span>-{formatPrice(appliedDiscount, currency)}</span>
                   </div>
                 )}
+                {beansDiscount > 0 && (
+                  <div className="flex justify-between text-emerald-800 font-semibold">
+                    <span>Cà Phê Circle Beans</span>
+                    <span>-{formatPrice(beansDiscount, currency)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-base font-bold text-[#271310] pt-3 border-t border-[#f4ecea]">
                   <span>Total Amount</span>
                   <span className="font-serif text-xl text-[#785a00]" style={{ fontFamily: 'Playfair Display, serif' }}>
                     {formatPrice(finalTotalINR, currency)}
                   </span>
                 </div>
+                <p className="text-[10px] text-[#827472] text-center pt-2">
+                  All prices are inclusive of applicable Goods & Services Tax (GST).
+                </p>
               </div>
 
               {/* Status Banner */}

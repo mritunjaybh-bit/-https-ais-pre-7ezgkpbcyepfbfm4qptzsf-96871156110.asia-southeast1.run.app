@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Logo } from './Logo';
-import { Currency, ActiveTab } from '../types';
+import { Currency, ActiveTab, SiteSettings } from '../types';
 import {
   ShoppingBag,
   Globe,
@@ -8,7 +8,8 @@ import {
   Check,
   Clock,
   Volume2,
-  VolumeX
+  VolumeX,
+  Award
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatCurrency';
 import { CURRENCY_RATES } from '../data/coffeeData';
@@ -25,6 +26,7 @@ interface HeaderProps {
   onOpenMatcher: () => void;
   onOpenTracker: () => void;
   activeOrdersCount?: number;
+  siteSettings?: SiteSettings;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -38,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMatcher,
   onOpenTracker,
   activeOrdersCount = 0,
+  siteSettings,
 }) => {
   const { isMuted, toggleMute } = useMusic();
   const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
@@ -54,22 +57,25 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const currencies: Currency[] = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'VND'];
+  const supportEmail = siteSettings?.supportEmail || 'support@caphevietnam.in';
+  const freeThreshold = siteSettings?.freeShippingThreshold || 799;
+  const announcementText = siteSettings?.announcementBarText || 'Single-origin. Slow-roasted. Brewed in the Vietnamese tradition.';
 
   return (
     <header className="sticky top-0 z-40 w-full max-w-full bg-[#fcfbf7]/95 backdrop-blur-md border-b border-[#c5a880]/20 font-sans transition-colors duration-300">
       {/* Editorial Luxury Top Announcement Bar */}
       <div className="w-full bg-[#140d09] text-[#fcfbf7] text-[11px] py-2 px-4 font-light tracking-[0.2em] uppercase flex items-center justify-between border-b border-[#c5a880]/20">
         <div className="hidden lg:flex items-center gap-2 text-[#c5a880]">
-          <span>Single-origin. Slow-roasted. Brewed in the Vietnamese tradition.</span>
+          <span>{announcementText}</span>
         </div>
         <div className="mx-auto lg:mx-0 flex items-center gap-2 text-center">
-          <span className="text-[#8c827a]">Complimentary Shipping Above ₹799</span>
+          <span className="text-[#8c827a]">Complimentary Shipping Above ₹{freeThreshold}</span>
           <span className="text-[#c5a880]">•</span>
           <a
-            href="mailto:support@caphevietnam.in"
+            href={`mailto:${supportEmail}`}
             className="text-[#e5ded8] hover:text-[#c5a880] underline underline-offset-2 transition-colors"
           >
-            support@caphevietnam.in
+            {supportEmail}
           </a>
         </div>
         <div className="hidden lg:flex items-center gap-3 text-[10px] text-[#c5a880] tracking-[0.25em]">
@@ -212,10 +218,13 @@ export const Header: React.FC<HeaderProps> = ({
             { id: 'flavor-matcher', label: 'Taste Matcher', href: '/taste-matcher' },
             { id: 'heritage', label: 'Terroir & Story', href: '/heritage' },
             { id: 'blog', label: 'Journal', href: '/blog' },
+            { id: 'circle', label: 'Cà Phê Circle', href: '/circle' },
           ].map((item) => {
             const isActive =
               item.id === 'blog'
                 ? activeTab === 'blog' || activeTab === 'blog-post'
+                : item.id === 'circle'
+                ? activeTab === 'circle' || activeTab === 'circle-terms'
                 : activeTab === item.id;
 
             return (

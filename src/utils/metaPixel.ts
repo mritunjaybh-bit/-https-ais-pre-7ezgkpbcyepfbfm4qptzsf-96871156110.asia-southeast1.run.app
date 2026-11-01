@@ -10,7 +10,62 @@
  * Replace 'YOUR_PIXEL_ID_HERE' with your actual Meta Pixel ID in index.html and optionally here.
  */
 
-export const META_PIXEL_ID = 'YOUR_PIXEL_ID_HERE';
+export function hasCookieConsent(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem('caphe_cookie_consent') === 'accepted';
+  } catch {
+    return false;
+  }
+}
+
+export function setCookieConsent(accepted: boolean): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('caphe_cookie_consent', accepted ? 'accepted' : 'declined');
+  } catch {}
+}
+
+let pixelInitialized = false;
+
+export function initMetaPixelFromSettings(pixelId?: string): void {
+  if (typeof window === 'undefined' || pixelInitialized) return;
+  const cleanId = (pixelId || '').trim();
+  if (!cleanId || cleanId === 'YOUR_PIXEL_ID_HERE') return;
+
+  // Only load if cookie consent was given
+  if (!hasCookieConsent()) return;
+
+  try {
+    /* eslint-disable */
+    (function (f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
+      if (f.fbq) return;
+      n = f.fbq = function () {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+      };
+      if (!f._fbq) f._fbq = n;
+      n.push = n;
+      n.loaded = !0;
+      n.version = '2.0';
+      n.queue = [];
+      t = b.createElement(e);
+      t.async = !0;
+      t.src = v;
+      s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s);
+    })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    /* eslint-enable */
+
+    if (typeof window.fbq === 'function') {
+      window.fbq('init', cleanId);
+      window.fbq('track', 'PageView');
+      pixelInitialized = true;
+      console.log(`[Meta Pixel] Initialized dynamically with ID: ${cleanId}`);
+    }
+  } catch (e) {
+    console.warn('[Meta Pixel] Failed to initialize:', e);
+  }
+}
 
 declare global {
   interface Window {

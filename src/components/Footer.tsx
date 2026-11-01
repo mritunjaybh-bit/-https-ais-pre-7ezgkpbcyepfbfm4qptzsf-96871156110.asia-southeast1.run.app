@@ -1,154 +1,285 @@
 import React, { useState } from 'react';
 import { Logo } from './Logo';
-import { ActiveTab } from '../types';
-import { Mail, Check, Lock, ArrowRight } from 'lucide-react';
+import { ActiveTab, SiteSettings } from '../types';
+import { LegalDocType } from './LegalPagesModal';
+import { Check, Lock, MessageCircle } from 'lucide-react';
 
 interface FooterProps {
   onSelectTab: (tab: ActiveTab) => void;
   onOpenTracker?: () => void;
+  siteSettings?: SiteSettings;
+  onOpenLegalDoc?: (doc: LegalDocType) => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onSelectTab, onOpenTracker }) => {
+export const Footer: React.FC<FooterProps> = ({
+  onSelectTab,
+  onOpenTracker,
+  siteSettings,
+  onOpenLegalDoc,
+}) => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) return;
+    try {
+      await fetch('/api/subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'footer_roastery_dispatch' }),
+      });
+    } catch {
+      // Ignore network error in fallback
+    }
     setSubscribed(true);
     setEmail('');
   };
 
-  return (
-    <footer className="w-full max-w-full overflow-hidden bg-[#140d09] text-[#fcfbf7] pt-16 pb-12 border-t border-[#c5a880]/20 font-sans">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 pb-14 border-b border-[#c5a880]/20">
-          {/* Brand Identity & Mission (5 cols) */}
-          <div className="lg:col-span-5 space-y-5">
-            <div className="inline-block bg-[#fcfbf7] p-2.5 rounded-lg">
-              <Logo size="sm" showTagline={false} />
-            </div>
-            <p className="text-xs text-[#a3978f] font-light leading-relaxed pr-4">
-              Direct-trade artisanal Vietnamese ground coffee powders, instant 3-in-1 condensed milk sachets, pure freeze-dried crystals, and stainless steel Phin gravity brewing kits. Sourced directly from heirloom micro-lot farmers in Buôn Ma Thuột & Đà Lạt.
-            </p>
+  const supportEmail = siteSettings?.supportEmail || 'support@caphevietnam.in';
+  const whatsapp = siteSettings?.whatsappNumber;
+  const fssai = siteSettings?.fssaiNumber;
+  const gstin = siteSettings?.gstin;
 
-            {/* Orders Update & Roastery Desk */}
-            <div className="p-4 rounded-xl border border-[#c5a880]/20 bg-white/5 space-y-1">
-              <span className="text-[9px] uppercase tracking-[0.2em] text-[#c5a880] block font-medium">
-                Client Concierge & Inquiries
-              </span>
+  return (
+    <>
+      <footer className="w-full max-w-full overflow-hidden bg-[#140d09] text-[#fcfbf7] pt-16 pb-12 border-t border-[#c5a880]/20 font-sans">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Main Footer Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 pb-14 border-b border-[#c5a880]/20">
+            {/* Brand Identity & Mission (5 cols) */}
+            <div className="lg:col-span-5 space-y-5">
+              <div className="inline-block bg-[#fcfbf7] p-2.5 rounded-lg">
+                <Logo size="sm" showTagline={false} />
+              </div>
+              <p className="text-xs text-[#a3978f] font-light leading-relaxed pr-4">
+                Direct-trade artisanal Vietnamese ground coffee powders, instant 3-in-1 condensed milk sachets, pure freeze-dried crystals, and stainless steel Phin gravity brewing kits. Sourced directly from heirloom micro-lot farmers in Buôn Ma Thuột & Đà Lạt.
+              </p>
+
+              {/* Orders Update & Roastery Desk */}
+              <div className="p-4 rounded-xl border border-[#c5a880]/20 bg-white/5 space-y-1">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-[#c5a880] block font-medium">
+                  Client Concierge & Inquiries
+                </span>
+                <a
+                  href={`mailto:${supportEmail}`}
+                  className="text-xs font-mono text-[#fcfbf7] hover:text-[#c5a880] transition-colors block"
+                >
+                  {supportEmail}
+                </a>
+                {whatsapp && (
+                  <p className="text-[11px] text-[#a3978f] font-mono mt-0.5">
+                    WhatsApp: {whatsapp}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Navigation (3 cols) */}
+            <div className="lg:col-span-3 space-y-4 text-xs font-light">
+              <h4 className="text-xs font-medium text-[#c5a880] uppercase tracking-[0.25em]">
+                Navigation & Story
+              </h4>
+              <ul className="space-y-2.5 text-[#a3978f]">
+                {[
+                  { label: 'The Collection', tab: 'shop', href: '/' },
+                  { label: 'Flavoured Specialty', tab: 'flavoured', href: '/flavoured' },
+                  { label: 'Instant 3-in-1', tab: 'instant', href: '/instant' },
+                  { label: 'Phin Gravity Studio', tab: 'brew-studio', href: '/brew-studio' },
+                  { label: 'Taste Matcher', tab: 'flavor-matcher', href: '/taste-matcher' },
+                  { label: 'Heritage Terroirs', tab: 'heritage', href: '/heritage' },
+                  { label: 'The Journal', tab: 'blog', href: '/blog' },
+                  { label: 'Track Order', tab: 'track-order', href: '/track' },
+                  { label: 'Cà Phê Circle (Rewards)', tab: 'circle', href: '/circle' },
+                ].map((link) => (
+                  <li key={link.tab}>
+                    <a
+                      href={link.href}
+                      onClick={(e) => {
+                        if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                        e.preventDefault();
+                        onSelectTab(link.tab as ActiveTab);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="hover:text-[#fcfbf7] transition-colors cursor-pointer inline-block tracking-wider"
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Private Dispatch List & Policies (4 cols) */}
+            <div className="lg:col-span-4 space-y-4 text-xs font-light">
+              <h4 className="text-xs font-medium text-[#c5a880] uppercase tracking-[0.25em]">
+                The Roastery Dispatch
+              </h4>
+              <p className="text-[#a3978f] leading-relaxed">
+                Receive private notices for micro-lot harvest releases, seasonal roasts, and traditional brewing dispatches.
+              </p>
+
+              {subscribed ? (
+                <div className="p-4 rounded-xl border border-[#c5a880]/40 bg-white/5 flex items-center gap-2.5 text-xs text-[#c5a880]">
+                  <Check className="w-4 h-4 text-[#c5a880]" />
+                  <span>You are subscribed to the private roastery dispatch.</span>
+                </div>
+              ) : (
+                <form onSubmit={handleSubscribe} className="space-y-2.5">
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter email address"
+                      className="flex-1 bg-white/5 border border-[#c5a880]/30 rounded-full px-4 py-2 text-xs text-[#fcfbf7] placeholder:text-[#8c827a] focus:outline-none focus:border-[#c5a880] transition-colors"
+                    />
+                    <button
+                      type="submit"
+                      className="px-5 py-2 bg-[#c5a880] hover:bg-[#b89a70] text-[#140d09] font-medium rounded-full text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                    >
+                      Join
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-[#8c827a]">No spam. Strictly seasonal roastery announcements.</p>
+                </form>
+              )}
+
+              {/* Legal & Compliance Links */}
+              <div className="pt-3 border-t border-[#c5a880]/15 space-y-2">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-[#c5a880] block font-medium">
+                  Client Charter & Policies
+                </span>
+                <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[11px] text-[#8c827a]">
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalDoc?.('privacy')}
+                    className="hover:text-[#fcfbf7] transition-colors cursor-pointer"
+                  >
+                    Privacy Policy
+                  </button>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalDoc?.('terms')}
+                    className="hover:text-[#fcfbf7] transition-colors cursor-pointer"
+                  >
+                    Terms of Service
+                  </button>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalDoc?.('refunds')}
+                    className="hover:text-[#fcfbf7] transition-colors cursor-pointer"
+                  >
+                    Refunds & Returns
+                  </button>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalDoc?.('shipping')}
+                    className="hover:text-[#fcfbf7] transition-colors cursor-pointer"
+                  >
+                    Shipping Policy
+                  </button>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalDoc?.('contact')}
+                    className="hover:text-[#fcfbf7] transition-colors cursor-pointer"
+                  >
+                    Contact Us
+                  </button>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalDoc?.('faq')}
+                    className="hover:text-[#fcfbf7] transition-colors cursor-pointer"
+                  >
+                    Knowledge & FAQ
+                  </button>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={() => onSelectTab('circle-terms')}
+                    className="hover:text-[#c5a880] transition-colors cursor-pointer"
+                  >
+                    Circle Terms
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Statutory Registration Line (FSSAI & GSTIN displayed ONLY IF present in siteSettings) */}
+          {(fssai || gstin) && (
+            <div className="py-4 border-b border-[#c5a880]/15 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-[11px] text-[#a3978f] font-mono">
+              {fssai && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#c5a880]">FSSAI Central Licence:</span>
+                  <span>{fssai}</span>
+                </div>
+              )}
+              {fssai && gstin && <span className="text-[#c5a880]/40">•</span>}
+              {gstin && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#c5a880]">GSTIN:</span>
+                  <span>{gstin}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Bottom Bar */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#8c827a] font-light">
+            <p>© {new Date().getFullYear()} Cà Phê Việt Nam. Direct-Trade Vietnamese Coffee.</p>
+            <div className="flex items-center gap-4 text-[11px]">
+              <span>Volcanic Basalt Terroirs</span>
+              <span>•</span>
+              <span>Valve Degassing Seal</span>
+              <span>•</span>
               <a
-                href="mailto:support@caphevietnam.in"
-                className="text-xs font-mono text-[#fcfbf7] hover:text-[#c5a880] transition-colors"
+                href="/admin"
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.button === 1) return;
+                  e.preventDefault();
+                  onSelectTab('admin');
+                  try {
+                    window.history.pushState({}, '', '/admin');
+                  } catch {
+                    // Ignore
+                  }
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="hover:text-[#c5a880] transition-colors flex items-center gap-1 cursor-pointer"
+                title="Roastery Owner Portal"
               >
-                support@caphevietnam.in
+                <Lock className="w-3 h-3 text-[#c5a880]" />
+                <span>Owner Portal</span>
               </a>
             </div>
           </div>
-
-          {/* Quick Navigation (3 cols) */}
-          <div className="lg:col-span-3 space-y-4 text-xs font-light">
-            <h4 className="text-xs font-medium text-[#c5a880] uppercase tracking-[0.25em]">
-              Navigation
-            </h4>
-            <ul className="space-y-2.5 text-[#a3978f]">
-              {[
-                { label: 'The Collection', tab: 'shop', href: '/' },
-                { label: 'Flavoured Specialty', tab: 'flavoured', href: '/flavoured' },
-                { label: 'Instant 3-in-1', tab: 'instant', href: '/instant' },
-                { label: 'Phin Gravity Studio', tab: 'brew-studio', href: '/brew-studio' },
-                { label: 'Taste Matcher', tab: 'flavor-matcher', href: '/taste-matcher' },
-                { label: 'Heritage Terroirs', tab: 'heritage', href: '/heritage' },
-                { label: 'The Journal', tab: 'blog', href: '/blog' },
-                { label: 'Track Order', tab: 'track-order', href: '/track' },
-              ].map((link) => (
-                <li key={link.tab}>
-                  <a
-                    href={link.href}
-                    onClick={(e) => {
-                      if (e.metaKey || e.ctrlKey || e.button === 1) return;
-                      e.preventDefault();
-                      onSelectTab(link.tab as ActiveTab);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="hover:text-[#fcfbf7] transition-colors cursor-pointer inline-block tracking-wider"
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Private Dispatch List (4 cols) */}
-          <div className="lg:col-span-4 space-y-4 text-xs font-light">
-            <h4 className="text-xs font-medium text-[#c5a880] uppercase tracking-[0.25em]">
-              The Roastery Dispatch
-            </h4>
-            <p className="text-[#a3978f] leading-relaxed">
-              Receive private notices for micro-lot harvest releases, seasonal roasts, and traditional brewing dispatches.
-            </p>
-
-            {subscribed ? (
-              <div className="p-4 rounded-xl border border-[#c5a880]/40 bg-white/5 flex items-center gap-2.5 text-xs text-[#c5a880]">
-                <Check className="w-4 h-4 text-[#c5a880]" />
-                <span>You are subscribed to the private roastery dispatch.</span>
-              </div>
-            ) : (
-              <form onSubmit={handleSubscribe} className="space-y-2.5">
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter email address"
-                    className="flex-1 bg-white/5 border border-[#c5a880]/30 rounded-full px-4 py-2 text-xs text-[#fcfbf7] placeholder:text-[#8c827a] focus:outline-none focus:border-[#c5a880] transition-colors"
-                  />
-                  <button
-                    type="submit"
-                    className="px-5 py-2 bg-[#c5a880] hover:bg-[#b89a70] text-[#140d09] font-medium rounded-full text-xs uppercase tracking-wider transition-colors cursor-pointer"
-                  >
-                    Join
-                  </button>
-                </div>
-                <p className="text-[10px] text-[#8c827a]">No spam. Strictly seasonal roastery announcements.</p>
-              </form>
-            )}
-          </div>
         </div>
+      </footer>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#8c827a] font-light">
-          <p>© {new Date().getFullYear()} Cà Phê Việt Nam. Direct-Trade Vietnamese Coffee.</p>
-          <div className="flex items-center gap-4 text-[11px]">
-            <span>Volcanic Basalt Terroirs</span>
-            <span>•</span>
-            <span>Valve Degassing Seal</span>
-            <span>•</span>
-            <a
-              href="/admin"
-              onClick={(e) => {
-                if (e.metaKey || e.ctrlKey || e.button === 1) return;
-                e.preventDefault();
-                onSelectTab('admin');
-                try {
-                  window.history.pushState({}, '', '/admin');
-                } catch {
-                  // Ignore
-                }
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="hover:text-[#c5a880] transition-colors flex items-center gap-1 cursor-pointer"
-              title="Roastery Owner Portal"
-            >
-              <Lock className="w-3 h-3 text-[#c5a880]" />
-              <span>Owner Portal</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    </footer>
+      {/* Floating WhatsApp Concierge Button (ONLY displayed if whatsappNumber is set in Site Settings) */}
+      {whatsapp && (
+        <aside aria-label="Customer Support Concierge">
+          <a
+            href={`https://wa.me/${whatsapp.replace(/[^0-9]/g, '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat with Roastery Concierge on WhatsApp"
+            className="fixed bottom-6 right-6 z-40 bg-[#25D366] hover:bg-[#20ba59] text-white p-3.5 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-2 group cursor-pointer border-2 border-white/20"
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-xs font-medium tracking-wide max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap">
+              Roastery Concierge
+            </span>
+          </a>
+        </aside>
+      )}
+    </>
   );
 };

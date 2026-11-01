@@ -47,7 +47,14 @@ import {
   UserCheck,
   UserX,
   Copy,
+  Settings,
+  MessageSquare,
+  Award,
 } from 'lucide-react';
+import { AdminSiteSettings } from './AdminSiteSettings.tsx';
+import { AdminPreOrders } from './AdminPreOrders.tsx';
+import { AdminReviews } from './AdminReviews.tsx';
+import { AdminCircle } from './AdminCircle.tsx';
 
 interface AdminPortalProps {
   currency: Currency;
@@ -69,7 +76,18 @@ export interface StaffAccount {
   lastLoginAt?: string;
 }
 
-type AdminTab = 'overview' | 'orders' | 'inventory' | 'prices' | 'products' | 'staff' | 'subscribers';
+type AdminTab =
+  | 'overview'
+  | 'orders'
+  | 'inventory'
+  | 'prices'
+  | 'products'
+  | 'staff'
+  | 'subscribers'
+  | 'settings'
+  | 'preorders'
+  | 'reviews'
+  | 'circle';
 
 export const AdminPortal: React.FC<AdminPortalProps> = ({
   currency,
@@ -2382,6 +2400,64 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </button>
         )}
 
+        {/* Pre-Orders & Waitlist (Owner & Staff) */}
+        <button
+          type="button"
+          onClick={() => setActiveTab('preorders')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'preorders'
+              ? 'bg-[#feca4d] text-[#271310] shadow-sm'
+              : 'text-[#d6c7c4] hover:bg-white/10'
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          <span>Pre-Orders</span>
+        </button>
+
+        {/* Customer Reviews Moderation (Owner & Staff) */}
+        <button
+          type="button"
+          onClick={() => setActiveTab('reviews')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'reviews'
+              ? 'bg-[#feca4d] text-[#271310] shadow-sm'
+              : 'text-[#d6c7c4] hover:bg-white/10'
+          }`}
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span>Reviews Queue</span>
+        </button>
+
+        {/* Cà Phê Circle Loyalty (Owner & Staff) */}
+        <button
+          type="button"
+          onClick={() => setActiveTab('circle')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'circle'
+              ? 'bg-[#feca4d] text-[#271310] shadow-sm'
+              : 'text-[#d6c7c4] hover:bg-white/10'
+          }`}
+        >
+          <Award className="w-4 h-4" />
+          <span>Cà Phê Circle</span>
+        </button>
+
+        {/* Site Settings (STRICTLY OWNER ONLY) */}
+        {currentUserRole === 'owner' && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('settings')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'settings'
+                ? 'bg-[#feca4d] text-[#271310] shadow-sm'
+                : 'text-[#d6c7c4] hover:bg-white/10'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            <span>Site Settings</span>
+          </button>
+        )}
+
         {/* Section 7: Direct Nav Logout */}
         <button
           type="button"
@@ -3837,6 +3913,26 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             )}
           </div>
         </div>
+      )}
+
+      {/* TAB 8: PRE-ORDERS & WAITLIST (OWNER & STAFF) */}
+      {activeTab === 'preorders' && (
+        <AdminPreOrders token={authToken} showToast={showToast} />
+      )}
+
+      {/* TAB 9: CUSTOMER REVIEWS MODERATION (OWNER & STAFF) */}
+      {activeTab === 'reviews' && (
+        <AdminReviews token={authToken} showToast={showToast} />
+      )}
+
+      {/* TAB 10: CÀ PHÊ CIRCLE MEMBERS (OWNER & STAFF) */}
+      {activeTab === 'circle' && (
+        <AdminCircle token={authToken} showToast={showToast} />
+      )}
+
+      {/* TAB 11: OWNER SITE SETTINGS (OWNER ONLY) */}
+      {activeTab === 'settings' && currentUserRole === 'owner' && (
+        <AdminSiteSettings token={authToken} showToast={showToast} />
       )}
 
       {/* MODAL: ADD STAFF MEMBER */}

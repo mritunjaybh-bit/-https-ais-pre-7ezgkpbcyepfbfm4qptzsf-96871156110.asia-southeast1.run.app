@@ -107,6 +107,8 @@ export type ActiveTab =
   | 'product-detail'
   | 'checkout'
   | 'track-order'
+  | 'circle'
+  | 'circle-terms'
   | 'admin';
 
 export type BlogContentBlock =
@@ -178,5 +180,67 @@ export interface EmailSubscriber {
   createdAt: string;
   source: string;
   discountCode?: string;
+}
+
+export interface SiteSettings {
+  preOrderMode: boolean;
+  dispatchWindow: string;
+  fssaiNumber: string;
+  gstin: string;
+  whatsappNumber: string;
+  announcementBarText: string;
+  freeShippingThreshold: number;
+  supportEmail: string;
+  metaPixelId: string;
+}
+
+export interface PreOrderRecord {
+  id: string;
+  customerName: string;
+  customerContact: string; // phone or email
+  productId: string;
+  productName: string;
+  quantity: number;
+  createdAt: string;
+  status: 'pending' | 'contacted' | 'fulfilled' | 'cancelled';
+  notes?: string;
+}
+
+export interface ProductReview {
+  id: string;
+  productId: string;
+  orderId: string;
+  customerEmail: string;
+  customerName: string;
+  rating: number; // 1 to 5
+  title?: string;
+  comment: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
+export type CircleTier = 'Origin' | 'Reserve' | 'Grand Cru';
+
+export interface CircleTransaction {
+  id: string;
+  type: 'earn' | 'redeem' | 'bonus' | 'reversal';
+  beans: number;
+  description: string;
+  orderId?: string;
+  timestamp: string;
+}
+
+export interface CircleMember {
+  id: string;
+  email: string;
+  name?: string;
+  phone?: string;
+  beansBalance: number;
+  lifetimeSpendINR: number;
+  tier: CircleTier;
+  referralCode: string;
+  referredBy?: string;
+  joinedAt: string;
+  history: CircleTransaction[];
 }
 

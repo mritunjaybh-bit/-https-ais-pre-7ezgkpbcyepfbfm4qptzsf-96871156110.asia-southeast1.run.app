@@ -1,5 +1,15 @@
 import type { Request, Response } from 'express';
-import { getDbProducts, updateDbProducts } from './_lib/db.ts';
+import {
+  getDbProducts,
+  updateDbProducts,
+  getDbSiteSettings,
+  getDbReviews,
+  createDbReview,
+  createDbPreOrder,
+  findDbCircleMember,
+  createOrGetDbCircleMember,
+  redeemCircleBeans,
+} from './_lib/db.ts';
 import { isValidSession } from './_lib/auth-util.ts';
 import type { ProductItem } from '../src/types.ts';
 import { PRODUCT_ITEMS } from '../src/data/coffeeData.ts';
@@ -11,11 +21,112 @@ export default async function handler(req: any, res: any) {
   if (origin !== '*') {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Handle POST actions (pre-orders, reviews submission, circle membership)
+  if (req.method === 'POST') {
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        body = {};
+      }
+    }
+    body = body || {};
+    const action = String(body.action || req.query.action || '').toLowerCase();
+
+    // 1. Pre-order / Waitlist submission
+    if (action === 'create-pre-order' || action === 'pre-order') {
+      const { customerName, customerContact, productId, productName, quantity, notes } = body;
+      if (!customerName || !customerContact || !productId) {
+        return res.status(400).json({ error: 'Name, contact detail (email or phone), and product are required.' });
+      }
+
+      const preOrder = createDbPreOrder({
+        customerName: String(customerName),
+        customerContact: String(customerContact),
+        productId: String(productId),
+        productName: String(productName || productId),
+        quantity: Number(quantity) || 1,
+        notes: notes ? String(notes) : undefined,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Your waitlist / pre-order reservation has been received. Our roastery team will contact you directly.',
+        preOrder,
+      });
+    }
+
+    // 2. Verified Customer Review submission (requires Delivered Order ID + customer email)
+    if (action === 'submit-review' || action === 'review') {
+      const { productId, orderId, customerEmail, customerName, rating, title, comment } = body;
+      if (!productId || !orderId || !customerEmail || !customerName || !rating || !comment) {
+        return res.status(400).json({
+          error: 'Product, Order ID, customer email, your name, rating, and review text are all required.',
+        });
+      }
+
+      const result = createDbReview({
+        productId: String(productId),
+        orderId: String(orderId),
+        customerEmail: String(customerEmail),
+        customerName: String(customerName),
+        rating: Number(rating) || 5,
+        title: title ? String(title) : undefined,
+        comment: String(comment),
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Your review has been submitted for roastery verification and will appear once approved by the Roastery Owner.',
+        review: result.review,
+      });
+    }
+
+    // 3. Circle Member Profile / Sign-in with Email
+    if (action === 'circle-member' || action === 'circle-profile') {
+      const email = String(body.email || '').trim().toLowerCase();
+      if (!email) {
+        return res.status(400).json({ error: 'Valid email address is required.' });
+      }
+
+      const member = createOrGetDbCircleMember(
+        email,
+        body.name ? String(body.name) : undefined,
+        body.phone ? String(body.phone) : undefined,
+        body.referralCode ? String(body.referralCode) : undefined
+      );
+
+      return res.status(200).json({ success: true, member });
+    }
+
+    // 4. Circle Beans Redeem on Checkout
+    if (action === 'circle-redeem') {
+      const { email, beans, orderId, orderTotal } = body;
+      if (!email || !beans || !orderTotal) {
+        return res.status(400).json({ error: 'Email, beans amount, and order total are required.' });
+      }
+
+      const redemption = redeemCircleBeans(
+        String(email),
+        Number(beans),
+        String(orderId || 'PENDING'),
+        Number(orderTotal)
+      );
+
+      if (!redemption.success) {
+        return res.status(400).json({ error: redemption.error });
+      }
+
+      return res.status(200).json(redemption);
+    }
   }
 
   try {
@@ -39,9 +150,14 @@ export default async function handler(req: any, res: any) {
         isOutOfStock: (p.stockQuantity ?? 0) <= 0,
       }));
 
+    const siteSettings = getDbSiteSettings();
+    const approvedReviews = getDbReviews(false); // Only approved reviews for public
+
     return res.status(200).json({
       products: activeProducts,
       count: activeProducts.length,
+      siteSettings,
+      reviews: approvedReviews,
       timestamp: new Date().toISOString(),
     });
   } catch (err: any) {
@@ -54,6 +170,8 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({
       products: fallbackProducts,
       count: fallbackProducts.length,
+      siteSettings: getDbSiteSettings(),
+      reviews: [],
       fallback: true,
       timestamp: new Date().toISOString(),
     });

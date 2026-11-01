@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ProductItem, Currency, PackageSize, GrindOption, CartItem } from '../types';
+import { ProductItem, Currency, PackageSize, GrindOption, CartItem, SiteSettings } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
 import { getProductById } from '../data/coffeeData';
 import {
@@ -8,7 +8,8 @@ import {
   Minus,
   Check,
   ShoppingBag,
-  BookOpen
+  BookOpen,
+  CalendarClock
 } from 'lucide-react';
 
 interface ProductDetailModalProps {
@@ -19,6 +20,8 @@ interface ProductDetailModalProps {
   currency: Currency;
   onAddToCart: (item: CartItem) => void;
   onOpenRecipeModal?: (item: ProductItem) => void;
+  onOpenPreOrderModal?: (item: ProductItem) => void;
+  siteSettings?: SiteSettings;
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -29,6 +32,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   currency,
   onAddToCart,
   onOpenRecipeModal,
+  onOpenPreOrderModal,
+  siteSettings,
 }) => {
   const rawProduct = productProp || itemProp;
   const isVisible = isOpen !== undefined ? isOpen : !!rawProduct;
@@ -37,6 +42,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   const product = getProductById(rawProduct.id) || rawProduct;
   const isOutOfStock = (product.stockQuantity ?? 50) <= 0 || product.isOutOfStock;
+  const isPreOrderActive = siteSettings?.preOrderMode || isOutOfStock;
 
   const [selectedSize, setSelectedSize] = useState<PackageSize>(
     product.availableSizes[0]?.size || '250g Valve Pouch'
@@ -47,6 +53,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [addedNotice, setAddedNotice] = useState(false);
   const [showRecipeInline, setShowRecipeInline] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -55,6 +62,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       setQuantity(1);
       setAddedNotice(false);
       setShowRecipeInline(false);
+      setImageError(false);
     }
   }, [product?.id]);
 
@@ -64,7 +72,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const totalPrice = unitPrice * quantity;
 
   const handleAddToCart = () => {
-    if (isOutOfStock) return;
+    if (isOutOfStock && !siteSettings?.preOrderMode) return;
     const cartItem: CartItem = {
       id: `${product.id}-${selectedSize}-${selectedGrind || 'none'}-${Date.now()}`,
       productId: product.id,
@@ -123,11 +131,19 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         <div className="p-6 overflow-y-auto space-y-6 flex-1 text-[#140d09]">
           {/* Top Visual & Quick Info Banner */}
           <div className="flex flex-col sm:flex-row gap-5 bg-white p-4 rounded-xl border border-[#c5a880]/25">
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              className="w-full sm:w-36 h-36 object-cover rounded-lg shrink-0"
-            />
+            {!imageError ? (
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                onError={() => setImageError(true)}
+                className="w-full sm:w-36 h-36 object-cover rounded-lg shrink-0"
+              />
+            ) : (
+              <div className="w-full sm:w-36 h-36 bg-[#140d09] rounded-lg shrink-0 flex flex-col items-center justify-center p-3 text-center border border-[#c5a880]/30">
+                <span className="font-serif text-xl text-[#c5a880] font-light">CP</span>
+                <span className="text-[8px] uppercase tracking-widest text-[#c5a880] mt-1">Cà Phê</span>
+              </div>
+            )}
             <div className="space-y-2 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 {product.originRegion && (
@@ -179,8 +195,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           {recipe && showRecipeInline && (
             <div className="bg-[#fbf9f5] border border-[#c5a880]/40 rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between border-b border-[#c5a880]/20 pb-2">
-                <h4 className="text-sm font-serif font-medium text-[#140d09]">{recipe.recipeName}</h4>
-                <span className="text-[10px] uppercase tracking-wider text-[#c5a880] font-mono">{recipe.waterTemp} • {recipe.brewTime}</span>
+                <h4 className="text-sm font-serif font-medium text-[#140d09]">{recipe.name}</h4>
+                <span className="text-[10px] uppercase tracking-wider text-[#c5a880] font-mono">{recipe.waterTemp} • {recipe.prepTime}</span>
               </div>
               <p className="text-xs text-[#6e635d] font-light">
                 <strong>Ingredients:</strong> {recipe.ingredients.map(i => `${i.item} (${i.quantity})`).join(', ')}
@@ -288,12 +304,17 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               </span>
             </div>
 
-            {isOutOfStock ? (
+            {isPreOrderActive ? (
               <button
-                disabled
-                className="px-6 py-3 rounded-xl font-medium text-xs uppercase tracking-wider bg-stone-200 text-stone-500 cursor-not-allowed border border-stone-300"
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenPreOrderModal?.(product);
+                }}
+                className="px-6 py-3 rounded-xl font-medium text-xs uppercase tracking-wider bg-[#140d09] text-[#c5a880] hover:bg-[#2b1f1a] border border-[#c5a880] flex items-center gap-2 cursor-pointer"
               >
-                Sold Out
+                <CalendarClock className="w-3.5 h-3.5 text-[#c5a880]" />
+                <span>Pre-Order</span>
               </button>
             ) : (
               <button

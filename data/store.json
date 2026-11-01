@@ -1004,6 +1004,33 @@
   ],
   "orders": [
     {
+      "orderId": "CP-TEST-777",
+      "shippingType": "standard",
+      "shippingAddress": "45 MG Road, Indiranagar",
+      "cityPincode": "Bengaluru 560038",
+      "customerName": "Rohan Gupta",
+      "customerPhone": "+91 9999888877",
+      "customerEmail": "rohan@example.com",
+      "discountINR": 0,
+      "finalTotalINR": 820,
+      "items": [
+        {
+          "id": "item-1",
+          "name": "Saigon Artisan Chocolate & Dark Cacao Phin Powder",
+          "quantity": 1,
+          "unitPriceINR": 410
+        }
+      ],
+      "createdAt": 1793529145902,
+      "timestamp": "2026-11-01T10:32:25.902Z",
+      "status": "Order Placed & Roasting",
+      "courierPartner": "Delhivery Surface",
+      "trackingNumber": "BD-EXP-12262645",
+      "paymentStatus": "Pending (COD)",
+      "paymentMethod": "COD",
+      "emailSentSuccess": true
+    },
+    {
       "orderId": "CP-999888",
       "shippingType": "express",
       "shippingAddress": "123 Coffee Lane",
@@ -1044,17 +1071,29 @@
       "email": "mritunjay.bhardwaj@caphevietnam.in",
       "userId": "usr-owner-1790511787965-3e82c9a1",
       "expiresAt": 1792705231070
+    },
+    "913fb53a588d3257d1e6ae65cea1b7b4436ea2085842744e": {
+      "otp": "261238",
+      "email": "mritunjay.bhardwaj@caphevietnam.in",
+      "userId": "usr-owner-1790511787965-3e82c9a1",
+      "expiresAt": 1793506356228
+    },
+    "c884445b88037ee1d7f9b2ff6f8e1c8c928fc4713cb49332": {
+      "otp": "414690",
+      "email": "mritunjay.bhardwaj@caphevietnam.in",
+      "userId": "usr-owner-1790511787965-3e82c9a1",
+      "expiresAt": 1793506905126
     }
   },
   "users": [
     {
+      "id": "usr-owner-1790511787965-3e82c9a1",
       "username": "Mritunjay",
       "email": "mritunjay.bhardwaj@caphevietnam.in",
       "name": "Mritunjay Bhardwaj",
       "role": "owner",
-      "passwordHash": "d11f39bbae21d012247f56d456d9be55:9cd77a67670d24a29d18c1e9fe539d92f542c726633df65b98bde01ec89604f140af2e87215bc0f696bcfe908ab9fae82798505428e514820edd9083358ef9c8",
       "status": "active",
-      "id": "usr-owner-1790511787965-3e82c9a1",
+      "passwordHash": "d11f39bbae21d012247f56d456d9be55:9cd77a67670d24a29d18c1e9fe539d92f542c726633df65b98bde01ec89604f140af2e87215bc0f696bcfe908ab9fae82798505428e514820edd9083358ef9c8",
       "createdAt": "2026-09-27T12:23:07.965Z",
       "lastLoginAt": "2026-09-27T12:25:10.137Z"
     }

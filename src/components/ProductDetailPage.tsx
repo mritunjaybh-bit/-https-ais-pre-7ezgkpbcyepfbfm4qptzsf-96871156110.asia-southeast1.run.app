@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ProductItem, Currency, PackageSize, GrindOption, CartItem } from '../types';
+import { ProductItem, Currency, PackageSize, GrindOption, CartItem, SiteSettings, ProductReview } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
 import { PRODUCT_ITEMS, getProductById } from '../data/coffeeData';
+import { ReviewModal } from './ReviewModal';
+import { PreOrderModal } from './PreOrderModal';
 import {
   ArrowLeft,
   ShoppingBag,
@@ -22,7 +24,10 @@ import {
   Minus,
   Share2,
   Droplets,
-  BookOpen
+  BookOpen,
+  CalendarClock,
+  MessageSquare,
+  Award
 } from 'lucide-react';
 
 interface ProductDetailPageProps {
@@ -33,6 +38,7 @@ interface ProductDetailPageProps {
   onBackToShop: () => void;
   onSelectRelatedProduct: (product: ProductItem) => void;
   onOpenBrewStudio?: () => void;
+  siteSettings?: SiteSettings;
 }
 
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
@@ -43,6 +49,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   onBackToShop,
   onSelectRelatedProduct,
   onOpenBrewStudio,
+  siteSettings,
 }) => {
   const [selectedSize, setSelectedSize] = useState<PackageSize>(
     product.availableSizes[0]?.size || '250g Valve Pouch'
@@ -53,12 +60,17 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [addedNotice, setAddedNotice] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isPreOrderModalOpen, setIsPreOrderModalOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
 
   useEffect(() => {
     setSelectedSize(product.availableSizes[0]?.size || '250g Valve Pouch');
     setSelectedGrind(product.availableGrinds ? product.availableGrinds[0] : undefined);
     setQuantity(1);
     setAddedNotice(false);
+    setImageError(false);
 
     if (typeof document !== 'undefined') {
       document.title = `${product.name} | Cà Phê Vietnamese Artisanal Roasters`;
@@ -67,10 +79,22 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    // Fetch approved customer reviews
+    fetch('/api/products')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.reviews && Array.isArray(data.reviews)) {
+          const matching = data.reviews.filter((rv: ProductReview) => rv.productId === product.id);
+          setReviews(matching);
+        }
+      })
+      .catch(() => {});
   }, [product.id]);
 
   const liveProduct = getProductById(product.id) || product;
   const isOutOfStock = (liveProduct.stockQuantity ?? 50) <= 0 || liveProduct.isOutOfStock;
+  const isPreOrderActive = siteSettings?.preOrderMode || isOutOfStock;
 
   const currentSizeObj =
     liveProduct.availableSizes.find((s) => s.size === selectedSize) || liveProduct.availableSizes[0];
@@ -78,9 +102,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const totalPrice = unitPrice * quantity;
 
   const recipe = liveProduct.brewRecipe;
+  const freeThreshold = siteSettings?.freeShippingThreshold || 799;
+  const dispatchWindow = siteSettings?.dispatchWindow || '24 to 48 business hours';
 
   const handleAddToCart = () => {
-    if (isOutOfStock) return;
+    if (isOutOfStock && !siteSettings?.preOrderMode) return;
     const cartItem: CartItem = {
       id: `${liveProduct.id}-${selectedSize}-${selectedGrind || 'none'}-${Date.now()}`,
       productId: liveProduct.id,
@@ -100,7 +126,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   };
 
   const handleBuyNow = () => {
-    if (isOutOfStock) return;
+    if (isOutOfStock && !siteSettings?.preOrderMode) return;
     const cartItem: CartItem = {
       id: `${liveProduct.id}-${selectedSize}-${selectedGrind || 'none'}-${Date.now()}`,
       productId: liveProduct.id,
@@ -138,274 +164,236 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             onClick={onBackToShop}
             className="flex items-center gap-2 text-[#6e635d] hover:text-[#140d09] font-medium tracking-wider uppercase transition-colors cursor-pointer"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-[#c5a880]" />
-            <span>Return to Catalog</span>
+            <ArrowLeft className="w-4 h-4 text-[#c5a880]" />
+            <span>Return to Collection</span>
           </button>
 
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1.5 text-[#6e635d] hover:text-[#140d09] font-medium tracking-wider uppercase transition-colors cursor-pointer"
-          >
-            {copiedLink ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-[#c5a880]" />
-                <span className="text-[#c5a880]">Link Saved</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-3.5 h-3.5 text-[#c5a880]" />
-                <span>Share Piece</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 text-[#6e635d] hover:text-[#140d09] transition-colors cursor-pointer text-xs uppercase tracking-wider font-light"
+            >
+              <Share2 className="w-3.5 h-3.5 text-[#c5a880]" />
+              <span>{copiedLink ? 'Link Copied' : 'Share'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-16">
-        {/* Main Product Showcase Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
-          {/* Left Column: Visual Showcase */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-16">
+        {/* Main Product Showcase Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
+          {/* Left Column: Visual Presentation (6 Cols) */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="relative aspect-[4/3] sm:aspect-square w-full rounded-2xl overflow-hidden border border-[#c5a880]/30 bg-[#f7f4ee]">
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-
-              {/* Status / Origin Badge */}
-              <div className="absolute top-4 left-4 flex gap-2">
-                {product.originRegion && (
-                  <span className="bg-[#140d09]/90 text-[#fcfbf7] text-[9px] font-medium tracking-[0.2em] uppercase px-3 py-1 rounded border border-[#c5a880]/40">
-                    {product.originRegion}
+            <div className="relative aspect-square bg-[#f5f1e8] rounded-2xl overflow-hidden border border-[#c5a880]/30 shadow-xs">
+              {!imageError ? (
+                <img
+                  src={liveProduct.imageUrl}
+                  alt={liveProduct.name}
+                  onError={() => setImageError(true)}
+                  className={`w-full h-full object-cover ${
+                    isOutOfStock ? 'grayscale-[25%] opacity-95' : ''
+                  }`}
+                />
+              ) : (
+                <div className="w-full h-full bg-[#140d09] flex flex-col items-center justify-center p-8 text-center">
+                  <div className="w-20 h-20 rounded-full border border-[#c5a880]/40 flex items-center justify-center mb-4">
+                    <span className="font-serif text-3xl text-[#c5a880] tracking-widest font-light">CP</span>
+                  </div>
+                  <span className="text-sm uppercase tracking-[0.25em] text-[#c5a880] font-medium block">
+                    Cà Phê Vietnam
                   </span>
-                )}
-                {product.badge && (
-                  <span className="bg-white/95 text-[#140d09] text-[9px] font-medium tracking-[0.15em] uppercase px-3 py-1 rounded border border-[#c5a880]/30">
-                    {product.badge}
+                  <span className="text-xs text-[#8c827a] font-serif italic mt-1">
+                    {liveProduct.vietnameseName}
                   </span>
-                )}
-              </div>
-
-              {/* Jump to Brew Recipe Floating Pill */}
-              {recipe && (
-                <a
-                  href="#brew-recipe-section"
-                  className="absolute bottom-4 right-4 bg-white/95 text-[#140d09] hover:bg-[#140d09] hover:text-[#c5a880] text-[10px] font-medium tracking-[0.15em] uppercase px-3 py-1.5 rounded-full border border-[#c5a880] shadow-xs transition-all duration-300 flex items-center gap-1.5 cursor-pointer backdrop-blur-xs"
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-[#c5a880]" />
-                  <span>Brew Recipe Below ↓</span>
-                </a>
+                </div>
               )}
+
+              {/* Status Badges */}
+              <div className="absolute top-4 left-4 flex flex-wrap gap-2 pointer-events-none">
+                {isPreOrderActive ? (
+                  <span className="bg-[#140d09] text-[#c5a880] text-[10px] font-medium tracking-[0.2em] uppercase px-3 py-1.5 rounded-md border border-[#c5a880]/40">
+                    {isOutOfStock ? 'Waitlist Reservation' : 'Pre-Order Active'}
+                  </span>
+                ) : liveProduct.originRegion ? (
+                  <span className="bg-white/95 backdrop-blur-xs text-[#140d09] text-[10px] font-medium tracking-[0.15em] uppercase px-3 py-1.5 rounded-md border border-[#c5a880]/30">
+                    {liveProduct.originRegion}
+                  </span>
+                ) : null}
+              </div>
             </div>
 
-            {/* House Quality Standards */}
-            <div className="grid grid-cols-3 gap-3 pt-1">
-              <div className="bg-white p-3 rounded-xl border border-[#c5a880]/20 text-center space-y-1">
-                <ShieldCheck className="w-4 h-4 text-[#c5a880] mx-auto" />
-                <span className="text-[10px] font-medium text-[#140d09] block uppercase tracking-wider">Direct Origin</span>
-                <span className="text-[9px] text-[#8c827a] block font-light">Central Highlands</span>
+            {/* Delivery & Returns Transparency Summary Box */}
+            <div className="p-5 rounded-2xl bg-white border border-[#c5a880]/25 space-y-3">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#c5a880] font-medium">
+                <Truck className="w-4 h-4 text-[#c5a880]" />
+                <span>Delivery & Roastery Assurance</span>
               </div>
-              <div className="bg-white p-3 rounded-xl border border-[#c5a880]/20 text-center space-y-1">
-                <Coffee className="w-4 h-4 text-[#c5a880] mx-auto" />
-                <span className="text-[10px] font-medium text-[#140d09] block uppercase tracking-wider">Slow Roasted</span>
-                <span className="text-[9px] text-[#8c827a] block font-light">Heritage Butter Drum</span>
-              </div>
-              <div className="bg-white p-3 rounded-xl border border-[#c5a880]/20 text-center space-y-1">
-                <Truck className="w-4 h-4 text-[#c5a880] mx-auto" />
-                <span className="text-[10px] font-medium text-[#140d09] block uppercase tracking-wider">Fresh Seal</span>
-                <span className="text-[9px] text-[#8c827a] block font-light">1-Way Degassing Valve</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-[#4a423e]">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase text-[#8c827a] block">Fresh Dispatch Window:</span>
+                  <p className="font-medium text-[#140d09]">{dispatchWindow}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase text-[#8c827a] block">Complimentary Shipping:</span>
+                  <p className="font-medium text-[#140d09]">Free on orders above ₹{freeThreshold}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase text-[#8c827a] block">Sealed Aroma Protection:</span>
+                  <p className="font-medium text-[#140d09]">Triple-laminate degassing valve</p>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase text-[#8c827a] block">Damaged Transit Guarantee:</span>
+                  <p className="font-medium text-[#140d09]">100% replacement or refund</p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Pricing, Grind/Size Selection & Actions */}
-          <div className="lg:col-span-6 space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-[10px] uppercase font-medium tracking-[0.2em] text-[#c5a880]">
-                <span>
-                  {product.category === 'flavoured-coffee'
-                    ? product.flavorType || 'Flavoured Specialty'
-                    : product.category === 'coffee-powder'
-                    ? 'Ground Phin Powder'
-                    : product.category === 'instant-coffee'
-                    ? 'Instant 3-in-1'
-                    : product.category === 'whole-bean'
-                    ? 'Whole Roasted Bean'
-                    : 'Brewing Hardware'}
-                </span>
-                {product.roastLevel && (
-                  <>
-                    <span>•</span>
-                    <span className="text-[#8c827a]">{product.roastLevel} Roast</span>
-                  </>
-                )}
-              </div>
-
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal text-[#140d09] leading-tight font-serif">
-                {product.name}
+          {/* Right Column: Narrative, Selection & Acquisition (6 Cols) */}
+          <div className="lg:col-span-6 space-y-8">
+            <div className="space-y-2 border-b border-[#c5a880]/20 pb-6">
+              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c5a880] block">
+                {liveProduct.category === 'flavoured-coffee'
+                  ? `Specialty Flavour • ${liveProduct.flavorType || 'Botanical'}`
+                  : liveProduct.category === 'coffee-powder'
+                  ? 'Ground Phin Powder'
+                  : liveProduct.category === 'instant-coffee'
+                  ? 'Instant 3-in-1 Box'
+                  : liveProduct.category === 'whole-bean'
+                  ? 'Wood-Roasted Whole Bean'
+                  : 'Brewing Hardware'}
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-normal text-[#140d09] font-serif">
+                {liveProduct.name}
               </h1>
-
-              <p className="text-sm font-serif italic text-[#c5a880]">
-                {product.vietnameseName}
+              <p className="text-base text-[#c5a880] font-serif italic">
+                {liveProduct.vietnameseName}
               </p>
-
-              <p className="text-xs sm:text-sm text-[#6e635d] font-light leading-relaxed pt-1">
-                {product.tagline}
+              <p className="text-sm text-[#6e635d] font-light leading-relaxed pt-2">
+                {liveProduct.tagline}
               </p>
             </div>
 
-            {/* Price Display */}
-            <div className="p-5 rounded-xl bg-white border border-[#c5a880]/30 flex items-center justify-between">
-              <div>
-                <span className="text-[9px] font-light text-[#8c827a] uppercase tracking-[0.2em] block mb-1">
-                  Selection ({selectedSize})
-                </span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl sm:text-3xl font-normal text-[#140d09] font-serif">
-                    {formatPrice(totalPrice, currency)}
-                  </span>
-                  {quantity > 1 && (
-                    <span className="text-xs text-[#8c827a] font-light">
-                      ({formatPrice(unitPrice, currency)} each)
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="text-right">
-                {isOutOfStock ? (
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-[#8c827a] bg-[#fbf9f5] border border-[#c5a880]/30 px-3 py-1 rounded-full inline-block">
-                    Sold Out
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-[#140d09] bg-[#fbf9f5] border border-[#c5a880]/40 px-3 py-1 rounded-full inline-block">
-                    In Stock • Fresh Batch
-                  </span>
-                )}
-              </div>
+            {/* Price Presentation */}
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl font-normal text-[#140d09] font-serif">
+                {formatPrice(totalPrice, currency)}
+              </span>
+              <span className="text-xs text-[#8c827a] font-light">
+                (Inclusive of all taxes)
+              </span>
             </div>
 
             {/* Package Size Selector */}
-            {product.availableSizes.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.15em] text-[#8c827a]">
-                  <span>1. Select Size:</span>
-                  <span className="text-[#140d09] font-medium">{selectedSize}</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {product.availableSizes.map((s) => {
-                    const isActive = selectedSize === s.size;
-                    const calculatedSizePrice = Math.round(product.basePriceINR * s.priceMultiplier);
-                    return (
-                      <button
-                        key={s.size}
-                        type="button"
-                        onClick={() => setSelectedSize(s.size)}
-                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                          isActive
-                            ? 'border-[#c5a880] bg-[#fbf9f5]'
-                            : 'border-[#c5a880]/20 bg-white hover:border-[#c5a880]/50'
-                        }`}
-                      >
-                        <span className="text-xs font-serif text-[#140d09] block truncate">
-                          {s.size.replace(' Valve Pouch', '').replace(' Fresh Pack', '')}
-                        </span>
-                        <span className="text-[11px] font-mono text-[#c5a880] mt-0.5 block">
-                          {formatPrice(calculatedSizePrice, currency)}
-                        </span>
-                      </button>
-                    );
-                  })}
+            {liveProduct.availableSizes && liveProduct.availableSizes.length > 0 && (
+              <div className="space-y-2.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#c5a880] block">
+                  Package Size:
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {liveProduct.availableSizes.map((sz) => (
+                    <button
+                      key={sz.size}
+                      type="button"
+                      onClick={() => setSelectedSize(sz.size)}
+                      className={`p-3 rounded-xl border text-xs text-left transition-all cursor-pointer ${
+                        selectedSize === sz.size
+                          ? 'border-[#c5a880] bg-[#140d09] text-[#fcfbf7]'
+                          : 'border-[#c5a880]/25 bg-white text-[#140d09] hover:border-[#c5a880]/60'
+                      }`}
+                    >
+                      <span className="font-medium block">{sz.size}</span>
+                      <span className="text-[10px] opacity-75 font-mono mt-0.5 block">
+                        {formatPrice(Math.round(liveProduct.basePriceINR * sz.priceMultiplier), currency)}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
             {/* Grind Option Selector */}
-            {product.availableGrinds && product.availableGrinds.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.15em] text-[#8c827a]">
-                  <span>2. Grind Calibration:</span>
-                  <span className="text-[#140d09] font-medium">{selectedGrind}</span>
-                </div>
+            {liveProduct.availableGrinds && liveProduct.availableGrinds.length > 0 && (
+              <div className="space-y-2.5">
+                <label className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#c5a880] block">
+                  Grind Calibration:
+                </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {product.availableGrinds.map((g) => {
-                    const isActive = selectedGrind === g;
-                    return (
-                      <button
-                        key={g}
-                        type="button"
-                        onClick={() => setSelectedGrind(g)}
-                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                          isActive
-                            ? 'border-[#c5a880] bg-[#fbf9f5]'
-                            : 'border-[#c5a880]/20 bg-white hover:border-[#c5a880]/50'
-                        }`}
-                      >
-                        <span className="text-xs font-serif text-[#140d09] block">{g}</span>
-                      </button>
-                    );
-                  })}
+                  {liveProduct.availableGrinds.map((grind) => (
+                    <button
+                      key={grind}
+                      type="button"
+                      onClick={() => setSelectedGrind(grind)}
+                      className={`p-2.5 rounded-xl border text-xs text-left transition-all cursor-pointer ${
+                        selectedGrind === grind
+                          ? 'border-[#c5a880] bg-[#140d09] text-[#fcfbf7]'
+                          : 'border-[#c5a880]/25 bg-white text-[#140d09] hover:border-[#c5a880]/60'
+                      }`}
+                    >
+                      <span className="font-medium text-[11px]">{grind}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Quantity & CTA Actions */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center border border-[#c5a880]/30 rounded-xl bg-white p-1">
+            {/* Quantity Selector and CTA Actions */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center border border-[#c5a880]/40 rounded-xl bg-white p-1">
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    disabled={quantity <= 1 || isOutOfStock}
-                    className="w-9 h-9 flex items-center justify-center text-[#6e635d] hover:text-[#140d09] disabled:opacity-30 cursor-pointer"
+                    className="p-2 text-[#6e635d] hover:text-[#140d09] transition-colors cursor-pointer"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="w-10 text-center font-mono text-sm font-medium text-[#140d09]">
+                  <span className="w-10 text-center font-mono text-sm font-medium">
                     {quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => q + 1)}
-                    disabled={isOutOfStock}
-                    className="w-9 h-9 flex items-center justify-center text-[#6e635d] hover:text-[#140d09] disabled:opacity-30 cursor-pointer"
+                    className="p-2 text-[#6e635d] hover:text-[#140d09] transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  id="detail-add-to-cart-btn"
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock}
-                  className={`flex-1 py-3.5 px-6 rounded-xl font-medium text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                    isOutOfStock
-                      ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                      : addedNotice
-                      ? 'bg-[#140d09] text-[#c5a880] border border-[#c5a880]'
-                      : 'bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] border border-[#c5a880]/40'
-                  }`}
-                >
-                  {addedNotice ? (
-                    <>
-                      <Check className="w-4 h-4 text-[#c5a880]" />
-                      <span>Added to Bag</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag className="w-4 h-4 text-[#c5a880]" />
-                      <span>Add to Bag ({formatPrice(totalPrice, currency)})</span>
-                    </>
-                  )}
-                </button>
+                {isPreOrderActive ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsPreOrderModalOpen(true)}
+                    className="flex-1 py-3.5 px-6 rounded-xl font-medium text-xs uppercase tracking-[0.2em] bg-[#140d09] text-[#c5a880] hover:bg-[#2b1f1a] border border-[#c5a880] flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <CalendarClock className="w-4 h-4 text-[#c5a880]" />
+                    <span>Reserve via Pre-Order</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    className="flex-1 py-3.5 px-6 rounded-xl font-medium text-xs uppercase tracking-[0.2em] bg-[#140d09] text-[#fcfbf7] hover:bg-[#2b1f1a] border border-[#c5a880]/40 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    {addedNotice ? (
+                      <>
+                        <Check className="w-4 h-4 text-[#c5a880]" />
+                        <span>Added to Bag</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag className="w-4 h-4 text-[#c5a880]" />
+                        <span>Add to Bag</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
 
               {!isOutOfStock && (
                 <button
                   type="button"
-                  id="detail-buy-now-btn"
                   onClick={handleBuyNow}
                   className="w-full py-3.5 px-6 rounded-xl font-medium text-xs uppercase tracking-[0.2em] bg-white hover:bg-[#fbf9f5] text-[#140d09] border border-[#c5a880] flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
@@ -433,7 +421,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           </div>
         </div>
 
-        {/* Dedicated Brew Recipe Section (Requirement: Same recipe appears on the product detail page) */}
+        {/* Dedicated Brew Recipe Section */}
         {recipe && (
           <section id="brew-recipe-section" className="bg-[#fbf9f5] border border-[#c5a880]/30 rounded-2xl p-6 sm:p-10 lg:p-12 space-y-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#c5a880]/20 pb-6">
@@ -566,7 +554,136 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           </section>
         )}
 
-        {/* Detailed Story & Terroir Section */}
+        {/* Why Cà Phê Vietnam Brand Story Section */}
+        <section className="bg-white rounded-2xl border border-[#c5a880]/30 p-8 sm:p-12 space-y-6">
+          <div className="max-w-2xl">
+            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c5a880] block mb-2">
+              The Roastery Difference
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-serif text-[#140d09]">
+              Why Cà Phê Vietnam?
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+            <div className="space-y-2 p-5 rounded-xl bg-[#fcfbf7] border border-[#c5a880]/20">
+              <span className="w-7 h-7 rounded-full bg-[#140d09] text-[#c5a880] flex items-center justify-center font-mono text-xs">
+                01
+              </span>
+              <h3 className="font-serif text-sm font-medium text-[#140d09]">Volcanic Micro-Terroirs</h3>
+              <p className="text-xs text-[#6e635d] font-light leading-relaxed">
+                Directly harvested from Buôn Ma Thuột's deep red basalt plateaus and Đà Lạt's mist-covered Langbiang mountain ridges.
+              </p>
+            </div>
+
+            <div className="space-y-2 p-5 rounded-xl bg-[#fcfbf7] border border-[#c5a880]/20">
+              <span className="w-7 h-7 rounded-full bg-[#140d09] text-[#c5a880] flex items-center justify-center font-mono text-xs">
+                02
+              </span>
+              <h3 className="font-serif text-sm font-medium text-[#140d09]">Traditional Butter Roast</h3>
+              <p className="text-xs text-[#6e635d] font-light leading-relaxed">
+                Slow French-style butter roasting coaxes rich caramelization, velvety crema, and heavy dark cocoa undertones.
+              </p>
+            </div>
+
+            <div className="space-y-2 p-5 rounded-xl bg-[#fcfbf7] border border-[#c5a880]/20">
+              <span className="w-7 h-7 rounded-full bg-[#140d09] text-[#c5a880] flex items-center justify-center font-mono text-xs">
+                03
+              </span>
+              <h3 className="font-serif text-sm font-medium text-[#140d09]">Ethical Direct Trade</h3>
+              <p className="text-xs text-[#6e635d] font-light leading-relaxed">
+                No middle agents. We partner directly with 3rd-generation Vietnamese farming families to ensure sustainable highland forestry.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Customer Reviews & Verified Tasting Notes Section */}
+        <section id="product-reviews" className="bg-[#fbf9f5] rounded-2xl border border-[#c5a880]/30 p-8 sm:p-12 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#c5a880]/20 pb-6">
+            <div>
+              <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c5a880] block mb-1">
+                Verified Client Opinions
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-serif text-[#140d09]">
+                Tasting Notes & Reviews ({reviews.length})
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsReviewModalOpen(true)}
+              className="px-5 py-2.5 rounded-full bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] text-xs uppercase tracking-wider transition-colors cursor-pointer border border-[#c5a880]/40 flex items-center gap-2 self-start sm:self-auto"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-[#c5a880]" />
+              <span>Write a Review</span>
+            </button>
+          </div>
+
+          {reviews.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {reviews.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="p-6 rounded-xl bg-white border border-[#c5a880]/20 space-y-3 shadow-2xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-[#c5a880]">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3.5 h-3.5 ${
+                            i < rev.rating ? 'fill-[#c5a880] text-[#c5a880]' : 'text-[#d8cfca]'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-mono text-[#8c827a]">
+                      {new Date(rev.createdAt).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+
+                  {rev.title && (
+                    <h3 className="font-serif text-sm font-medium text-[#140d09]">
+                      {rev.title}
+                    </h3>
+                  )}
+
+                  <p className="text-xs text-[#52463f] font-light leading-relaxed">
+                    "{rev.comment}"
+                  </p>
+
+                  <div className="pt-2 border-t border-[#c5a880]/15 flex items-center justify-between text-[11px]">
+                    <span className="font-medium text-[#140d09]">{rev.customerName}</span>
+                    <span className="text-emerald-700 font-mono flex items-center gap-1 text-[10px]">
+                      <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                      <span>Verified Buyer ({rev.orderId})</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 rounded-xl bg-white border border-[#c5a880]/20 text-center space-y-3">
+              <p className="text-xs text-[#6e635d] font-light">
+                No reviews published yet for this micro-lot harvest. Have you brewed this coffee?
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsReviewModalOpen(true)}
+                className="text-xs text-[#c5a880] hover:text-[#140d09] underline font-medium tracking-wider uppercase cursor-pointer"
+              >
+                Share your tasting notes with your Order ID →
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* Detailed Terroir Spec Grid */}
         <div className="bg-white rounded-2xl border border-[#c5a880]/30 p-8 sm:p-12 space-y-8">
           <div>
             <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#c5a880] block mb-2">
@@ -576,56 +693,55 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               About This Roast
             </h2>
             <p className="text-sm text-[#4a423e] font-light leading-relaxed max-w-3xl">
-              {product.description}
+              {liveProduct.description}
             </p>
           </div>
 
-          {/* Terroir & Origin Spec Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-[#c5a880]/20">
-            {product.originRegion && (
+            {liveProduct.originRegion && (
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] text-[#c5a880] font-medium uppercase tracking-wider">
                   <MapPin className="w-3.5 h-3.5" />
                   <span>Origin</span>
                 </div>
                 <div className="text-xs font-serif text-[#140d09]">
-                  {product.originRegion}
+                  {liveProduct.originRegion}
                 </div>
               </div>
             )}
 
-            {product.elevation && (
+            {liveProduct.elevation && (
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] text-[#c5a880] font-medium uppercase tracking-wider">
                   <Mountain className="w-3.5 h-3.5" />
                   <span>Elevation</span>
                 </div>
                 <div className="text-xs font-serif text-[#140d09]">
-                  {product.elevation}
+                  {liveProduct.elevation}
                 </div>
               </div>
             )}
 
-            {product.process && (
+            {liveProduct.process && (
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] text-[#c5a880] font-medium uppercase tracking-wider">
                   <Layers className="w-3.5 h-3.5" />
                   <span>Processing</span>
                 </div>
                 <div className="text-xs font-serif text-[#140d09]">
-                  {product.process}
+                  {liveProduct.process}
                 </div>
               </div>
             )}
 
-            {product.shelfLife && (
+            {liveProduct.shelfLife && (
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] text-[#c5a880] font-medium uppercase tracking-wider">
                   <Clock className="w-3.5 h-3.5" />
                   <span>Peak Freshness</span>
                 </div>
                 <div className="text-xs font-serif text-[#140d09]">
-                  {product.shelfLife}
+                  {liveProduct.shelfLife}
                 </div>
               </div>
             )}
@@ -696,6 +812,26 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           </div>
         )}
       </div>
+
+      {/* Review Submission Modal (Requires Order ID + Email Verification) */}
+      <ReviewModal
+        product={liveProduct}
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        onSuccess={() => {
+          setIsReviewModalOpen(false);
+        }}
+      />
+
+      {/* Pre-Order / Waitlist Reservation Modal */}
+      <PreOrderModal
+        product={liveProduct}
+        isOpen={isPreOrderModalOpen}
+        onClose={() => setIsPreOrderModalOpen(false)}
+        onSuccess={() => {
+          setIsPreOrderModalOpen(false);
+        }}
+      />
     </div>
   );
 };

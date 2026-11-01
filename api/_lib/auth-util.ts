@@ -58,11 +58,11 @@ export function verifySessionToken(token?: string): { valid: boolean; user?: Use
     const timestampStr = parts[3];
     const timestamp = parseInt(timestampStr, 10);
 
-    // 7-day expiration check
-    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-    if (isNaN(timestamp) || Date.now() - timestamp > SEVEN_DAYS) {
+    // 12-hour expiration check (Phase 0 requirement)
+    const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+    if (isNaN(timestamp) || Date.now() - timestamp > TWELVE_HOURS) {
       activeSessions.delete(token);
-      return { valid: false, error: 'Session expired' };
+      return { valid: false, error: 'Session expired (12-hour limit)' };
     }
 
     // Verify user actually exists in database and is active
@@ -81,6 +81,63 @@ export function verifySessionToken(token?: string): { valid: boolean; user?: Use
   } catch (err: any) {
     return { valid: false, error: err?.message || 'Token verification failed' };
   }
+}
+
+// -------------------------------------------------------------
+// LOGIN RATE LIMITING: 5 failed attempts = 15-minute lock
+// -------------------------------------------------------------
+interface RateLimitRecord {
+  failedAttempts: number;
+  lockUntil: number;
+}
+const loginRateLimits = new Map<string, RateLimitRecord>();
+
+export function checkLoginRateLimit(key: string): { allowed: boolean; remainingMinutes?: number } {
+  const cleanKey = key.toLowerCase().trim();
+  const record = loginRateLimits.get(cleanKey);
+  if (!record) return { allowed: true };
+
+  const now = Date.now();
+  if (record.lockUntil > now) {
+    const remainingMinutes = Math.ceil((record.lockUntil - now) / (60 * 1000));
+    return { allowed: false, remainingMinutes };
+  }
+
+  // Reset if lockout elapsed
+  if (record.lockUntil <= now && record.failedAttempts >= 5) {
+    loginRateLimits.delete(cleanKey);
+  }
+  return { allowed: true };
+}
+
+export function recordFailedLogin(key: string): {
+  locked: boolean;
+  remainingAttempts: number;
+  remainingMinutes?: number;
+} {
+  const cleanKey = key.toLowerCase().trim();
+  const now = Date.now();
+  const record = loginRateLimits.get(cleanKey) || { failedAttempts: 0, lockUntil: 0 };
+
+  if (record.lockUntil <= now && record.failedAttempts >= 5) {
+    record.failedAttempts = 0;
+    record.lockUntil = 0;
+  }
+
+  record.failedAttempts += 1;
+  if (record.failedAttempts >= 5) {
+    record.lockUntil = now + 15 * 60 * 1000; // 15-minute lockout
+    loginRateLimits.set(cleanKey, record);
+    return { locked: true, remainingAttempts: 0, remainingMinutes: 15 };
+  }
+
+  loginRateLimits.set(cleanKey, record);
+  return { locked: false, remainingAttempts: 5 - record.failedAttempts };
+}
+
+export function resetLoginRateLimit(key: string): void {
+  const cleanKey = key.toLowerCase().trim();
+  loginRateLimits.delete(cleanKey);
 }
 
 export function isValidSession(token?: string): boolean {

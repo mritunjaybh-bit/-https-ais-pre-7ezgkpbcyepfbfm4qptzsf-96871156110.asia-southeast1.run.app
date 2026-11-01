@@ -1,4 +1,4 @@
-import type { ProductItem } from '../types.ts';
+import type { ProductItem, BrewRecipe } from '../types.ts';
 import { BREW_RECIPES } from './brewRecipes.ts';
 
 export const PRODUCT_ITEMS: ProductItem[] = [
@@ -772,23 +772,68 @@ export const CURRENCY_RATES: Record<
   VND: { symbol: '₫', rate: 300, label: 'VND (₫)', name: 'Vietnamese Dong' }
 };
 
+export function getDefaultRecipeForProduct(p: ProductItem): BrewRecipe {
+  if (p.isInstant || p.category === 'instant-coffee') {
+    return {
+      name: `${p.name} Quick Stir Brew`,
+      bestFor: 'Hot or Iced Morning Boost',
+      servingTemp: 'Hot or Iced',
+      prepTime: '60 Seconds',
+      equipment: ['Coffee Mug or Tumbler', 'Stirring Spoon'],
+      ingredients: [
+        { item: `${p.name}`, quantity: '1 sachet or 1.5 tbsp (15g)' },
+        { item: 'Hot Water (85°C)', quantity: '75ml' },
+        { item: 'Cold Milk / Condensed Milk', quantity: 'Optional 25ml' },
+      ],
+      waterTemp: '85°C (185°F)',
+      steps: [
+        { stepNumber: 1, title: 'Dissolve Crystals', instruction: 'Empty powder into cup, add 75ml hot water, stir for 15s until completely dissolved.' },
+        { stepNumber: 2, title: 'Finish & Serve', instruction: 'Enjoy piping hot, or add ice cubes for an instant Vietnamese iced coffee.' },
+      ],
+      baristaTip: 'Dissolving in hot water first releases the aromatics before adding cold milk or ice.',
+    };
+  }
+  return {
+    name: `Traditional Phin Drip for ${p.name}`,
+    bestFor: 'Cà Phê Sữa Đá (Iced Coffee with Condensed Milk) or Black',
+    servingTemp: 'Hot or Iced',
+    prepTime: '5 Minutes',
+    equipment: ['Vietnamese Phin Dripper (6oz)', 'Heatproof Glass', 'Stirring Spoon'],
+    ingredients: [
+      { item: p.name, quantity: '20g – 25g (approx. 3 tablespoons)' },
+      { item: 'Hot Filtered Water (92°C–96°C)', quantity: '100ml total' },
+      { item: 'Sweetened Condensed Milk', quantity: '1.5 – 2 tablespoons' },
+      { item: 'Ice Cubes (optional)', quantity: '4 to 5 large cubes' },
+    ],
+    waterTemp: '94°C (201°F)',
+    steps: [
+      { stepNumber: 1, title: 'Base Preparation', instruction: 'Add sweetened condensed milk into the bottom of a clear glass tumbler.' },
+      { stepNumber: 2, title: 'Grounds & Gravity Plate', instruction: 'Add coffee into the Phin body, tap lightly to level, and seat the gravity press evenly.' },
+      { stepNumber: 3, title: 'The Bloom', instruction: 'Pour 20ml hot water to moisten the grounds. Cover with lid and bloom for 45 seconds.' },
+      { stepNumber: 4, title: 'Slow Gravity Drip', instruction: 'Pour remaining 80ml water to top rim. Let drip drop-by-drop for 4 minutes.' },
+      { stepNumber: 5, title: 'Stir & Savor', instruction: 'Stir condensed milk and coffee together until creamy. Pour over rock ice.' },
+    ],
+    baristaTip: 'For the authentic taste of Vietnam, choose medium-high heat water (92-94°C) to coax out chocolate and caramel notes without scorching.',
+  };
+}
+
 // Initialize recipes on bundled products
 PRODUCT_ITEMS.forEach((p) => {
-  if (!p.brewRecipe && BREW_RECIPES[p.id]) {
-    p.brewRecipe = BREW_RECIPES[p.id];
+  if (!p.brewRecipe) {
+    p.brewRecipe = BREW_RECIPES[p.id] || getDefaultRecipeForProduct(p);
   }
 });
 
 let liveProductsCache: ProductItem[] = PRODUCT_ITEMS.map((p) => ({
   ...p,
-  brewRecipe: p.brewRecipe || BREW_RECIPES[p.id],
+  brewRecipe: p.brewRecipe || BREW_RECIPES[p.id] || getDefaultRecipeForProduct(p),
 }));
 
 export function syncLiveProducts(newProducts: ProductItem[]) {
   if (!Array.isArray(newProducts) || newProducts.length === 0) return;
   const enriched = newProducts.map((p) => ({
     ...p,
-    brewRecipe: p.brewRecipe || BREW_RECIPES[p.id],
+    brewRecipe: p.brewRecipe || BREW_RECIPES[p.id] || getDefaultRecipeForProduct(p),
   }));
   liveProductsCache = enriched;
   

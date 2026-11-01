@@ -23,6 +23,14 @@ import {
   deleteDbOtp,
   removeDbSession,
   findDbUserByRecovery,
+  getDbSiteSettings,
+  updateDbSiteSettings,
+  getDbPreOrders,
+  updateDbPreOrderStatus,
+  getDbReviews,
+  updateDbReviewStatus,
+  deleteDbReview,
+  getDbCircleMembers,
   type UserAccount,
 } from './_lib/db.ts';
 import {
@@ -32,18 +40,22 @@ import {
   maskEmail,
   sendOtpEmail,
   sendAccountRecoveryEmail,
+  checkLoginRateLimit,
+  recordFailedLogin,
+  resetLoginRateLimit,
 } from './_lib/auth-util.ts';
 import type { ProductItem } from '../src/types.ts';
 
-function sanitizeUser(u: UserAccount) {
+function sanitizeUser(u: any) {
+  if (!u) return null;
   return {
-    id: u.id,
-    username: u.username,
-    email: u.email,
-    name: u.name,
-    role: u.role,
-    status: u.status,
-    createdAt: u.createdAt,
+    id: u.id || 'usr-owner-default',
+    username: u.username || 'owner',
+    email: u.email || 'mritunjaybh@gmail.com',
+    name: u.name || u.username || 'Roastery Owner',
+    role: (u.role === 'staff' ? 'staff' : 'owner') as 'owner' | 'staff',
+    status: (u.status === 'deactivated' ? 'deactivated' : 'active') as 'active' | 'deactivated',
+    createdAt: u.createdAt || new Date().toISOString(),
     lastLoginAt: u.lastLoginAt,
   };
 }
@@ -136,13 +148,14 @@ export async function adminHandler(req: Request, res: Response) {
 
     const config = getDbAdminConfig();
     const users = getDbUsers();
-    const ownerUser = users.find((u) => u.role === 'owner' && u.status === 'active');
-    const isSetupDone = Boolean(config.isSetupComplete && ownerUser);
+    const ownerUser = users.find((u) => u && (u.role === 'owner' || !u.role) && u.status !== 'deactivated');
+    const isSetupDone = Boolean(config.isSetupComplete && (ownerUser || users.length > 0));
+
     // -------------------------------------------------------------
     // ACTION: setup-status
     // -------------------------------------------------------------
     if (action === 'setup-status' || action === 'status') {
-      return res.status(200).json({
+      return safeJson(200, {
         isSetupComplete: isSetupDone,
         hasOwner: Boolean(ownerUser),
         ownerCount: users.filter((u) => u.role === 'owner').length,
@@ -154,144 +167,208 @@ export async function adminHandler(req: Request, res: Response) {
     // ACTION: reset-setup (Wipes all accounts, clears sessions)
     // -------------------------------------------------------------
     if (action === 'reset-setup') {
-      resetDatabaseAuth();
-      clearInMemorySessions();
-      return res.status(200).json({
-        success: true,
-        message: 'All admin/owner/staff accounts deleted. Database reset to fresh setup.',
-        isSetupComplete: false,
-      });
+      try {
+        resetDatabaseAuth();
+        clearInMemorySessions();
+        return safeJson(200, {
+          success: true,
+          message: 'All admin/owner/staff accounts deleted. Database reset to fresh setup.',
+          isSetupComplete: false,
+        });
+      } catch (resetErr: any) {
+        console.error('[Admin Reset-Setup Error]:', resetErr);
+        return safeJson(500, { error: 'Failed to reset setup: ' + resetErr?.message });
+      }
     }
 
     // -------------------------------------------------------------
     // ACTION: setup (Initial One-Time Owner Account Setup)
     // -------------------------------------------------------------
     if (action === 'setup') {
-      if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'POST required for setup' });
-      }
+      try {
+        if (req.method !== 'POST') {
+          return safeJson(405, { error: 'POST required for setup' });
+        }
 
-      if (isSetupDone) {
-        return res.status(400).json({
-          error: 'Setup has already been completed. Please log in using your Owner credentials.',
+        if (isSetupDone) {
+          return safeJson(400, {
+            error: 'Setup has already been completed. Please log in using your Owner credentials.',
+          });
+        }
+
+        const { username, email, password, name } = req.body || {};
+        if (!username || !email || !password) {
+          return safeJson(400, { error: 'Username, email, and password are required.' });
+        }
+
+        const cleanUser = String(username).trim();
+        const cleanEmail = String(email).trim().toLowerCase();
+        const cleanPass = String(password);
+
+        if (cleanPass.length < 6) {
+          return safeJson(400, { error: 'Password must be at least 6 characters long.' });
+        }
+
+        // Check uniqueness
+        if (findDbUserByIdentifier(cleanUser) || findDbUserByIdentifier(cleanEmail)) {
+          return safeJson(400, { error: 'An account with that username or email already exists.' });
+        }
+
+        // Create primary Owner account
+        const newOwner = createDbUser({
+          username: cleanUser,
+          email: cleanEmail,
+          name: name ? String(name).trim() : cleanUser,
+          role: 'owner',
+          passwordHash: hashPassword(cleanPass),
+          status: 'active',
+        });
+
+        updateDbAdminConfig({
+          isSetupComplete: true,
+          setupAt: new Date().toISOString(),
+        });
+
+        const sessionToken = generateSessionToken(newOwner);
+        return safeJson(200, {
+          success: true,
+          message: 'Owner account successfully initialized.',
+          token: sessionToken,
+          user: sanitizeUser(newOwner),
+        });
+      } catch (setupErr: any) {
+        console.error('[Admin Setup Error]:', setupErr);
+        return safeJson(500, {
+          error: `Setup initialization failed: ${setupErr?.message || 'Server error'}`,
+          code: 'SETUP_SERVER_ERROR',
         });
       }
-
-      const { username, email, password, name } = req.body;
-      if (!username || !email || !password) {
-        return res.status(400).json({ error: 'Username, email, and password are required.' });
-      }
-
-      const cleanUser = String(username).trim();
-      const cleanEmail = String(email).trim().toLowerCase();
-      const cleanPass = String(password);
-
-      if (cleanPass.length < 6) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
-      }
-
-      // Check uniqueness
-      if (findDbUserByIdentifier(cleanUser) || findDbUserByIdentifier(cleanEmail)) {
-        return res.status(400).json({ error: 'An account with that username or email already exists.' });
-      }
-
-      // Create primary Owner account
-      const newOwner = createDbUser({
-        username: cleanUser,
-        email: cleanEmail,
-        name: name ? String(name).trim() : cleanUser,
-        role: 'owner',
-        passwordHash: hashPassword(cleanPass),
-        status: 'active',
-      });
-
-      updateDbAdminConfig({
-        isSetupComplete: true,
-        setupAt: new Date().toISOString(),
-      });
-
-      const sessionToken = generateSessionToken(newOwner);
-      return res.status(200).json({
-        success: true,
-        message: 'Owner account successfully initialized.',
-        token: sessionToken,
-        user: sanitizeUser(newOwner),
-      });
     }
 
     // -------------------------------------------------------------
     // ACTION: login (Owner and Staff)
     // -------------------------------------------------------------
     if (action === 'login') {
-      if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'POST required for login' });
-      }
+      try {
+        if (req.method !== 'POST') {
+          return safeJson(405, { error: 'POST required for login' });
+        }
 
-      const { username, password } = req.body;
-      if (!username || !password) {
-        return res.status(400).json({ error: 'Username/email and password are required.' });
-      }
+        const { username, password } = req.body || {};
+        if (!username || !password) {
+          return safeJson(400, { error: 'Username/email and password are required.' });
+        }
 
-      // Check if setup is complete
-      if (!isSetupDone) {
-        return res.status(403).json({
-          error: 'Setup is required. Please visit /setup to create the Owner account.',
-          requiresSetup: true,
+        // Rate limit check: 5 failed attempts = 15-minute lock
+        const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'ip')
+          .toString()
+          .split(',')[0]
+          .trim();
+        const rateLimitKey = `${ip}:${String(username).toLowerCase().trim()}`;
+        const rateCheck = checkLoginRateLimit(rateLimitKey);
+        if (!rateCheck.allowed) {
+          return safeJson(429, {
+            error: `Too many failed login attempts. Account temporarily locked for ${rateCheck.remainingMinutes || 15} minutes.`,
+            locked: true,
+            code: 'RATE_LIMIT_LOCKED',
+          });
+        }
+
+        // Check if setup is complete
+        if (!isSetupDone) {
+          return safeJson(403, {
+            error: 'Setup is required. Please visit /setup to create the Owner account.',
+            requiresSetup: true,
+          });
+        }
+
+        const user = findDbUserByIdentifier(String(username));
+        if (!user) {
+          const failStatus = recordFailedLogin(rateLimitKey);
+          if (failStatus.locked) {
+            return safeJson(429, {
+              error: 'Too many failed login attempts (5). Account temporarily locked for 15 minutes.',
+              locked: true,
+              code: 'RATE_LIMIT_LOCKED',
+            });
+          }
+          return safeJson(401, {
+            error: `Invalid credentials. Please verify your username and password. (${failStatus.remainingAttempts} attempts remaining before 15-minute lock)`,
+          });
+        }
+
+        if (user.status !== 'active') {
+          return safeJson(403, {
+            error: 'This account has been deactivated. Please contact the Roastery Owner.',
+          });
+        }
+
+        const passMatches = verifyPassword(String(password), user.passwordHash);
+        if (!passMatches) {
+          const failStatus = recordFailedLogin(rateLimitKey);
+          if (failStatus.locked) {
+            return safeJson(429, {
+              error: 'Too many failed login attempts (5). Account temporarily locked for 15 minutes.',
+              locked: true,
+              code: 'RATE_LIMIT_LOCKED',
+            });
+          }
+          return safeJson(401, {
+            error: `Invalid credentials. Please verify your username and password. (${failStatus.remainingAttempts} attempts remaining before 15-minute lock)`,
+          });
+        }
+
+        resetLoginRateLimit(rateLimitKey);
+        updateDbUser(user.id, { lastLoginAt: new Date().toISOString() });
+        const sessionToken = generateSessionToken(user);
+
+        return safeJson(200, {
+          success: true,
+          token: sessionToken,
+          user: sanitizeUser(user),
+        });
+      } catch (loginErr: any) {
+        console.error('[Admin Login Error]:', loginErr);
+        return safeJson(500, {
+          error: `Authentication processing failed: ${loginErr?.message || 'Server error'}`,
+          code: 'LOGIN_SERVER_ERROR',
+          details: String(loginErr?.stack || loginErr),
         });
       }
-
-      const user = findDbUserByIdentifier(String(username));
-      if (!user) {
-        return res.status(401).json({
-          error: 'Invalid credentials. Please verify your username and password.',
-        });
-      }
-
-      if (user.status !== 'active') {
-        return res.status(403).json({
-          error: 'This account has been deactivated. Please contact the Roastery Owner.',
-        });
-      }
-
-      const passMatches = verifyPassword(String(password), user.passwordHash);
-      if (!passMatches) {
-        return res.status(401).json({
-          error: 'Invalid credentials. Please verify your username and password.',
-        });
-      }
-
-      updateDbUser(user.id, { lastLoginAt: new Date().toISOString() });
-      const sessionToken = generateSessionToken(user);
-
-      return res.status(200).json({
-        success: true,
-        token: sessionToken,
-        user: sanitizeUser(user),
-      });
     }
 
     // -------------------------------------------------------------
     // ACTION: verify (Session verification)
     // -------------------------------------------------------------
     if (action === 'verify') {
-      const auth = verifySessionToken(token);
-      if (auth.valid && auth.user) {
-        return res.status(200).json({
-          valid: true,
-          user: sanitizeUser(auth.user),
-        });
+      try {
+        const auth = verifySessionToken(token);
+        if (auth.valid && auth.user) {
+          return safeJson(200, {
+            valid: true,
+            user: sanitizeUser(auth.user),
+          });
+        }
+        return safeJson(401, { valid: false, error: auth.error || 'Session expired or invalid' });
+      } catch (verifyErr: any) {
+        console.error('[Admin Verify Error]:', verifyErr);
+        return safeJson(401, { valid: false, error: 'Session verification failed' });
       }
-      return res.status(401).json({ valid: false, error: auth.error || 'Session expired or invalid' });
     }
 
     // -------------------------------------------------------------
     // ACTION: logout
     // -------------------------------------------------------------
     if (action === 'logout') {
-      if (token) {
-        removeDbSession(token);
+      try {
+        if (token) {
+          removeDbSession(token);
+        }
+        return safeJson(200, { success: true, message: 'Logged out successfully' });
+      } catch (logoutErr: any) {
+        console.error('[Admin Logout Error]:', logoutErr);
+        return safeJson(200, { success: true, message: 'Logged out' });
       }
-      return res.status(200).json({ success: true, message: 'Logged out successfully' });
     }
 
     // -------------------------------------------------------------
@@ -303,44 +380,54 @@ export async function adminHandler(req: Request, res: Response) {
       action === 'recover-id' ||
       action === 'forgot-username'
     ) {
-      if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'POST required' });
-      }
+      try {
+        if (req.method !== 'POST') {
+          return safeJson(405, { error: 'POST required' });
+        }
 
-      const { recoveryDetail, detail } = req.body;
-      const query = String(recoveryDetail || detail || '').trim();
+        const { recoveryDetail, detail } = req.body || {};
+        const query = String(recoveryDetail || detail || '').trim();
 
-      if (!query) {
-        return res.status(400).json({
-          error: 'Please enter your registered phone number, full name, or answer a recovery prompt.',
+        if (!query) {
+          return safeJson(400, {
+            error: 'Please enter your registered phone number, full name, or answer a recovery prompt.',
+          });
+        }
+
+        const result = findDbUserByRecovery(query);
+        if (!result || !result.user) {
+          return safeJson(404, {
+            error:
+              'No matching account found with that detail. Please verify your phone number, full name, or roastery security prompt.',
+          });
+        }
+
+        const { user, matchReason } = result;
+
+        // Send credential email asynchronously in background
+        sendAccountRecoveryEmail(user.email, user.username, user.name).catch((emailErr) => {
+          console.error('[Recovery Email Send Error]:', emailErr);
+        });
+
+        return safeJson(200, {
+          success: true,
+          matchReason,
+          user: {
+            username: user.username,
+            email: user.email,
+            maskedEmail: maskEmail(user.email),
+            name: user.name,
+            role: user.role,
+          },
+          message: `Account credentials located! Owner ID: "${user.username}" | Registered Email: "${user.email}".`,
+        });
+      } catch (recoveryErr: any) {
+        console.error('[Admin Forgot-ID Error]:', recoveryErr);
+        return safeJson(500, {
+          error: `Account recovery failed: ${recoveryErr?.message || 'Server error'}`,
+          code: 'RECOVERY_SERVER_ERROR',
         });
       }
-
-      const result = findDbUserByRecovery(query);
-      if (!result || !result.user) {
-        return res.status(404).json({
-          error:
-            'No matching account found with that detail. Please verify your phone number, full name, or roastery security prompt.',
-        });
-      }
-
-      const { user, matchReason } = result;
-
-      // Send credential email asynchronously in background
-      sendAccountRecoveryEmail(user.email, user.username, user.name).catch(() => {});
-
-      return res.status(200).json({
-        success: true,
-        matchReason,
-        user: {
-          username: user.username,
-          email: user.email,
-          maskedEmail: maskEmail(user.email),
-          name: user.name,
-          role: user.role,
-        },
-        message: `Account credentials located! Owner ID: "${user.username}" | Registered Email: "${user.email}".`,
-      });
     }
 
     // -------------------------------------------------------------
@@ -351,51 +438,60 @@ export async function adminHandler(req: Request, res: Response) {
       action === 'request-otp' ||
       action === 'request'
     ) {
-      if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'POST required' });
-      }
+      try {
+        if (req.method !== 'POST') {
+          return safeJson(405, { error: 'POST required' });
+        }
 
-      const { email, username, identifier } = req.body;
-      const targetIdentifier = String(identifier || email || username || '').trim();
+        const { email, username, identifier } = req.body || {};
+        const targetIdentifier = String(identifier || email || username || '').trim();
 
-      if (!targetIdentifier) {
-        return res.status(400).json({ error: 'Username or registered email address is required.' });
-      }
+        if (!targetIdentifier) {
+          return safeJson(400, { error: 'Username or registered email address is required.' });
+        }
 
-      const targetUser = findDbUserByIdentifier(targetIdentifier);
-      if (!targetUser) {
-        return res.status(404).json({
-          error: 'No active account found for that username or email.',
+        const targetUser = findDbUserByIdentifier(targetIdentifier);
+        if (!targetUser) {
+          return safeJson(404, {
+            error: 'No active account found for that username or email.',
+          });
+        }
+
+        if (targetUser.status !== 'active') {
+          return safeJson(403, {
+            error: 'This account has been deactivated. Please contact the Roastery Owner.',
+          });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const resetToken = crypto.randomBytes(24).toString('hex');
+        const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+        console.log(`[AUTH] Password Reset OTP for ${targetUser.email} (${targetUser.username}): ${otp}`);
+
+        saveDbOtp(resetToken, {
+          otp,
+          email: targetUser.email,
+          userId: targetUser.id,
+          expiresAt,
+        });
+
+        await sendOtpEmail(targetUser.email, otp, targetUser.name);
+
+        return safeJson(200, {
+          success: true,
+          message: `A 6-digit verification code has been dispatched to ${maskEmail(targetUser.email)}.`,
+          resetToken,
+          maskedEmail: maskEmail(targetUser.email),
+        });
+      } catch (otpErr: any) {
+        console.error('[Admin Forgot-Password-Request Error]:', otpErr);
+        return safeJson(500, {
+          error: `Failed to generate or dispatch verification code: ${otpErr?.message || 'Server error'}`,
+          code: 'OTP_REQUEST_SERVER_ERROR',
+          details: String(otpErr?.stack || otpErr),
         });
       }
-
-      if (targetUser.status !== 'active') {
-        return res.status(403).json({
-          error: 'This account has been deactivated. Please contact the Roastery Owner.',
-        });
-      }
-
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      const resetToken = crypto.randomBytes(24).toString('hex');
-      const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-      console.log(`[AUTH] Password Reset OTP for ${targetUser.email} (${targetUser.username}): ${otp}`);
-
-      saveDbOtp(resetToken, {
-        otp,
-        email: targetUser.email,
-        userId: targetUser.id,
-        expiresAt,
-      });
-
-      await sendOtpEmail(targetUser.email, otp, targetUser.name);
-
-      return res.status(200).json({
-        success: true,
-        message: `A 6-digit verification code has been dispatched to ${maskEmail(targetUser.email)}.`,
-        resetToken,
-        maskedEmail: maskEmail(targetUser.email),
-      });
     }
 
     // -------------------------------------------------------------
@@ -406,50 +502,67 @@ export async function adminHandler(req: Request, res: Response) {
       action === 'verify-reset' ||
       action === 'reset-password'
     ) {
-      if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'POST required' });
-      }
+      try {
+        if (req.method !== 'POST') {
+          return safeJson(405, { error: 'POST required' });
+        }
 
-      const { otp, newPassword, resetToken } = req.body;
-      if (!otp || !newPassword || !resetToken) {
-        return res.status(400).json({
-          error: 'Verification code, new password, and resetToken are all required.',
+        const { otp, newPassword, resetToken } = req.body || {};
+        if (!otp || !newPassword || !resetToken) {
+          return safeJson(400, {
+            error: 'Verification code, new password, and resetToken are all required.',
+          });
+        }
+
+        if (String(newPassword).length < 6) {
+          return safeJson(400, { error: 'Password must be at least 6 characters long.' });
+        }
+
+        const record = getDbOtp(resetToken);
+        if (!record) {
+          return safeJson(400, {
+            error: 'Password reset request has expired or is invalid. Please request a new code.',
+          });
+        }
+
+        // OTP 10-minute expiry check (Phase 0 requirement)
+        if (record.expiresAt && Date.now() > record.expiresAt) {
+          deleteDbOtp(resetToken);
+          return safeJson(400, {
+            error: 'Verification code has expired (valid for 10 minutes). Please request a new code.',
+          });
+        }
+
+        if (record.otp !== String(otp).trim()) {
+          return safeJson(400, { error: 'Invalid verification code. Please check your email.' });
+        }
+
+        const targetUser = findDbUserById(record.userId);
+        if (!targetUser) {
+          deleteDbOtp(resetToken);
+          return safeJson(404, { error: 'User account not found.' });
+        }
+
+        updateDbUser(targetUser.id, {
+          passwordHash: hashPassword(String(newPassword)),
         });
-      }
-
-      if (String(newPassword).length < 6) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
-      }
-
-      const record = getDbOtp(resetToken);
-      if (!record) {
-        return res.status(400).json({
-          error: 'Password reset request has expired or is invalid. Please request a new code.',
-        });
-      }
-
-      if (record.otp !== String(otp).trim()) {
-        return res.status(400).json({ error: 'Invalid verification code. Please check your email.' });
-      }
-
-      const targetUser = findDbUserById(record.userId);
-      if (!targetUser) {
         deleteDbOtp(resetToken);
-        return res.status(404).json({ error: 'User account not found.' });
+
+        const sessionToken = generateSessionToken(targetUser);
+        return safeJson(200, {
+          success: true,
+          message: 'Password successfully reset.',
+          token: sessionToken,
+          user: sanitizeUser(targetUser),
+        });
+      } catch (resetErr: any) {
+        console.error('[Admin Forgot-Password-Verify-Reset Error]:', resetErr);
+        return safeJson(500, {
+          error: `Failed to reset password: ${resetErr?.message || 'Server error'}`,
+          code: 'RESET_PASSWORD_SERVER_ERROR',
+          details: String(resetErr?.stack || resetErr),
+        });
       }
-
-      updateDbUser(targetUser.id, {
-        passwordHash: hashPassword(String(newPassword)),
-      });
-      deleteDbOtp(resetToken);
-
-      const sessionToken = generateSessionToken(targetUser);
-      return res.status(200).json({
-        success: true,
-        message: 'Password successfully reset.',
-        token: sessionToken,
-        user: sanitizeUser(targetUser),
-      });
     }
 
     // -------------------------------------------------------------
@@ -587,11 +700,115 @@ export async function adminHandler(req: Request, res: Response) {
         }
 
         deleteDbUser(targetId);
-        return res.status(200).json({
+        return safeJson(200, {
           success: true,
           message: `Staff account "${targetUser.name}" permanently deleted.`,
         });
       }
+    }
+
+    // -------------------------------------------------------------
+    // OWNER SITE SETTINGS (OWNER ONLY)
+    // -------------------------------------------------------------
+    if (action === 'site-settings' || action === 'settings') {
+      const auth = verifySessionToken(token);
+      if (!auth.valid || !auth.user) {
+        return safeJson(401, { error: 'Unauthorized: Session invalid or expired' });
+      }
+
+      // Update Settings (Owner only)
+      if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
+        if (auth.user.role !== 'owner') {
+          return safeJson(403, { error: 'Forbidden: Only the Roastery Owner can update site settings.' });
+        }
+        const updated = updateDbSiteSettings(req.body.settings || req.body);
+        return safeJson(200, {
+          success: true,
+          message: 'Site settings updated successfully',
+          settings: updated,
+        });
+      }
+
+      // Read Settings
+      return safeJson(200, { settings: getDbSiteSettings() });
+    }
+
+    // -------------------------------------------------------------
+    // PRE-ORDERS & WAITLIST (OWNER & STAFF)
+    // -------------------------------------------------------------
+    if (
+      action === 'pre-orders' ||
+      action === 'pre-orders-list' ||
+      action === 'update-pre-order-status'
+    ) {
+      const auth = verifySessionToken(token);
+      if (!auth.valid || !auth.user) {
+        return safeJson(401, { error: 'Unauthorized: Session invalid or expired' });
+      }
+
+      if (action === 'update-pre-order-status' && req.method === 'POST') {
+        const { id, status } = req.body || {};
+        if (!id || !status) {
+          return safeJson(400, { error: 'Pre-order ID and status are required.' });
+        }
+        const updated = updateDbPreOrderStatus(String(id), status);
+        if (!updated) {
+          return safeJson(404, { error: 'Pre-order not found' });
+        }
+        return safeJson(200, { success: true, preOrder: updated });
+      }
+
+      const preOrders = getDbPreOrders();
+      return safeJson(200, { preOrders, count: preOrders.length });
+    }
+
+    // -------------------------------------------------------------
+    // CUSTOMER REVIEWS MODERATION (OWNER & STAFF)
+    // -------------------------------------------------------------
+    if (
+      action === 'reviews' ||
+      action === 'reviews-list' ||
+      action === 'approve-review' ||
+      action === 'reject-review' ||
+      action === 'delete-review'
+    ) {
+      const auth = verifySessionToken(token);
+      if (!auth.valid || !auth.user) {
+        return safeJson(401, { error: 'Unauthorized: Session invalid or expired' });
+      }
+
+      if (action === 'approve-review' && req.method === 'POST') {
+        const id = String(req.body.id || req.query.id);
+        const updated = updateDbReviewStatus(id, 'approved');
+        return safeJson(200, { success: Boolean(updated), review: updated });
+      }
+
+      if (action === 'reject-review' && req.method === 'POST') {
+        const id = String(req.body.id || req.query.id);
+        const updated = updateDbReviewStatus(id, 'rejected');
+        return safeJson(200, { success: Boolean(updated), review: updated });
+      }
+
+      if (action === 'delete-review' && (req.method === 'POST' || req.method === 'DELETE')) {
+        const id = String(req.body.id || req.query.id);
+        const deleted = deleteDbReview(id);
+        return safeJson(200, { success: deleted });
+      }
+
+      const allReviews = getDbReviews(true); // Return all reviews for moderation
+      return safeJson(200, { reviews: allReviews, count: allReviews.length });
+    }
+
+    // -------------------------------------------------------------
+    // CÀ PHÊ CIRCLE MEMBERS (OWNER & STAFF)
+    // -------------------------------------------------------------
+    if (action === 'circle-members' || action === 'circle-members-list') {
+      const auth = verifySessionToken(token);
+      if (!auth.valid || !auth.user) {
+        return safeJson(401, { error: 'Unauthorized: Session invalid or expired' });
+      }
+      const members = getDbCircleMembers();
+      return safeJson(200, { members, count: members.length });
     }
 
     // -------------------------------------------------------------

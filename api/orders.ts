@@ -1,5 +1,12 @@
 import type { Request, Response } from 'express';
-import { getDbOrders, updateDbOrders, getDbProducts, updateDbProducts } from './_lib/db.ts';
+import {
+  getDbOrders,
+  updateDbOrders,
+  getDbProducts,
+  updateDbProducts,
+  handleOrderDeliveredRewards,
+  handleOrderCancelledReversal,
+} from './_lib/db.ts';
 import { isValidSession } from './_lib/auth-util.ts';
 import type { PlacedOrder, OrderState } from '../src/types.ts';
 
@@ -98,6 +105,7 @@ export function ordersHandler(req: Request, res: Response) {
       return res.status(404).json({ error: `Order ${orderId} not found` });
     }
 
+    const prevStatus = orders[index].status;
     if (status) {
       orders[index].status = status as OrderState;
     }
@@ -109,6 +117,21 @@ export function ordersHandler(req: Request, res: Response) {
     }
 
     updateDbOrders(orders);
+
+    // Fraud protection: award Beans ONLY when marked Delivered
+    if (status === 'Delivered' && prevStatus !== 'Delivered') {
+      try {
+        handleOrderDeliveredRewards(orders[index]);
+      } catch (err) {
+        console.error('[Orders] Error processing Delivered Circle rewards:', err);
+      }
+    } else if (status === 'Cancelled' && prevStatus !== 'Cancelled') {
+      try {
+        handleOrderCancelledReversal(orders[index]);
+      } catch (err) {
+        console.error('[Orders] Error reversing Circle rewards:', err);
+      }
+    }
 
     return res.status(200).json({
       success: true,
