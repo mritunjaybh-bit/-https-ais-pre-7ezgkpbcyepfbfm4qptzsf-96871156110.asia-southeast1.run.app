@@ -149,15 +149,15 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
             <span className="font-bold text-xs text-[#271310] block mt-0.5">
               {orderDetails.shippingType === 'express' ? '1 – 2 Business Days' : '3 – 5 Business Days'}
             </span>
-            <span className="text-[10px] text-[#827472]">Fresh roasting in 24h</span>
+            <span className="text-[10px] text-[#827472]">Dispatch preparation in 24h</span>
           </div>
           <div className="col-span-2 sm:col-span-1">
             <span className="text-[10px] uppercase text-[#827472] font-semibold block">Fulfillment:</span>
             <span className="font-bold text-xs text-emerald-800 flex items-center gap-1 mt-0.5">
               <Truck className="w-3.5 h-3.5" />
-              Air Express Courier
+              Express Courier
             </span>
-            <span className="text-[10px] text-[#827472]">Nitrogen-sealed valve</span>
+            <span className="text-[10px] text-[#827472]">Protective barrier seal</span>
           </div>
         </div>
 

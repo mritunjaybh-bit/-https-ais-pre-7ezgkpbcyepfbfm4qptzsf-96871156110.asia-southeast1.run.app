@@ -303,19 +303,19 @@ export function adminProductsHandler(req: Request, res: Response) {
       id,
       name: newProd.name.trim(),
       vietnameseName: newProd.vietnameseName?.trim() || newProd.name.trim(),
-      tagline: newProd.tagline?.trim() || 'Direct-trade Vietnamese roastery release',
-      description: newProd.description?.trim() || 'Freshly hand-roasted Vietnamese coffee beans.',
+      tagline: newProd.tagline?.trim() || 'A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.',
+      description: newProd.description?.trim() || 'Authentic Vietnamese coffee experience.',
       category: newProd.category,
       flavorType: newProd.flavorType || undefined,
       isFlavoured: Boolean(newProd.isFlavoured || newProd.flavorType),
       isInstant: Boolean(newProd.isInstant || newProd.category === 'instant-coffee'),
-      basePriceINR: Math.max(1, Math.round(Number(newProd.basePriceINR) || 350)),
+      basePriceINR: Math.max(0, Math.round(Number(newProd.basePriceINR) || 0)),
       stockQuantity: Math.max(0, Number(newProd.stockQuantity) ?? 50),
       isActive: newProd.isActive !== false,
       imageUrl:
         newProd.imageUrl?.trim() ||
         'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=800&q=80',
-      badge: newProd.badge || 'New Roast Release',
+      badge: newProd.badge || 'Coming soon',
       roastLevel: newProd.roastLevel || 'Medium-Dark',
       beanBlend: newProd.beanBlend || '100% Vietnamese Highlands Robusta',
       caffeineScore: newProd.caffeineScore || 4,
@@ -324,7 +324,7 @@ export function adminProductsHandler(req: Request, res: Response) {
         : typeof newProd.tastingNotes === 'string'
         ? (newProd.tastingNotes as string).split(',').map((s) => s.trim())
         : ['Dark Cocoa', 'Toasted Hazelnut', 'Molasses'],
-      originRegion: newProd.originRegion || 'Buôn Ma Thuột, Central Highlands',
+      originRegion: newProd.originRegion || 'Vietnam High-Plateau Highlands',
       elevation: newProd.elevation || '800m',
       process: newProd.process || 'Natural Sun-Dried Honey',
       shelfLife: newProd.shelfLife || '12 Months Freshness Guaranteed',

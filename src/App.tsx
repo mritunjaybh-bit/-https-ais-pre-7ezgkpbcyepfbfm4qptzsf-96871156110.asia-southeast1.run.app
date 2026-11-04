@@ -36,6 +36,7 @@ import { LegalPagesModal, LegalDocType } from './components/LegalPagesModal';
 import { CookieConsent } from './components/CookieConsent';
 import { PreOrderModal } from './components/PreOrderModal';
 import { Footer } from './components/Footer';
+import { PartnerPage } from './components/PartnerPage';
 import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 import { CoffeeMasterChat } from './components/CoffeeMasterChat';
 import { EmailCaptureModal } from './components/EmailCaptureModal';
@@ -270,6 +271,8 @@ export default function App() {
         window.history.pushState({}, '', '/circle');
       } else if (tab === 'circle-terms') {
         window.history.pushState({}, '', '/circle-terms');
+      } else if (tab === 'partner') {
+        window.history.pushState({}, '', '/partner');
       } else if (tab === 'product-detail' && selectedProduct) {
         window.history.pushState({}, '', `/product/${selectedProduct.id}`);
       } else {
@@ -370,6 +373,12 @@ export default function App() {
         }
         if (path === '/circle-terms' || path === '/loyalty-terms') {
           setActiveTab('circle-terms');
+          return;
+        }
+
+        // Partner with us page
+        if (path === '/partner' || path.startsWith('/partner') || path === '/suppliers' || path === '/b2b') {
+          setActiveTab('partner');
           return;
         }
 
@@ -766,6 +775,14 @@ export default function App() {
             initialOrderId={trackingOrderId}
             initialContact={trackingContact}
             onBackToShop={() => handleSelectTab('shop')}
+          />
+        )}
+
+        {/* Tab 13: Partner with Cà Phê */}
+        {activeTab === 'partner' && (
+          <PartnerPage
+            siteSettings={siteSettings}
+            onSelectTab={handleSelectTab}
           />
         )}
       </main>

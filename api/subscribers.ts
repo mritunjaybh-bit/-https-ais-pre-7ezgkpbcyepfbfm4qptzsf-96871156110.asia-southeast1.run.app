@@ -35,7 +35,7 @@ export function subscribersHandler(req: Request, res: Response) {
       const orders = getDbOrders() || [];
 
       const csvRows = [
-        'ID,Email,Created At,Order Status,Orders Placed,Total Spent (INR),Source,Discount Code',
+        'ID,Email,Phone,Product of Interest,Consent,Created At,Order Status,Orders Placed,Total Spent (INR),Source,Discount Code',
         ...subscribers.map((s) => {
           const sEmail = (s.email || '').trim().toLowerCase();
           const customerOrders = orders.filter(
@@ -48,7 +48,10 @@ export function subscribersHandler(req: Request, res: Response) {
             0
           );
           const statusText = hasOrdered ? 'Converted Customer' : 'Lead (Not yet ordered)';
-          return `"${s.id}","${s.email}","${s.createdAt}","${statusText}","${orderCount}","₹${totalSpent}","${s.source || ''}","${s.discountCode || ''}"`;
+          const phoneVal = (s.phone || '').replace(/"/g, '""');
+          const interestVal = (s.interest || '').replace(/"/g, '""');
+          const consentVal = s.consent ? 'Yes' : 'No';
+          return `"${s.id}","${s.email}","${phoneVal}","${interestVal}","${consentVal}","${s.createdAt}","${statusText}","${orderCount}","₹${totalSpent}","${s.source || ''}","${s.discountCode || ''}"`;
         }),
       ].join('\n');
 
@@ -64,11 +67,14 @@ export function subscribersHandler(req: Request, res: Response) {
     });
   }
 
-  // POST /api/subscribers - Submit new subscriber
+  // POST /api/subscribers - Submit new subscriber or waitlist entry
   if (req.method === 'POST') {
     const email = String(req.body.email || '').trim().toLowerCase();
-    const source = String(req.body.source || 'exit_intent_popup').trim();
-    const discountCode = String(req.body.discountCode || 'XINCHAO10').trim();
+    const source = String(req.body.source || 'waitlist').trim();
+    const discountCode = String(req.body.discountCode || '').trim();
+    const phone = req.body.phone ? String(req.body.phone).trim() : undefined;
+    const interest = req.body.interest ? String(req.body.interest).trim() : undefined;
+    const consent = Boolean(req.body.consent);
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -81,19 +87,23 @@ export function subscribersHandler(req: Request, res: Response) {
     const { subscriber, isNew } = addDbSubscriber({
       email,
       source,
-      discountCode,
+      discountCode: discountCode || undefined,
+      phone,
+      interest,
+      consent,
     });
 
-    console.log(`[Subscribers] ${isNew ? 'New' : 'Existing'} subscriber recorded: ${email}`);
+    console.log(`[Subscribers] ${isNew ? 'New' : 'Updated'} subscriber recorded: ${email} (${interest || 'general'})`);
 
     return res.status(200).json({
       success: true,
       isNew,
-      message: 'Discount code unlocked successfully!',
-      discountCode: subscriber.discountCode || 'XINCHAO10',
+      message: 'You have been registered on the waitlist!',
       subscriber: {
         id: subscriber.id,
         email: subscriber.email,
+        phone: subscriber.phone,
+        interest: subscriber.interest,
         createdAt: subscriber.createdAt,
       },
     });

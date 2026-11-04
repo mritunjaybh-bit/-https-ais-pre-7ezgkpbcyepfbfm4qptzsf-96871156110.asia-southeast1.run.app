@@ -1,460 +1,331 @@
 import React, { useState } from 'react';
 import { ProductItem, Currency } from '../types';
-import { PRODUCT_ITEMS } from '../data/coffeeData';
-import { formatPrice } from '../utils/formatCurrency';
-import { HeritageDivider } from './HeritageDivider';
-import { Sparkles, Coffee, Package, ArrowRight, RotateCcw, Check, Plus, Zap, Layers } from 'lucide-react';
+import { PRODUCT_ITEMS, getProductById } from '../data/coffeeData';
+import { Sparkles, ArrowRight, RotateCcw, Check, Clock } from 'lucide-react';
+import { WaitlistModal } from './WaitlistModal';
 
 interface FlavorMatcherProps {
   currency: Currency;
-  onOpenProductModal: (item: ProductItem) => void;
-  onQuickAddToCart: (item: ProductItem) => void;
+  onOpenProductModal?: (item: ProductItem) => void;
+  onQuickAddToCart?: (item: ProductItem) => void;
 }
 
 export const FlavorMatcher: React.FC<FlavorMatcherProps> = ({
-  currency,
   onOpenProductModal,
-  onQuickAddToCart,
 }) => {
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
   const [answers, setAnswers] = useState<{
-    prepType?: string;
+    temperature?: string;
+    strength?: string;
+    sweetness?: string;
     flavor?: string;
-    caffeine?: string;
   }>({});
   const [matchedProduct, setMatchedProduct] = useState<ProductItem | null>(null);
+  const [waitlistOpen, setWaitlistOpen] = useState<boolean>(false);
 
   const questions = [
     {
-      key: 'prepType',
-      title: 'How do you plan to prepare your coffee?',
-      hint: 'Choose your convenience & brewing preference',
+      key: 'temperature',
+      title: '1. How do you prefer to enjoy your coffee?',
+      hint: 'Hot warmth or refreshing iced preparation',
       options: [
         {
-          id: 'instant-convenient',
-          label: 'Instant 10-Second Cups & Travel Sachets',
-          sub: 'Dissolves instantly in hot or cold water with zero equipment',
-          icon: '⚡',
-        },
-        {
-          id: 'fresh-ground-phin',
-          label: 'Authentic Fresh Ground Phin Drip Powder',
-          sub: 'Slow gravity drip ritual with maximum chocolate aroma',
+          id: 'hot',
+          label: 'Hot & Comforting',
+          sub: 'Steaming cup for contemplative mornings',
           icon: '☕',
         },
         {
-          id: 'pure-black',
-          label: 'Pure Black Coffee (Zero Sugar / Fillers)',
-          sub: 'Cryo-freeze-dried pure Robusta crystals or single-origin beans',
+          id: 'iced',
+          label: 'Iced & Refreshing',
+          sub: 'Poured over ice for vibrant midday energy',
+          icon: '🧊',
+        },
+      ],
+    },
+    {
+      key: 'strength',
+      title: '2. What coffee strength suits your palate?',
+      hint: 'Intensity and roast profile preference',
+      options: [
+        {
+          id: 'bold',
+          label: 'Bold & Intense',
+          sub: 'Deep dark roast with prominent punch',
+          icon: '⚡',
+        },
+        {
+          id: 'balanced',
+          label: 'Balanced & Smooth',
+          sub: 'Rich coffee presence with a rounded finish',
+          icon: '⚖️',
+        },
+        {
+          id: 'gentle',
+          label: 'Smooth & Gentle',
+          sub: 'Mellow character emphasizing dessert notes',
+          icon: '✨',
+        },
+      ],
+    },
+    {
+      key: 'sweetness',
+      title: '3. What level of sweetness do you prefer?',
+      hint: 'From pure black to creamy condensed milk style',
+      options: [
+        {
+          id: 'unsweetened',
+          label: 'Pure Unsweetened',
+          sub: 'Zero sugar, 100% coffee-led taste',
           icon: '🖤',
         },
         {
-          id: 'starter-kit',
-          label: 'Complete Home Barista Kit with Phin Dripper',
-          sub: 'Want the authentic metal dripper, coffee powder & condensed milk',
-          icon: '🎁',
+          id: 'subtle',
+          label: 'Delicately Sweet',
+          sub: 'Gentle sweetness that lets cocoa and notes shine',
+          icon: '🍯',
+        },
+        {
+          id: 'creamy',
+          label: 'Classic Sweet & Creamy',
+          sub: 'Iconic Vietnamese milk coffee harmony',
+          icon: '🥛',
         },
       ],
     },
     {
       key: 'flavor',
-      title: 'Which flavor profile excites your palate?',
-      hint: 'Select your preferred flavor profile',
+      title: '4. Which flavour profile appeals to you most?',
+      hint: 'Your preferred taste direction',
       options: [
         {
-          id: 'condensed-chocolate',
-          label: 'Rich Dark Chocolate & Mekong Cacao',
-          sub: 'Single-origin Robusta roasted with artisan Ben Tre cacao nibs',
-          icon: '🍫',
+          id: 'pure',
+          label: 'Straightforward Coffee',
+          sub: 'Pure unadulterated coffee flavour',
+          icon: '☕',
         },
         {
-          id: 'egg-custard',
-          label: 'Hà Nội Golden Egg Custard (Cà Phê Trứng)',
-          sub: 'Silky whipped egg yolk sabayon cream with vanilla & caramelized honey',
-          icon: '🍳',
+          id: 'classic-3in1',
+          label: 'Traditional 3-in-1',
+          sub: 'Quintessential balanced Vietnamese cafe profile',
+          icon: '✨',
         },
         {
-          id: 'salted-caramel',
-          label: 'Huế Imperial Sea Salt Caramel Cream (Cà Phê Muối)',
-          sub: 'Mineral coastal pink salt cutting all bitterness into dark velvet',
-          icon: '🧂',
-        },
-        {
-          id: 'coconut-latte',
-          label: 'Đà Nẵng Tropical Roasted Coconut (Cà Phê Cốt Dừa)',
-          sub: 'Bến Tre coconut milk cream with smooth highland coffee',
+          id: 'coconut',
+          label: 'Toasted Coconut',
+          sub: 'A distinctive tropical flavour direction',
           icon: '🥥',
         },
         {
-          id: 'durian-exotic',
-          label: 'Mekong King Durian (Cà Phê Sầu Riêng)',
-          sub: 'Creamy custard-like Ri6 durian essence with rich dark coffee',
-          icon: '👑',
+          id: 'chocolate',
+          label: 'Dark Chocolate Cacao',
+          sub: 'Familiar bittersweet dark chocolate',
+          icon: '🍫',
         },
         {
-          id: 'citrus-jasmine',
-          label: 'Đà Lạt Highland Floral & Pandan Leaf',
-          sub: 'Wild mountain jasmine, pandan vanilla sweetness, and citrus Arabica',
-          icon: '🍃',
-        },
-      ],
-    },
-    {
-      key: 'caffeine',
-      title: 'What energy intensity do you desire?',
-      hint: 'Select your ideal caffeine power level',
-      options: [
-        {
-          id: 'ultra',
-          label: 'Maximum Energy Robusta (High 2x Boost)',
-          sub: 'Single-origin Buon Ma Thuot volcanic red earth harvest',
-          icon: '⚡',
-        },
-        {
-          id: 'balanced',
-          label: 'Balanced Harmony (70/30 Blend)',
-          sub: 'Smooth dark cacao body with a rounded, lingering finish',
-          icon: '⚖️',
-        },
-        {
-          id: 'smooth',
-          label: 'Gentle & Creamy Dessert Coffee',
-          sub: 'Velvety custard, coconut, or highland Arabica profiles',
-          icon: '🍃',
+          id: 'mocha',
+          label: 'Chilled Mocha',
+          sub: 'Refreshing cold cacao latte infusion',
+          icon: '🧊',
         },
       ],
     },
   ];
 
-  const handleSelectOption = (optionId: string) => {
-    const currentKey = questions[currentQuestion].key as 'prepType' | 'flavor' | 'caffeine';
-    const updatedAnswers = { ...answers, [currentKey]: optionId };
+  const handleSelectOption = (questionKey: string, optionId: string) => {
+    const updatedAnswers = { ...answers, [questionKey]: optionId };
     setAnswers(updatedAnswers);
 
     if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
+      setCurrentQuestion((prev) => prev + 1);
     } else {
       calculateMatch(updatedAnswers);
     }
   };
 
   const calculateMatch = (finalAnswers: typeof answers) => {
-    // 1. Starter kit
-    if (finalAnswers.prepType === 'starter-kit') {
-      const kit = PRODUCT_ITEMS.find((p) => p.id === 'vietnamese-barista-starter-bundle');
-      if (kit) {
-        setMatchedProduct(kit);
-        return;
-      }
+    let targetId = 'vietnamese-3in1-instant-coffee';
+
+    if (finalAnswers.flavor === 'pure' || finalAnswers.sweetness === 'unsweetened') {
+      targetId = 'pure-vietnamese-instant-black-coffee';
+    } else if (finalAnswers.flavor === 'coconut') {
+      targetId = 'coconut-coffee';
+    } else if (finalAnswers.flavor === 'mocha' || (finalAnswers.temperature === 'iced' && finalAnswers.flavor === 'chocolate')) {
+      targetId = 'iced-mocha';
+    } else if (finalAnswers.flavor === 'chocolate') {
+      targetId = 'chocolate-coffee';
+    } else {
+      targetId = 'vietnamese-3in1-instant-coffee';
     }
 
-    // 2. Pure Black
-    if (finalAnswers.prepType === 'pure-black') {
-      const blackJar = PRODUCT_ITEMS.find((p) => p.id === 'freeze-dried-pure-black-robusta-jar');
-      if (blackJar) {
-        setMatchedProduct(blackJar);
-        return;
-      }
-    }
-
-    // 3. Instant preferences
-    if (finalAnswers.prepType === 'instant-convenient') {
-      if (finalAnswers.flavor === 'condensed-chocolate') {
-        const item = PRODUCT_ITEMS.find((p) => p.id === 'mekong-dark-chocolate-instant-mocha') ||
-                     PRODUCT_ITEMS.find((p) => p.id === 'saigon-3in1-instant-sachets');
-        if (item) {
-          setMatchedProduct(item);
-          return;
-        }
-      }
-      if (finalAnswers.flavor === 'egg-custard') {
-        const item = PRODUCT_ITEMS.find((p) => p.id === 'hanoi-egg-custard-instant-latte');
-        if (item) {
-          setMatchedProduct(item);
-          return;
-        }
-      }
-      if (finalAnswers.flavor === 'salted-caramel') {
-        const item = PRODUCT_ITEMS.find((p) => p.id === 'hue-sea-salted-instant-caramel');
-        if (item) {
-          setMatchedProduct(item);
-          return;
-        }
-      }
-      if (finalAnswers.flavor === 'coconut-latte') {
-        const item = PRODUCT_ITEMS.find((p) => p.id === 'danang-coconut-instant-latte');
-        if (item) {
-          setMatchedProduct(item);
-          return;
-        }
-      }
-      if (finalAnswers.flavor === 'durian-exotic') {
-        const item = PRODUCT_ITEMS.find((p) => p.id === 'mekong-durian-creamy-instant-coffee');
-        if (item) {
-          setMatchedProduct(item);
-          return;
-        }
-      }
-      const saigon3in1 = PRODUCT_ITEMS.find((p) => p.id === 'saigon-3in1-instant-sachets');
-      if (saigon3in1) {
-        setMatchedProduct(saigon3in1);
-        return;
-      }
-    }
-
-    // 4. Ground Powder preferences
-    if (finalAnswers.flavor === 'condensed-chocolate') {
-      const chocoPowder = PRODUCT_ITEMS.find((p) => p.id === 'saigon-cacao-chocolate-powder');
-      if (chocoPowder) {
-        setMatchedProduct(chocoPowder);
-        return;
-      }
-    }
-    if (finalAnswers.flavor === 'egg-custard') {
-      const eggPowder = PRODUCT_ITEMS.find((p) => p.id === 'hanoi-egg-custard-coffee-powder');
-      if (eggPowder) {
-        setMatchedProduct(eggPowder);
-        return;
-      }
-    }
-    if (finalAnswers.flavor === 'coconut-latte') {
-      const coconutPowder = PRODUCT_ITEMS.find((p) => p.id === 'bentre-toasted-coconut-powder');
-      if (coconutPowder) {
-        setMatchedProduct(coconutPowder);
-        return;
-      }
-    }
-    if (finalAnswers.flavor === 'salted-caramel') {
-      const saltPowder = PRODUCT_ITEMS.find((p) => p.id === 'hue-salted-caramel-powder');
-      if (saltPowder) {
-        setMatchedProduct(saltPowder);
-        return;
-      }
-    }
-    if (finalAnswers.flavor === 'durian-exotic') {
-      const durianInstant = PRODUCT_ITEMS.find((p) => p.id === 'mekong-durian-creamy-instant-coffee');
-      if (durianInstant) {
-        setMatchedProduct(durianInstant);
-        return;
-      }
-    }
-    if (finalAnswers.flavor === 'citrus-jasmine') {
-      const pandanPowder = PRODUCT_ITEMS.find((p) => p.id === 'pandan-vanilla-highland-powder') ||
-                           PRODUCT_ITEMS.find((p) => p.id === 'dalat-highland-typica-powder');
-      if (pandanPowder) {
-        setMatchedProduct(pandanPowder);
-        return;
-      }
-    }
-    if (finalAnswers.caffeine === 'ultra') {
-      const culi = PRODUCT_ITEMS.find((p) => p.id === 'buon-ma-thuot-peaberry-powder');
-      if (culi) {
-        setMatchedProduct(culi);
-        return;
-      }
-    }
-
-    // Default match
-    const defaultItem =
-      PRODUCT_ITEMS.find((p) => p.id === 'saigon-heritage-phin-powder') || PRODUCT_ITEMS[0];
-    setMatchedProduct(defaultItem);
+    const matched = getProductById(targetId) || PRODUCT_ITEMS.find((p) => p.id === targetId) || PRODUCT_ITEMS[0];
+    setMatchedProduct(matched);
   };
 
-  const handleRestart = () => {
+  const handleReset = () => {
     setCurrentQuestion(0);
     setAnswers({});
     setMatchedProduct(null);
   };
 
-  const currentQ = questions[currentQuestion];
+  const q = questions[currentQuestion];
+  const progressPercent = Math.round(((currentQuestion + (matchedProduct ? 1 : 0)) / questions.length) * 100);
 
   return (
-    <section id="flavor-matcher-section" className="w-full max-w-[900px] mx-auto py-12 px-4 sm:px-6">
-      {/* Quiz Section Header */}
-      <div className="text-center max-w-xl mx-auto mb-10">
-        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#785a00] bg-[#feca4d]/20 px-3 py-1 rounded-full border border-[#feca4d]/40 inline-flex items-center gap-1.5 mb-3">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Interactive Coffee Matcher</span>
-        </span>
-        <h2
-          className="text-3xl sm:text-4xl font-bold text-[#271310] tracking-tight font-serif"
-          style={{ fontFamily: 'Playfair Display, serif' }}
-        >
-          Find Your Perfect Vietnamese Roast
-        </h2>
-        <p className="mt-2 text-sm text-[#504442]">
-          Answer 3 quick questions to discover your ideal ground coffee powder, instant sachet box, or heirloom Phin starter kit.
-        </p>
-      </div>
-
-      {!matchedProduct ? (
-        /* Quiz Active Step Card */
-        <div className="bg-[#faf2f0] border border-[#d3c3c0] rounded-2xl p-6 sm:p-8 shadow-md">
-          {/* Progress Indicator */}
-          <div className="flex items-center justify-between mb-6 border-b border-[#d3c3c0]/40 pb-4">
-            <div>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#785a00]">
-                Step {currentQuestion + 1} of {questions.length}
-              </span>
-              <h3
-                className="text-xl font-bold text-[#271310] font-serif mt-0.5"
-                style={{ fontFamily: 'Playfair Display, serif' }}
-              >
-                {currentQ.title}
-              </h3>
-              <p className="text-xs text-[#504442]">{currentQ.hint}</p>
-            </div>
-            <div className="flex gap-1.5">
-              {questions.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`w-8 h-1.5 rounded-full transition-all duration-300 ${
-                    idx === currentQuestion
-                      ? 'bg-[#785a00]'
-                      : idx < currentQuestion
-                      ? 'bg-[#feca4d]'
-                      : 'bg-[#d3c3c0]'
-                  }`}
-                />
-              ))}
-            </div>
+    <section className="w-full max-w-4xl mx-auto py-16 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="bg-[#140d09] text-[#fcfbf7] border border-[#c5a880]/40 p-8 sm:p-12 shadow-2xl relative">
+        {/* Header */}
+        <div className="text-center space-y-3 pb-8 border-b border-[#c5a880]/20">
+          <div className="inline-flex items-center gap-2 text-[#c5a880] text-[10px] uppercase tracking-[0.25em]">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Taste Sommelier Quiz</span>
           </div>
+          <h2 className="font-serif text-3xl sm:text-4xl text-[#fcfbf7] font-normal">
+            Find Your Vietnamese Coffee Match
+          </h2>
+          <p className="text-xs text-[#a3978f] font-light max-w-md mx-auto">
+            Answer 4 quick questions (Hot or Iced, Strength, Sweetness, Flavour) to discover your ideal planned blend.
+          </p>
+        </div>
 
-          {/* Options Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {currentQ.options.map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => handleSelectOption(opt.id)}
-                className="bg-white hover:bg-[#fff8f6] border border-[#d3c3c0] hover:border-[#785a00] p-4 rounded-xl text-left transition-all duration-200 group flex items-start gap-3 shadow-2xs hover:shadow-xs cursor-pointer"
-              >
-                <span className="text-2xl p-2 rounded-lg bg-[#faf2f0] group-hover:scale-110 transition-transform">
-                  {opt.icon}
-                </span>
-                <div className="flex-1">
-                  <h4 className="font-bold text-xs text-[#271310] group-hover:text-[#785a00] transition-colors font-serif">
+        {/* Progress Bar */}
+        <div className="py-6 border-b border-[#c5a880]/15">
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-[#c5a880] mb-2">
+            <span>{matchedProduct ? 'Match Discovered' : `Question ${currentQuestion + 1} of ${questions.length}`}</span>
+            <span>{progressPercent}%</span>
+          </div>
+          <div className="w-full h-1 bg-white/10 overflow-hidden">
+            <div
+              className="h-full bg-[#c5a880] transition-all duration-500 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Quiz Body */}
+        {!matchedProduct ? (
+          <div className="py-8 space-y-6">
+            <div className="space-y-1">
+              <h3 className="font-serif text-xl sm:text-2xl text-[#fcfbf7] font-normal">
+                {q.title}
+              </h3>
+              <p className="text-xs text-[#a3978f] font-light">{q.hint}</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              {q.options.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => handleSelectOption(q.key, opt.id)}
+                  className="p-5 text-left border border-[#c5a880]/30 hover:border-[#c5a880] bg-white/5 hover:bg-white/10 transition-all duration-300 group cursor-pointer space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl">{opt.icon}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#a3978f] group-hover:text-[#c5a880] group-hover:translate-x-1 transition-all" />
+                  </div>
+                  <h4 className="font-serif text-base text-[#fcfbf7] group-hover:text-[#c5a880] transition-colors">
                     {opt.label}
                   </h4>
-                  <p className="text-[11px] text-[#504442] mt-0.5 leading-relaxed">{opt.sub}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {currentQuestion > 0 && (
-            <div className="mt-6 pt-4 border-t border-[#d3c3c0]/40 flex justify-between items-center text-xs">
-              <button
-                onClick={() => setCurrentQuestion(currentQuestion - 1)}
-                className="text-[#504442] hover:text-[#271310] font-semibold"
-              >
-                ← Previous Question
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* Matched Result Card */
-        <div className="bg-[#faf2f0] border-2 border-[#785a00]/30 rounded-2xl p-6 sm:p-8 shadow-xl animate-in fade-in zoom-in-95 duration-300">
-          <div className="text-center mb-6">
-            <span className="text-xs uppercase tracking-widest font-bold text-[#785a00] bg-[#feca4d]/20 px-3 py-1 rounded-full border border-[#feca4d]/40 inline-flex items-center gap-1.5 mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Recommended Match For You</span>
-            </span>
-            <h3
-              className="text-2xl sm:text-3xl font-bold text-[#271310] font-serif"
-              style={{ fontFamily: 'Playfair Display, serif' }}
-            >
-              {matchedProduct.name}
-            </h3>
-            <p className="text-xs text-[#785a00] italic font-medium mt-0.5">
-              {matchedProduct.vietnameseName}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-white p-5 rounded-xl border border-[#d3c3c0]/60">
-            <div className="md:col-span-4 aspect-square rounded-lg overflow-hidden bg-[#eee3e1]">
-              <img
-                src={matchedProduct.imageUrl}
-                alt={matchedProduct.name}
-                className="w-full h-full object-cover"
-              />
+                  <p className="text-xs text-[#a3978f] font-light leading-relaxed">
+                    {opt.sub}
+                  </p>
+                </button>
+              ))}
             </div>
 
-            <div className="md:col-span-8 space-y-3">
-              <div className="flex flex-wrap gap-1.5">
-                {matchedProduct.badge && (
-                  <span className="bg-[#785a00] text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                    {matchedProduct.badge}
-                  </span>
-                )}
-                {matchedProduct.roastLevel && (
-                  <span className="bg-[#f4ecea] text-[#271310] text-[10px] font-bold px-2 py-0.5 rounded border border-[#d3c3c0]">
-                    {matchedProduct.roastLevel} Roast
-                  </span>
-                )}
-                <span className="bg-[#feca4d]/20 text-[#785a00] text-[10px] font-bold px-2 py-0.5 rounded border border-[#feca4d]/40 flex items-center gap-1">
-                  <Zap className="w-3 h-3" /> Energy {matchedProduct.caffeineScore}/5
+            {currentQuestion > 0 && (
+              <div className="pt-4 flex justify-between items-center text-xs">
+                <button
+                  type="button"
+                  onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
+                  className="text-[#a3978f] hover:text-[#c5a880] transition-colors cursor-pointer uppercase tracking-wider"
+                >
+                  &larr; Previous Question
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="text-[#8c827a] hover:text-[#fcfbf7] transition-colors cursor-pointer"
+                >
+                  Restart Quiz
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Match Result Screen */
+          <div className="py-8 space-y-8 animate-in fade-in duration-300">
+            <div className="p-6 bg-white/5 border border-[#c5a880]/40 flex flex-col md:flex-row items-center gap-6">
+              <div className="w-32 h-32 aspect-square shrink-0 overflow-hidden border border-[#c5a880]/30">
+                <img
+                  src={matchedProduct.imageUrl}
+                  alt={matchedProduct.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              <div className="space-y-2 flex-1 text-center md:text-left">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-[#c5a880] font-medium block">
+                  Your Personalized Match • Coming Soon
                 </span>
-              </div>
+                <h3 className="font-serif text-2xl text-[#fcfbf7]">
+                  {matchedProduct.name}
+                </h3>
+                <p className="text-xs text-[#c5a880] font-serif italic">
+                  {matchedProduct.vietnameseName}
+                </p>
+                <p className="text-xs text-[#dcd4cb] font-light leading-relaxed">
+                  {matchedProduct.description}
+                </p>
 
-              <p className="text-xs text-[#504442] leading-relaxed">
-                {matchedProduct.description}
-              </p>
-
-              {/* Tasting Notes */}
-              <div className="flex flex-wrap gap-1">
-                {matchedProduct.tastingNotes.map((note, idx) => (
-                  <span
-                    key={idx}
-                    className="text-[10px] bg-[#faf2f0] border border-[#d3c3c0] text-[#504442] px-2 py-0.5 rounded-full font-medium"
-                  >
-                    {note}
-                  </span>
-                ))}
-              </div>
-
-              <div className="pt-2 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-[#827472] block">
-                    Starting From
-                  </span>
-                  <span className="text-xl font-bold text-[#271310] font-serif">
-                    {formatPrice(matchedProduct.basePriceINR, currency)}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onOpenProductModal(matchedProduct)}
-                    className="px-3.5 py-2 rounded-lg border border-[#d3c3c0] text-xs font-bold text-[#504442] hover:bg-[#faf2f0]"
-                  >
-                    View Details & Grinds
-                  </button>
-                  <button
-                    onClick={() => onQuickAddToCart(matchedProduct)}
-                    className="px-4 py-2 rounded-lg bg-[#785a00] hover:bg-[#8e6b00] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add to Cart</span>
-                  </button>
+                <div className="flex flex-wrap gap-1.5 pt-2 justify-center md:justify-start">
+                  {matchedProduct.tastingNotes.map((note, idx) => (
+                    <span
+                      key={idx}
+                      className="text-[10px] text-[#fcfbf7] bg-[#140d09] border border-[#c5a880]/30 px-2.5 py-0.5"
+                    >
+                      {note}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-6 text-center">
-            <button
-              onClick={handleRestart}
-              className="inline-flex items-center gap-1.5 text-xs text-[#504442] hover:text-[#271310] font-semibold underline underline-offset-4"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Retake Taste Matcher Quiz</span>
-            </button>
-          </div>
-        </div>
-      )}
+            {/* Packaging Note */}
+            <p className="text-xs text-center text-[#a3978f] font-light italic">
+              Pack sizes (2g, 5g, 10g sachets) are being evaluated and will be confirmed at launch.
+            </p>
 
-      <HeritageDivider variant="lotus" />
+            {/* Actions: Join Waitlist */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+              <button
+                type="button"
+                onClick={() => setWaitlistOpen(true)}
+                className="w-full sm:w-auto px-8 py-3.5 bg-[#c5a880] hover:bg-[#d8be98] text-[#140d09] text-xs uppercase tracking-[0.2em] font-medium transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Join the Waitlist</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleReset}
+                className="w-full sm:w-auto px-6 py-3.5 border border-[#c5a880]/40 text-[#fcfbf7] hover:text-[#c5a880] text-xs uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Retake Quiz</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <WaitlistModal
+        isOpen={waitlistOpen}
+        onClose={() => setWaitlistOpen(false)}
+        product={matchedProduct}
+      />
     </section>
   );
 };

@@ -166,6 +166,53 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
           </div>
         </div>
 
+        {/* Direct Online Checkout Switch */}
+        <div className="p-5 rounded-2xl bg-[#1d1210] border border-[#3e2723] space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-bold text-white flex items-center gap-2">
+                <span>Direct Online Checkout (Razorpay & COD)</span>
+                {settings.directCheckoutEnabled ? (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/40">
+                    Live Checkout
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider border border-amber-500/40">
+                    Waitlist Mode Active (Default)
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-[#a8928e] mt-1">
+                When switched OFF (default), checkout operates safely in Waitlist Mode with zero payments charged. When switched ON at launch, Razorpay and COD processing activate immediately.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={Boolean(settings.directCheckoutEnabled)}
+                onChange={(e) => setSettings({ ...settings, directCheckoutEnabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+          </div>
+        </div>
+
+        {/* Footer Legal Entity Line */}
+        <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+            Footer Legal Line (Editable Entity Notice)
+          </label>
+          <input
+            type="text"
+            value={settings.footerLegalLine ?? 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).'}
+            onChange={(e) => setSettings({ ...settings, footerLegalLine: e.target.value })}
+            placeholder="Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress)."
+            className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+          />
+          <p className="text-[10px] text-[#827472]">Displayed in the storefront footer copyright notice.</p>
+        </div>
+
         {/* Operational & Legal Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Dispatch Window */}
@@ -177,7 +224,7 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
               type="text"
               value={settings.dispatchWindow}
               onChange={(e) => setSettings({ ...settings, dispatchWindow: e.target.value })}
-              placeholder="e.g. Dispatched within 24–48 hours from our roastery"
+              placeholder="e.g. Batches prepared upon official launch"
               className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
             />
             <p className="text-[10px] text-[#827472]">Displayed on product detail pages and checkout estimates.</p>
@@ -192,7 +239,7 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
               type="text"
               value={settings.announcementBarText}
               onChange={(e) => setSettings({ ...settings, announcementBarText: e.target.value })}
-              placeholder="e.g. Complimentary shipping across India on orders above ₹799"
+              placeholder="e.g. A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon."
               className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
             />
             <p className="text-[10px] text-[#827472]">Leave blank to completely hide the announcement bar.</p>
@@ -201,7 +248,7 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
           {/* FSSAI Licence Number */}
           <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
-              FSSAI Licence Number (Strict Rule: hidden until set)
+              FSSAI Licence Number (Strict: hidden until set)
             </label>
             <input
               type="text"
@@ -211,7 +258,7 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
               className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
             />
             <p className="text-[10px] text-[#827472]">
-              Strictly invisible on storefront footer until a verified number is saved here.
+              Strictly invisible on storefront footer until entered.
             </p>
           </div>
 
@@ -229,6 +276,68 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
             />
             <p className="text-[10px] text-[#827472]">
               Strictly hidden on storefront footer until entered.
+            </p>
+          </div>
+
+          {/* CIN (Corporate Identification Number) */}
+          <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+              CIN (Corporate Identification Number)
+            </label>
+            <input
+              type="text"
+              value={settings.cin || ''}
+              onChange={(e) => setSettings({ ...settings, cin: e.target.value })}
+              placeholder="e.g. U15400KA2026OPC123456"
+              className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+            />
+            <p className="text-[10px] text-[#827472]">
+              Strictly hidden on partner page and footer until entered.
+            </p>
+          </div>
+
+          {/* IEC (Import Export Code) */}
+          <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+              IEC (Import Export Code)
+            </label>
+            <input
+              type="text"
+              value={settings.iec || ''}
+              onChange={(e) => setSettings({ ...settings, iec: e.target.value })}
+              placeholder="e.g. 0517001234"
+              className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+            />
+            <p className="text-[10px] text-[#827472]">
+              Strictly hidden on partner page and footer until entered.
+            </p>
+          </div>
+
+          {/* Partner Address */}
+          <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5 md:col-span-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+                Registered Postal Address (for Partner Page)
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-[#a8928e]">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.showPartnerAddressPublicly)}
+                  onChange={(e) => setSettings({ ...settings, showPartnerAddressPublicly: e.target.checked })}
+                  className="rounded-sm border-white/20 bg-white/10 text-[#c5a880] focus:ring-0 accent-[#c5a880]"
+                />
+                <span>Show Address Publicly on /partner</span>
+              </label>
+            </div>
+            <textarea
+              rows={2}
+              value={settings.partnerAddress || ''}
+              onChange={(e) => setSettings({ ...settings, partnerAddress: e.target.value })}
+              placeholder="Enter company registered postal address"
+              className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+            />
+            <p className="text-[10px] text-[#827472]">
+              Hidden on /partner unless the &quot;Show Address Publicly&quot; checkbox is ticked.
             </p>
           </div>
 

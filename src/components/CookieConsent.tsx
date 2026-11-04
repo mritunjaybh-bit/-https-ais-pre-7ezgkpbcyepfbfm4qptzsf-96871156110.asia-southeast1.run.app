@@ -60,7 +60,7 @@ export const CookieConsent: React.FC<CookieConsentProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-[#d8cfca] font-light leading-relaxed">
-            We use essential cookies to manage your cart and optional analytics to refine our direct-trade coffee experience. No personally identifiable tracking data is ever brokered.
+            We use essential cookies to manage site preferences and optional analytics to refine our Vietnamese coffee experience. No personally identifiable tracking data is ever brokered.
           </p>
           {onOpenPrivacyPolicy && (
             <button

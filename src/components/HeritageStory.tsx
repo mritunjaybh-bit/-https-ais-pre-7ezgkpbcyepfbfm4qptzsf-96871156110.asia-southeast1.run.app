@@ -56,7 +56,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
           className="mt-4 text-base text-[#504442] leading-relaxed"
           style={{ fontFamily: 'Montserrat, sans-serif' }}
         >
-          From the mineral-dense volcanic soils of the Central Highlands to the buzzing sidewalk stools of Hanoi and Saigon, Vietnamese coffee is more than a beverage—it is a cultural ritual of mindful stillness, resilience, and culinary brilliance.
+          From the mineral-dense volcanic soils of Vietnam's fertile highlands to the buzzing sidewalk stools of Hanoi and Saigon, Vietnamese coffee is more than a beverage—it is a cultural ritual of mindful stillness, resilience, and culinary brilliance.
         </p>
       </div>
 
@@ -221,12 +221,12 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
 
       {/* Terroirs Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-        {/* Buon Ma Thuot Terroir Card */}
+        {/* Highland Terroir Card */}
         <div className="bg-[#faf2f0] rounded-xl border border-[#d3c3c0]/40 overflow-hidden shadow-xs">
           <div className="aspect-[16/9] w-full bg-[#eee6e5] relative">
             <img
               src="https://images.unsplash.com/photo-1587734195503-904fca47e0e9?auto=format&fit=crop&w=800&q=80"
-              alt="Buon Ma Thuot Coffee Estate"
+              alt="Vietnamese Coffee Estate"
               className="w-full h-full object-cover"
             />
             <div className="absolute top-3 left-3 bg-[#271310] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
@@ -236,7 +236,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
           <div className="p-6 sm:p-8 space-y-3">
             <div className="flex items-center gap-2 text-xs font-semibold text-[#785a00]">
               <MapPin className="w-4 h-4" />
-              <span>Buôn Ma Thuột, Đắk Lắk Province (850m)</span>
+              <span>Vietnam High-Plateau Highlands</span>
             </div>
             <h3
               className="text-2xl font-bold text-[#271310] font-serif"
@@ -245,7 +245,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
               The Ancient Red Basalt Volcanic Soil
             </h3>
             <p className="text-xs sm:text-sm text-[#504442] leading-relaxed">
-              Millions of years of volcanic activity blessed Buon Ma Thuot with rich, mineral-dense basalt earth (Đất Đỏ Bazan). This terroir produces Peaberry Culi Robusta with twice the caffeine of Arabica, thick syrupy body, zero sourness, and natural notes of Belgian dark chocolate, roasted hazelnuts, and cedar.
+              Volcanic activity created mineral-dense basalt earth (Đất Đỏ Bazan). This terroir produces resilient Robusta with substantial caffeine, rich syrupy body, zero sourness, and natural notes of Belgian dark chocolate, roasted hazelnuts, and cedar.
             </p>
             <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#d3c3c0]/40 text-center">
               <div className="bg-[#fff8f6] p-2 rounded">
@@ -264,22 +264,22 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
           </div>
         </div>
 
-        {/* Da Lat Lang Biang Terroir Card */}
+        {/* Highland Terroir Card */}
         <div className="bg-[#faf2f0] rounded-xl border border-[#d3c3c0]/40 overflow-hidden shadow-xs">
           <div className="aspect-[16/9] w-full bg-[#eee6e5] relative">
             <img
               src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=800&q=80"
-              alt="Da Lat Misty Mountains"
+              alt="Highland Misty Mountains"
               className="w-full h-full object-cover"
             />
             <div className="absolute top-3 left-3 bg-[#081c17] text-[#d0e8de] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
-              Highland Cloud Forest Arabica
+              Highland Cloud Forest
             </div>
           </div>
           <div className="p-6 sm:p-8 space-y-3">
             <div className="flex items-center gap-2 text-xs font-semibold text-[#785a00]">
               <MapPin className="w-4 h-4" />
-              <span>Cầu Đất & Núi Lang Biang, Đà Lạt (1,650m)</span>
+              <span>Highland Cloud Elevation</span>
             </div>
             <h3
               className="text-2xl font-bold text-[#271310] font-serif"
@@ -365,38 +365,38 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
 
       <HeritageDivider variant="geometric" />
 
-      {/* Sustainable Direct Trade Commitments */}
+      {/* Authentic Origin Commitments */}
       <div className="bg-[#271310] text-[#f4eceb] rounded-2xl p-8 sm:p-12 shadow-lg">
         <div className="max-w-3xl mx-auto text-center space-y-5">
           <div className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#feca4d] bg-[#3e2723] px-3 py-1 rounded-full border border-[#feca4d]/30">
             <Leaf className="w-3.5 h-3.5 text-[#feca4d]" />
-            <span>Regenerative Agriculture & Direct-Trade Pledge</span>
+            <span>Vietnamese Origin & Cultural Tradition</span>
           </div>
           <h3
             className="text-2xl sm:text-3xl md:text-4xl font-bold text-white font-serif"
             style={{ fontFamily: 'Playfair Display, serif' }}
           >
-            Honoring Vietnamese Farmers & Soil Health
+            A Premium Vietnamese-Origin Coffee Brand
           </h3>
           <p className="text-xs sm:text-sm text-[#ae8d87] leading-relaxed">
-            We partner directly with multi-generational family estates in Dak Lak and Lam Dong, eliminating middlemen. By paying <strong>65% above fair-trade floor prices</strong>, we fund organic shade canopy tree planting (intercropping with avocado and black pepper), clean solar drying beds, and mountain spring bio-filtration.
+            A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon. Honoring centuries of slow coffee heritage and bringing distinct Vietnamese flavor profiles to discerning coffee lovers.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-[#3e2723]">
             <div className="p-4 bg-[#3e2723]/60 rounded-xl text-center border border-[#5b403c]/40">
               <p className="text-2xl font-bold text-[#feca4d] font-serif">100%</p>
-              <p className="text-[11px] text-white font-semibold mt-1">Shade-Canopy Grown</p>
-              <p className="text-[10px] text-[#ae8d87] mt-0.5">Zero clear-cut monoculture</p>
+              <p className="text-[11px] text-white font-semibold mt-1">Authentic Heritage</p>
+              <p className="text-[10px] text-[#ae8d87] mt-0.5">Vietnamese recipes & formats</p>
             </div>
             <div className="p-4 bg-[#3e2723]/60 rounded-xl text-center border border-[#5b403c]/40">
-              <p className="text-2xl font-bold text-[#feca4d] font-serif">+65%</p>
-              <p className="text-[11px] text-white font-semibold mt-1">Above Fair-Trade Pay</p>
-              <p className="text-[10px] text-[#ae8d87] mt-0.5">Direct to family estates</p>
+              <p className="text-2xl font-bold text-[#feca4d] font-serif">India</p>
+              <p className="text-[11px] text-white font-semibold mt-1">Launching Soon</p>
+              <p className="text-[10px] text-[#ae8d87] mt-0.5">Sachets & instant formats</p>
             </div>
             <div className="p-4 bg-[#3e2723]/60 rounded-xl text-center border border-[#5b403c]/40">
-              <p className="text-2xl font-bold text-[#feca4d] font-serif">0%</p>
-              <p className="text-[11px] text-white font-semibold mt-1">Synthetic Additives</p>
-              <p className="text-[10px] text-[#ae8d87] mt-0.5">Pure single-origin beans</p>
+              <p className="text-2xl font-bold text-[#feca4d] font-serif">Curated</p>
+              <p className="text-[11px] text-white font-semibold mt-1">Planned Flavours</p>
+              <p className="text-[10px] text-[#ae8d87] mt-0.5">Classic 3-in-1, coconut & mocha</p>
             </div>
           </div>
         </div>

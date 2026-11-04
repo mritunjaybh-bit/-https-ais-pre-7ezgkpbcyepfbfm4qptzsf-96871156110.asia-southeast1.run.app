@@ -190,7 +190,7 @@ export const PreOrderModal: React.FC<PreOrderModalProps> = ({
                     Roast Batch
                   </label>
                   <div className="bg-[#140b09] border border-[#3e2723] rounded-xl px-3 py-2 text-[#a3978f] text-[11px]">
-                    Upcoming Fresh Roast
+                    Upcoming Launch Release
                   </div>
                 </div>
               </div>

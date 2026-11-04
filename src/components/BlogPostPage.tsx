@@ -319,7 +319,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
           <div className="space-y-2 text-center sm:text-left">
             <div className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-[#feca4d] bg-[#feca4d]/15 px-2.5 py-0.5 rounded-full border border-[#feca4d]/30">
               <Sparkles className="w-3 h-3 text-[#feca4d]" />
-              <span>Direct From Central Highlands</span>
+              <span>Authentic Vietnamese Tradition</span>
             </div>
             <h4
               className="text-lg sm:text-xl font-bold text-white font-serif-brand"

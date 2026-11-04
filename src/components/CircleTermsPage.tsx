@@ -115,7 +115,7 @@ export const CircleTermsPage: React.FC<CircleTermsPageProps> = ({
               <span>Redemption & Checkout Benefits</span>
             </h2>
             <p>
-              Beans may be applied at checkout toward artisanal coffees and brewing accessories at a nominal valuation of 100 Beans = ₹50 discount. Redemptions are capped at a maximum of 30% of the cart subtotal per order to maintain direct-trade economic integrity with our farming partners. Beans cannot be combined with certain exclusive promotional clearance codes.
+              Beans may be applied toward artisanal coffees and brewing accessories at a nominal valuation of 100 Beans = ₹50 discount. Redemptions are capped at a maximum of 30% of the cart subtotal per order to maintain sustainable economics. Beans cannot be combined with certain exclusive promotional clearance codes.
             </p>
           </section>
 

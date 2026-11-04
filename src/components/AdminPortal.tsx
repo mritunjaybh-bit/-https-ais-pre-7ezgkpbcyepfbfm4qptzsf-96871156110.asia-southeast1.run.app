@@ -3824,6 +3824,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     <tr>
                       <th className="py-3 px-4">#</th>
                       <th className="py-3 px-4">Subscriber Email</th>
+                      <th className="py-3 px-4">Product of Interest</th>
+                      <th className="py-3 px-4">Phone / Contact</th>
                       <th className="py-3 px-4">Order Status</th>
                       <th className="py-3 px-4">Trigger Source</th>
                       <th className="py-3 px-4">Discount Code</th>
@@ -3841,6 +3843,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           <span className="font-bold text-[#271310] font-mono select-all">
                             {sub.email}
                           </span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {sub.interest ? (
+                            <span className="font-serif font-medium text-[#785a00] bg-amber-50 border border-amber-200 px-2 py-0.5 rounded text-xs block">
+                              {sub.interest}
+                            </span>
+                          ) : (
+                            <span className="text-[#827472] italic text-[11px]">General Range</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 font-mono text-xs text-[#271310]">
+                          {sub.phone ? (
+                            <span>{sub.phone}</span>
+                          ) : (
+                            <span className="text-[#827472] italic text-[11px]">—</span>
+                          )}
                         </td>
                         <td className="py-3.5 px-4">
                           {sub.hasOrdered ? (
@@ -3867,7 +3885,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                         </td>
                         <td className="py-3.5 px-4">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-stone-100 text-stone-700 border border-stone-200">
-                            {sub.source === 'exit_intent' ? 'Exit-Intent (Desktop)' : 'Timed Fallback (Mobile/Timer)'}
+                            {sub.source === 'waitlist' || sub.source === 'waitlist_modal' || sub.source === 'product_waitlist' || sub.source === 'checkout_waitlist_mode'
+                              ? 'Waitlist'
+                              : sub.source === 'exit_intent'
+                              ? 'Exit-Intent (Desktop)'
+                              : 'Timed Fallback (Mobile/Timer)'}
                           </span>
                         </td>
                         <td className="py-3.5 px-4">
@@ -4085,7 +4107,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     required
                     value={productFormState.name || ''}
                     onChange={(e) => setProductFormState({ ...productFormState, name: e.target.value })}
-                    placeholder="e.g. Đà Lạt Highland Typica Arabica"
+                    placeholder="e.g. Vietnamese 3-in-1 Instant Coffee"
                     className="w-full bg-[#faf2f0] border border-[#d3c3c0] rounded-xl px-3 py-2 text-[#271310] focus:outline-none focus:border-[#785a00]"
                   />
                 </div>

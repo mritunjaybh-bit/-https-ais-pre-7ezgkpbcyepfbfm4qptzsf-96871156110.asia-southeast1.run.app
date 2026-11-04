@@ -360,7 +360,7 @@ const BREWING_GUIDES: BrewingGuide[] = [
       {
         stepNumber: 2,
         title: 'Blend the Coconut Snow Slushie',
-        vietnameseTitle: 'Xay Đá Tuyết Cốt Dừa Bến Tre',
+        vietnameseTitle: 'Xay Đá Tuyết Cốt Dừa',
         durationSeconds: 45,
         shortInstruction: 'Blend coconut cream, condensed milk, and crushed ice in a blender on high speed until smooth snow forms.',
         detailedInstruction: 'Add 60ml coconut cream, 2 tbsp condensed milk, and 1.5 cups of ice to your blender. Pulse and blend on high for 30–45 seconds until it forms a creamy, ultra-thick white slushie texture reminiscent of fine snow.',

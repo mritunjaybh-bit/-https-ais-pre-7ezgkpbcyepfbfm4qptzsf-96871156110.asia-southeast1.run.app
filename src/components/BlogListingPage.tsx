@@ -294,22 +294,22 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
           )}
         </div>
 
-        {/* Bottom Call to Action: Shop Fresh Single-Origin Vietnamese Coffee */}
+        {/* Bottom Call to Action: Authentic Vietnamese Coffee */}
         <div className="bg-[#271310] text-white rounded-2xl p-6 sm:p-10 border border-[#3e2723] relative overflow-hidden shadow-md">
           <div className="relative z-10 max-w-2xl space-y-4">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#feca4d] bg-[#feca4d]/15 px-3 py-1 rounded-full border border-[#feca4d]/30 inline-block">
-              Direct-Trade Central Highlands Beans
+              Authentic Vietnamese Coffee Tradition
             </span>
 
             <h3
               className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-serif-brand"
               style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
             >
-              Taste the Authentic Brews from Our Journal
+              Discover the Authentic Vietnamese Ritual
             </h3>
 
             <p className="text-xs sm:text-sm text-[#ae8d87] leading-relaxed">
-              Bring the stories to your kitchen. Order artisanal Fine Robusta powders, authentic stainless steel Phin kits, or micro-ground condensed milk instant sachets delivered fresh with air-dispatch across India.
+              A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon. Explore our planned product range and join the early access waitlist.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">

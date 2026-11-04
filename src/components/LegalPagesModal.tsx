@@ -106,7 +106,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
               <div className="space-y-4">
                 <h4 className="text-sm font-serif text-[#140d09]">1. Information We Collect</h4>
                 <p>
-                  When you visit or place an order on <strong>www.caphevietnam.in</strong>, we collect personal information strictly necessary to fulfill your artisanal coffee orders, communicate tracking updates, and maintain our direct-trade relationship. This includes:
+                  When you visit or place an order on <strong>www.caphevietnam.in</strong>, we collect personal information strictly necessary to fulfill your artisanal coffee orders, communicate tracking updates, and manage your account. This includes:
                 </p>
                 <ul className="list-disc pl-5 space-y-1">
                   <li><strong>Identity & Contact:</strong> Full name, shipping address, landmark, PIN code, contact telephone/mobile number, and email address.</li>
@@ -119,7 +119,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                   We <strong>never store, inspect, or process your credit/debit card numbers, CVVs, or UPI PINs</strong>. All online transactions are handled through PCI-DSS Level 1 compliant secure gateways operated by <strong>Razorpay</strong>. Payment data is encrypted at transit via 256-bit SSL protocols.
                 </p>
 
-                <h4 className="text-sm font-serif text-[#140d09]">3. Direct-Trade Communications & Marketing Consent</h4>
+                <h4 className="text-sm font-serif text-[#140d09]">3. Email Updates & Marketing Consent</h4>
                 <p>
                   You are only enrolled in promotional communications if you affirmatively consent (e.g. by subscribing to the Roastery Dispatch or checking an opt-in box). You may unsubscribe at any time with a single click in any newsletter or by emailing <a href={`mailto:${supportEmail}`} className="text-[#c5a880] underline">{supportEmail}</a> with the subject line <em>"Unsubscribe"</em>.
                 </p>
@@ -329,7 +329,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                 <div className="space-y-1.5">
                   <h4 className="text-sm font-serif text-[#140d09]">What makes authentic Vietnamese coffee different?</h4>
                   <p>
-                    Vietnam's volcanic highland soils in Buôn Ma Thuột yield prized heirloom Robusta (Peaberry Culi) and Arabica cultivars with nearly twice the antioxidant density and bold caffeine punch of standard coffees. Traditionally slow-roasted with notes of dark cacao, caramelized butter, and hazelnut, it drips drop-by-drop through a gravity Phin filter.
+                    Vietnam's high-plateau volcanic soils yield prized Robusta and Arabica coffees with distinctive flavor intensity and bold caffeine punch. Traditionally slow-roasted with notes of dark cacao, caramelized sugar, and hazelnut, it drips drop-by-drop through a gravity Phin filter.
                   </p>
                 </div>
 
@@ -341,9 +341,9 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                 </div>
 
                 <div className="space-y-1.5">
-                  <h4 className="text-sm font-serif text-[#140d09]">What is the shelf life and freshness window?</h4>
+                  <h4 className="text-sm font-serif text-[#140d09]">What is the shelf life and packaging?</h4>
                   <p>
-                    All our pouches feature one-way degassing valves to expel CO2 while keeping oxygen out. Unopened pouches remain fresh for 12 months from the roast date. Once opened, store in a cool, dry cupboard in an airtight jar and consume within 6 to 8 weeks for peak aroma.
+                    All planned packages feature premium barrier packaging to preserve aroma. Sachet formats are being evaluated across 2g, 5g, and 10g options. Unopened packs maintain freshness for up to 12 months.
                   </p>
                 </div>
               </div>
@@ -354,25 +354,25 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
           {activeDoc === 'about' && (
             <div className="space-y-6">
               <div className="border-b border-[#c5a880]/20 pb-4">
-                <h3 className="text-xl font-serif text-[#140d09]">Our Heritage & Terroirs</h3>
+                <h3 className="text-xl font-serif text-[#140d09]">Our Heritage & Vision</h3>
                 <p className="text-[11px] text-[#8c827a] mt-1">
-                  Direct-trade relationship with heirloom micro-lot producers in Buôn Ma Thuột & Đà Lạt.
+                  A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.
                 </p>
               </div>
 
               <div className="space-y-4">
                 <p>
-                  Cà Phê Vietnam was founded on a simple conviction: Vietnamese coffee culture is one of the most sublime and misunderstood brewing traditions in the world. Rather than mass-commodity beans, we travel directly to the misty red volcanic plateaus of the Central Highlands to partner with third-generation farming families.
+                  Cà Phê was founded on a simple conviction: Vietnamese coffee culture is one of the most distinctive and memorable brewing traditions in the world. We are preparing to introduce authentic Vietnamese instant coffee formats and flavour directions to Indian coffee drinkers.
                 </p>
                 <p>
-                  From hand-picked Culi (rare single-rounded peaberry cherries) to high-altitude Langbiang Arabica processed with natural honey fermentation, every batch is slow-roasted in micro-lots and packed into triple-laminate pouches with one-way degassing valves.
+                  From rich 3-in-1 condensed milk preparations to coconut and mocha varieties, each product is crafted to bring authentic Vietnamese profiles into simple, accessible everyday cups.
                 </p>
                 <div className="p-4 rounded-xl bg-[#c5a880]/10 border border-[#c5a880]/30 space-y-1">
                   <span className="text-[10px] uppercase tracking-wider text-[#c5a880] font-medium block">
-                    Our Direct-Trade Pledge
+                    Brand Philosophy
                   </span>
                   <p className="text-xs text-[#2b201a]">
-                    We pay our highland growers well above fair-trade floor benchmarks, ensuring sustainable agroforestry, shade-grown micro-climates, and uncompromising harvest quality.
+                    A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.
                   </p>
                 </div>
               </div>
@@ -382,7 +382,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
 
         {/* Footer Bar */}
         <div className="p-4 bg-white/90 border-t border-[#c5a880]/20 flex items-center justify-between text-xs text-[#8c827a] shrink-0">
-          <span>Cà Phê Vietnam • Direct-Trade Roastery</span>
+          <span>Cà Phê Vietnam • Launching Soon in India</span>
           <button
             type="button"
             onClick={onClose}

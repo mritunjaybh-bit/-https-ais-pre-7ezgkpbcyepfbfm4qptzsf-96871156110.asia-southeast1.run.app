@@ -404,7 +404,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               <Package className="w-12 h-12 text-[#827472]/50 stroke-[1.5]" />
               <h4 className="font-bold text-sm text-[#271310] font-serif">Your shopping cart is empty</h4>
               <p className="text-xs text-[#504442] max-w-xs">
-                Explore our single-origin ground coffee powders, instant 3-in-1 condensed milk boxes, and heirloom Phin drip kits.
+                Explore our planned Vietnamese instant coffee varieties and reserve early access.
               </p>
               <button
                 onClick={onClose}
@@ -825,7 +825,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
             <div className="flex items-center justify-center gap-2 text-[10px] text-[#827472]">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Direct-Trade Guarantee • Fresh Roasted & Hermetically Sealed</span>
+              <span>Authentic Vietnamese Heritage Guarantee</span>
             </div>
           </div>
         )}

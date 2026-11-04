@@ -59,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({
   const currencies: Currency[] = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'VND'];
   const supportEmail = siteSettings?.supportEmail || 'support@caphevietnam.in';
   const freeThreshold = siteSettings?.freeShippingThreshold || 799;
-  const announcementText = siteSettings?.announcementBarText || 'Single-origin. Slow-roasted. Brewed in the Vietnamese tradition.';
+  const announcementText = siteSettings?.announcementBarText || 'A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.';
 
   return (
     <header className="sticky top-0 z-40 w-full max-w-full bg-[#fcfbf7]/95 backdrop-blur-md border-b border-[#c5a880]/20 font-sans transition-colors duration-300">
@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
           <span>{announcementText}</span>
         </div>
         <div className="mx-auto lg:mx-0 flex items-center gap-2 text-center">
-          <span className="text-[#8c827a]">Complimentary Shipping Above ₹{freeThreshold}</span>
+          <span className="text-[#c5a880] tracking-widest font-normal">Vietnamese Heritage • Launching Soon in India</span>
           <span className="text-[#c5a880]">•</span>
           <a
             href={`mailto:${supportEmail}`}
@@ -79,9 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
           </a>
         </div>
         <div className="hidden lg:flex items-center gap-3 text-[10px] text-[#c5a880] tracking-[0.25em]">
-          <span>Buôn Ma Thuột</span>
-          <span>•</span>
-          <span>Đà Lạt</span>
+          <span>Cà Phê Việt Nam</span>
         </div>
       </div>
 

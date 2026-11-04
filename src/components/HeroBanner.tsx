@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActiveTab } from '../types';
-import { ArrowRight, Compass } from 'lucide-react';
+import { ArrowRight, Compass, Sparkles } from 'lucide-react';
 
 interface HeroBannerProps {
   onSelectTab: (tab: ActiveTab) => void;
@@ -26,18 +26,19 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
             {/* Super Header Tagline */}
             <div className="inline-flex items-center gap-2 text-[#c5a880] text-[10px] font-medium tracking-[0.3em] uppercase border-b border-[#c5a880]/40 pb-1">
-              <span>Maison de Cà Phê • Vietnamese Artisanal Roasters</span>
+              <Sparkles className="w-3 h-3" />
+              <span>Cà Phê • Vietnamese Coffee House</span>
             </div>
 
             {/* Display Headline */}
             <div className="space-y-4">
               <h1 className="text-4xl sm:text-6xl lg:text-7xl font-normal tracking-tight leading-[1.08] font-serif text-[#fcfbf7]">
-                Single-origin. <br />
-                <span className="italic font-serif text-[#c5a880]">Slow-roasted.</span> <br />
-                Vietnamese tradition.
+                Vietnamese origin. <br />
+                <span className="italic font-serif text-[#c5a880]">Authentic craft.</span> <br />
+                Launching soon.
               </h1>
               <p className="text-sm sm:text-base text-[#a3978f] max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
-                Direct trade harvests from the ancient basalt soils of Buôn Ma Thuột and the misty cloud plateaus of Đà Lạt. Precision ground for gravity Phin extraction, accompanied by tailored masterclass brew recipes for every roast.
+                A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.
               </p>
             </div>
 
@@ -46,114 +47,114 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               <button
                 id="hero-shop-coffee-btn"
                 onClick={() => onSelectTab('shop')}
-                className="px-8 py-4 rounded-full bg-[#c5a880] hover:bg-[#b89a70] text-[#140d09] font-medium text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-sm"
+                className="px-8 py-4 rounded-none bg-[#c5a880] hover:bg-[#d8be98] text-[#140d09] font-medium text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-sm"
               >
-                <span>Explore the Collection</span>
+                <span>View Planned Range</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
 
               <button
                 id="hero-instant-matcher-btn"
                 onClick={onOpenMatcher}
-                className="px-7 py-4 rounded-full bg-transparent hover:bg-white/5 text-[#fcfbf7] border border-[#c5a880]/40 hover:border-[#c5a880] font-light text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 cursor-pointer"
+                className="px-7 py-4 rounded-none bg-transparent hover:bg-white/5 text-[#fcfbf7] border border-[#c5a880]/40 hover:border-[#c5a880] font-light text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 cursor-pointer"
               >
-                <span>Find Your Profile</span>
+                <span>Taste Matcher</span>
               </button>
             </div>
 
-            {/* Terroirs Row */}
+            {/* Credo Row */}
             <div className="pt-8 border-t border-[#c5a880]/20 grid grid-cols-3 gap-6 text-left">
               <div>
-                <span className="text-[9px] text-[#c5a880] uppercase tracking-[0.25em] block mb-1">01 / Terroir</span>
-                <p className="text-xs font-serif text-[#fcfbf7]">Buôn Ma Thuột & Đà Lạt</p>
+                <span className="text-[9px] text-[#c5a880] uppercase tracking-[0.25em] block mb-1">01 / Origin</span>
+                <p className="text-xs font-serif text-[#fcfbf7]">Vietnam</p>
               </div>
               <div>
-                <span className="text-[9px] text-[#c5a880] uppercase tracking-[0.25em] block mb-1">02 / Method</span>
-                <p className="text-xs font-serif text-[#fcfbf7]">Slow French Butter Roast</p>
+                <span className="text-[9px] text-[#c5a880] uppercase tracking-[0.25em] block mb-1">02 / Market</span>
+                <p className="text-xs font-serif text-[#fcfbf7]">India Release</p>
               </div>
               <div>
-                <span className="text-[9px] text-[#c5a880] uppercase tracking-[0.25em] block mb-1">03 / Standard</span>
-                <p className="text-xs font-serif text-[#fcfbf7]">Tailored Brew Recipes</p>
+                <span className="text-[9px] text-[#c5a880] uppercase tracking-[0.25em] block mb-1">03 / Status</span>
+                <p className="text-xs font-serif text-[#fcfbf7]">Launching Soon</p>
               </div>
             </div>
           </div>
 
           {/* Right Column: Editorial Visual Showcase (5 cols) */}
           <div className="lg:col-span-5">
-            <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl border border-[#c5a880]/30 p-6 sm:p-8 space-y-6">
+            <div className="relative bg-white/5 backdrop-blur-sm rounded-none border border-[#c5a880]/30 p-6 sm:p-8 space-y-6">
               <div className="flex items-center justify-between border-b border-[#c5a880]/20 pb-4">
                 <span className="text-[9px] uppercase tracking-[0.25em] text-[#c5a880] font-medium">
-                  House Signature Roasts
+                  Planned Product Range
                 </span>
-                <span className="text-[9px] uppercase tracking-wider text-[#a3978f] font-light">
-                  Direct Harvest
+                <span className="text-[9px] uppercase tracking-wider text-[#c5a880] border border-[#c5a880]/40 px-2 py-0.5">
+                  Coming Soon
                 </span>
               </div>
 
-              {/* Curated Previews */}
+              {/* Curated Previews of Planned Products with NO prices */}
               <div className="space-y-4">
                 <div
                   onClick={() => onSelectTab('shop')}
-                  className="group flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-[#c5a880]/40 hover:bg-white/5 transition-all duration-300 cursor-pointer"
-                >
-                  <img
-                    src="https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=200&q=80"
-                    alt="Saigon Heritage Phin Coffee Powder"
-                    className="w-14 h-14 rounded-lg object-cover bg-black/40 border border-[#c5a880]/20"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-normal text-[#fcfbf7] group-hover:text-[#c5a880] transition-colors truncate font-serif">
-                      Saigon Heritage Phin Powder
-                    </h4>
-                    <p className="text-[11px] text-[#a3978f] font-light">70% Fine Robusta • French Butter Roast</p>
-                    <span className="text-xs font-mono text-[#c5a880] mt-0.5 block">From ₹380</span>
-                  </div>
-                </div>
-
-                <div
-                  onClick={() => onSelectTab('shop')}
-                  className="group flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-[#c5a880]/40 hover:bg-white/5 transition-all duration-300 cursor-pointer"
+                  className="group flex items-center gap-4 p-3 border border-transparent hover:border-[#c5a880]/40 hover:bg-white/5 transition-all duration-300 cursor-pointer"
                 >
                   <img
                     src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=200&q=80"
-                    alt="Hanoi Egg Custard Powder"
-                    className="w-14 h-14 rounded-lg object-cover bg-black/40 border border-[#c5a880]/20"
+                    alt="Vietnamese 3-in-1 Instant Coffee"
+                    className="w-14 h-14 object-cover bg-black/40 border border-[#c5a880]/20"
                   />
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-normal text-[#fcfbf7] group-hover:text-[#c5a880] transition-colors truncate font-serif">
-                      Hà Nội Egg Custard Coffee
+                      Vietnamese 3-in-1 Instant Coffee
                     </h4>
-                    <p className="text-[11px] text-[#a3978f] font-light">Golden Egg Crème • Dark Volcanic Robusta</p>
-                    <span className="text-xs font-mono text-[#c5a880] mt-0.5 block">From ₹420</span>
+                    <p className="text-[11px] text-[#a3978f] font-light">A convenient instant coffee format.</p>
+                    <span className="text-[10px] text-[#c5a880] tracking-wider uppercase mt-1 block">Coming soon</span>
                   </div>
                 </div>
 
                 <div
                   onClick={() => onSelectTab('shop')}
-                  className="group flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-[#c5a880]/40 hover:bg-white/5 transition-all duration-300 cursor-pointer"
+                  className="group flex items-center gap-4 p-3 border border-transparent hover:border-[#c5a880]/40 hover:bg-white/5 transition-all duration-300 cursor-pointer"
                 >
                   <img
-                    src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=200&q=80"
-                    alt="Saigon 3-in-1 Instant Box"
-                    className="w-14 h-14 rounded-lg object-cover bg-black/40 border border-[#c5a880]/20"
+                    src="https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=200&q=80"
+                    alt="Pure Vietnamese Instant Black Coffee"
+                    className="w-14 h-14 object-cover bg-black/40 border border-[#c5a880]/20"
                   />
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-normal text-[#fcfbf7] group-hover:text-[#c5a880] transition-colors truncate font-serif">
-                      Saigon 3-in-1 Instant (20 Sachets)
+                      Pure Vietnamese Instant Black Coffee
                     </h4>
-                    <p className="text-[11px] text-[#a3978f] font-light">Real Condensed Milk & Microground Coffee</p>
-                    <span className="text-xs font-mono text-[#c5a880] mt-0.5 block">₹340</span>
+                    <p className="text-[11px] text-[#a3978f] font-light">A straightforward coffee-led option.</p>
+                    <span className="text-[10px] text-[#c5a880] tracking-wider uppercase mt-1 block">Coming soon</span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => onSelectTab('shop')}
+                  className="group flex items-center gap-4 p-3 border border-transparent hover:border-[#c5a880]/40 hover:bg-white/5 transition-all duration-300 cursor-pointer"
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=200&q=80"
+                    alt="Coconut Coffee"
+                    className="w-14 h-14 object-cover bg-black/40 border border-[#c5a880]/20"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-normal text-[#fcfbf7] group-hover:text-[#c5a880] transition-colors truncate font-serif">
+                      Coconut Coffee
+                    </h4>
+                    <p className="text-[11px] text-[#a3978f] font-light">A distinctive flavour direction.</p>
+                    <span className="text-[10px] text-[#c5a880] tracking-wider uppercase mt-1 block">Coming soon</span>
                   </div>
                 </div>
               </div>
 
-              {/* Ritual Guide Link */}
+              {/* Tradition Link */}
               <button
                 onClick={() => onSelectTab('brew-studio')}
-                className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-[#c5a880] font-light tracking-[0.15em] uppercase border border-[#c5a880]/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 bg-white/5 hover:bg-white/10 text-xs text-[#c5a880] font-light tracking-[0.15em] uppercase border border-[#c5a880]/30 transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Compass className="w-3.5 h-3.5" />
-                <span>Enter Phin Gravity Studio</span>
+                <span>Vietnamese Coffee Tradition</span>
               </button>
             </div>
           </div>

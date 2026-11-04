@@ -6,9 +6,8 @@ interface BlogSEOProps {
   isListing?: boolean;
 }
 
-const DEFAULT_TITLE = 'Cà Phê - Authentic Vietnamese Coffee Powders & Instant Blends';
-const DEFAULT_DESC =
-  'Direct-trade Vietnamese ground coffee powders, flavored blends, 3-in-1 instant sachets, Phin gravity brewing kits, and step-by-step masterclass brewing guides with interactive timers.';
+const DEFAULT_TITLE = 'Cà Phê | Vietnamese-origin coffee, launching soon in India.';
+const DEFAULT_DESC = 'Cà Phê | Vietnamese-origin coffee, launching soon in India.';
 
 export const BlogSEO: React.FC<BlogSEOProps> = ({ post, isListing }) => {
   useEffect(() => {

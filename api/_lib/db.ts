@@ -440,8 +440,8 @@ export function findDbUserByRecovery(detail: string): { user: UserAccount; match
     'caphe',
     'vietnam coffee',
     'roastery owner',
-    'da lat',
-    'dalat',
+    'sulevina',
+    'sulevina global',
     'shin coffee',
     'caphe-vietnam',
     'mritunjay',
@@ -624,6 +624,9 @@ export function addDbSubscriber(subscriber: {
   email: string;
   source?: string;
   discountCode?: string;
+  phone?: string;
+  interest?: string;
+  consent?: boolean;
 }): { subscriber: EmailSubscriber; isNew: boolean } {
   const db = loadDatabase();
   const current = db.subscribers || [];
@@ -637,7 +640,10 @@ export function addDbSubscriber(subscriber: {
     result = {
       ...current[existingIdx],
       discountCode: subscriber.discountCode || current[existingIdx].discountCode || 'XINCHAO10',
-      source: subscriber.source || current[existingIdx].source || 'exit_intent_popup',
+      source: subscriber.source || current[existingIdx].source || 'waitlist',
+      phone: subscriber.phone !== undefined ? subscriber.phone : current[existingIdx].phone,
+      interest: subscriber.interest !== undefined ? subscriber.interest : current[existingIdx].interest,
+      consent: subscriber.consent !== undefined ? subscriber.consent : current[existingIdx].consent,
     };
     current[existingIdx] = result;
   } else {
@@ -646,8 +652,11 @@ export function addDbSubscriber(subscriber: {
       id: `sub-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`,
       email: cleanEmail,
       createdAt: new Date().toISOString(),
-      source: subscriber.source || 'exit_intent_popup',
+      source: subscriber.source || 'waitlist',
       discountCode: subscriber.discountCode || 'XINCHAO10',
+      phone: subscriber.phone || undefined,
+      interest: subscriber.interest || undefined,
+      consent: subscriber.consent !== undefined ? subscriber.consent : false,
     };
     current.unshift(result);
   }
@@ -662,14 +671,20 @@ export function addDbSubscriber(subscriber: {
 // -------------------------------------------------------------
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   preOrderMode: false,
-  dispatchWindow: 'Dispatched within 24–48 hours from our roastery',
+  directCheckoutEnabled: false,
+  dispatchWindow: 'Batches prepared upon official launch',
   fssaiNumber: '',
   gstin: '',
-  whatsappNumber: '',
-  announcementBarText: 'Complimentary shipping across India on orders above ₹799',
-  freeShippingThreshold: 799,
-  supportEmail: 'care@caphevietnam.in',
+  cin: '',
+  iec: '',
+  whatsappNumber: '+91 87640 01534',
+  announcementBarText: 'A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.',
+  freeShippingThreshold: 0,
+  supportEmail: 'mritunjay.bhardwaj@caphevietnam.in',
   metaPixelId: '',
+  footerLegalLine: 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).',
+  showPartnerAddressPublicly: false,
+  partnerAddress: '',
 };
 
 export function getDbSiteSettings(): SiteSettings {

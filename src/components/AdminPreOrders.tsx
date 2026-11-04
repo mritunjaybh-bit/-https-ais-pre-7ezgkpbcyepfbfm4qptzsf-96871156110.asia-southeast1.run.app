@@ -79,7 +79,7 @@ export const AdminPreOrders: React.FC<AdminPreOrdersProps> = ({ token, showToast
             Pre-Orders & Waitlist Reservations
           </h2>
           <p className="text-xs text-[#a8928e] mt-1">
-            Customers who reserved coffee during Pre-Order mode or joined the waitlist for fresh roastery batches.
+            Customers who reserved coffee during Pre-Order mode or joined the waitlist for launch releases.
           </p>
         </div>
         <button

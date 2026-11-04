@@ -53,7 +53,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <Logo size="sm" showTagline={false} />
               </div>
               <p className="text-xs text-[#a3978f] font-light leading-relaxed pr-4">
-                Direct-trade artisanal Vietnamese ground coffee powders, instant 3-in-1 condensed milk sachets, pure freeze-dried crystals, and stainless steel Phin gravity brewing kits. Sourced directly from heirloom micro-lot farmers in Buôn Ma Thuột & Đà Lạt.
+                A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.
               </p>
 
               {/* Orders Update & Roastery Desk */}
@@ -83,6 +83,7 @@ export const Footer: React.FC<FooterProps> = ({
               <ul className="space-y-2.5 text-[#a3978f]">
                 {[
                   { label: 'The Collection', tab: 'shop', href: '/' },
+                  { label: 'Partner with us', tab: 'partner', href: '/partner' },
                   { label: 'Flavoured Specialty', tab: 'flavoured', href: '/flavoured' },
                   { label: 'Instant 3-in-1', tab: 'instant', href: '/instant' },
                   { label: 'Phin Gravity Studio', tab: 'brew-studio', href: '/brew-studio' },
@@ -212,8 +213,8 @@ export const Footer: React.FC<FooterProps> = ({
             </div>
           </div>
 
-          {/* Statutory Registration Line (FSSAI & GSTIN displayed ONLY IF present in siteSettings) */}
-          {(fssai || gstin) && (
+          {/* Statutory Registration Line (FSSAI, GSTIN, CIN, IEC displayed ONLY IF present in siteSettings) */}
+          {(fssai || gstin || siteSettings?.cin || siteSettings?.iec) && (
             <div className="py-4 border-b border-[#c5a880]/15 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-[11px] text-[#a3978f] font-mono">
               {fssai && (
                 <div className="flex items-center gap-1.5">
@@ -228,16 +229,30 @@ export const Footer: React.FC<FooterProps> = ({
                   <span>{gstin}</span>
                 </div>
               )}
+              {siteSettings?.cin && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#c5a880]">CIN:</span>
+                  <span>{siteSettings.cin}</span>
+                </div>
+              )}
+              {siteSettings?.iec && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#c5a880]">IEC:</span>
+                  <span>{siteSettings.iec}</span>
+                </div>
+              )}
             </div>
           )}
 
           {/* Bottom Bar */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#8c827a] font-light">
-            <p>© {new Date().getFullYear()} Cà Phê Việt Nam. Direct-Trade Vietnamese Coffee.</p>
+            <p className="text-center sm:text-left">
+              {siteSettings?.footerLegalLine || 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).'}
+            </p>
             <div className="flex items-center gap-4 text-[11px]">
-              <span>Volcanic Basalt Terroirs</span>
+              <span>Vietnamese Heritage</span>
               <span>•</span>
-              <span>Valve Degassing Seal</span>
+              <span>Launching Soon</span>
               <span>•</span>
               <a
                 href="/admin"

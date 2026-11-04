@@ -3,7 +3,7 @@ import type { BrewRecipe } from '../types.ts';
 export const BREW_RECIPES: Record<string, BrewRecipe> = {
   // 1. Saigon Artisan Chocolate & Dark Cacao Phin Powder
   'saigon-artisan-dark-chocolate-cacao-powder': {
-    name: 'Bến Tre Dark Chocolate Phin Mocha',
+    name: 'Rich Dark Chocolate Phin Mocha',
     bestFor: 'Velvety Hot Mocha or Iced Dark Chocolate Phin',
     servingTemp: 'Hot or Iced',
     prepTime: '5 Minutes',
@@ -86,7 +86,7 @@ export const BREW_RECIPES: Record<string, BrewRecipe> = {
       },
     ],
     baristaTip:
-      'Because these sachets contain authentic Bến Tre dark cacao, whisking with a handheld milk frother creates a luxurious chocolate head identical to a hand-pulled café mocha.',
+      'Because these sachets contain authentic Vietnamese dark cacao, whisking with a handheld milk frother creates a luxurious chocolate head identical to a hand-pulled café mocha.',
   },
 
   // 3. Hà Nội Heritage Egg Custard Coffee Powder
@@ -521,7 +521,7 @@ export const BREW_RECIPES: Record<string, BrewRecipe> = {
       'Do not press down forcefully on the inner gravity filter. Gentle placement allows the water to percolate through the butter-roasted grounds at the golden extraction rate.',
   },
 
-  // 14. Buôn Ma Thuột Culi Peaberry Powder
+  // 14. Culi Peaberry Powder
   'buon-ma-thuot-peaberry-powder': {
     name: 'Intense Highland Culi Peaberry Espresso Drip',
     bestFor: 'Maximum Morning Energy & Dark Cocoa Intensity',
@@ -558,15 +558,15 @@ export const BREW_RECIPES: Record<string, BrewRecipe> = {
       'Only 5% of any coffee harvest yields peaberry beans (culi), where a single spherical seed absorbs all the plant nutrition rather than splitting into two flat beans.',
   },
 
-  // 15. Đà Lạt Lang Biang Arabica Powder
+  // 15. Highland Arabica Powder
   'dalat-highland-typica-powder': {
-    name: 'Lang Biang Cloud Mist Pour-Over / Phin',
+    name: 'Highland Cloud Mist Pour-Over / Phin',
     bestFor: 'Elegant Morning Pour-Over with Citrus & Honey Notes',
     servingTemp: 'Hot Neat or Light Iced Americano',
     prepTime: '4 Minutes',
     equipment: ['Phin Dripper or Hario V60 / Kalita Wave', 'Porcelain Server'],
     ingredients: [
-      { item: 'Đà Lạt Arabica Powder', quantity: '18g' },
+      { item: 'Highland Arabica Powder', quantity: '18g' },
       { item: 'Hot Water (92°C)', quantity: '150ml (ratio 1:8 for Phin, 1:15 for V60)' },
       { item: 'Serving style', quantity: 'Black with optional dash of fresh milk' },
     ],
@@ -671,7 +671,7 @@ export const BREW_RECIPES: Record<string, BrewRecipe> = {
       'Our cryo-freeze-drying process preserves the authentic dark chocolate and cedar notes of the beans without heat degradation.',
   },
 
-  // 18. Buôn Ma Thuột Single-Origin Whole Beans (250g)
+  // 18. Highland Whole Beans (250g)
   'buon-ma-thuot-whole-bean-robusta': {
     name: 'Artisan Fresh-Cracked Phin Drip',
     bestFor: 'Purists Who Grind Fresh for Ultimate Aromatics',
@@ -708,7 +708,7 @@ export const BREW_RECIPES: Record<string, BrewRecipe> = {
       'Grinding fresh right before brewing yields up to 300% more volatile aromatic oils than pre-ground coffee.',
   },
 
-  // 19. Đà Lạt Typica Whole Roasted Beans (250g)
+  // 19. Typica Whole Roasted Beans (250g)
   'dalat-arabica-whole-beans': {
     name: 'Slow French Press Citrus Floral Bloom',
     bestFor: 'Relaxed Weekend Brunch & Pour-Over Rituals',
@@ -716,7 +716,7 @@ export const BREW_RECIPES: Record<string, BrewRecipe> = {
     prepTime: '5 Minutes',
     equipment: ['French Press or Chemex', 'Burr Grinder', 'Kitchen Scale'],
     ingredients: [
-      { item: 'Đà Lạt Whole Beans', quantity: '25g ground coarse' },
+      { item: 'Typica Whole Beans', quantity: '25g ground coarse' },
       { item: 'Hot Water (93°C)', quantity: '350ml (ratio 1:14)' },
     ],
     waterTemp: '93°C (200°F)',

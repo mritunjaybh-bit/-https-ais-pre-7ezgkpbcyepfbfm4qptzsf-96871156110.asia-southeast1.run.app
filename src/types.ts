@@ -109,7 +109,8 @@ export type ActiveTab =
   | 'track-order'
   | 'circle'
   | 'circle-terms'
-  | 'admin';
+  | 'admin'
+  | 'partner';
 
 export type BlogContentBlock =
   | { type: 'paragraph'; text: string }
@@ -180,6 +181,9 @@ export interface EmailSubscriber {
   createdAt: string;
   source: string;
   discountCode?: string;
+  phone?: string;
+  interest?: string;
+  consent?: boolean;
 }
 
 export interface SiteSettings {
@@ -187,11 +191,17 @@ export interface SiteSettings {
   dispatchWindow: string;
   fssaiNumber: string;
   gstin: string;
+  cin?: string;
+  iec?: string;
   whatsappNumber: string;
   announcementBarText: string;
   freeShippingThreshold: number;
   supportEmail: string;
   metaPixelId: string;
+  directCheckoutEnabled?: boolean;
+  footerLegalLine?: string;
+  showPartnerAddressPublicly?: boolean;
+  partnerAddress?: string;
 }
 
 export interface PreOrderRecord {

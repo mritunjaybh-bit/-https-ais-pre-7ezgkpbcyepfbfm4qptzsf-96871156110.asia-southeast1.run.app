@@ -207,7 +207,7 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
             </h3>
 
             <p className="text-xs sm:text-sm text-[#504442] max-w-sm mx-auto leading-relaxed">
-              Experience direct-trade Vietnamese coffees co-roasted with real butter, cacao, and sea salt. Enter your email to unlock your roastery discount code.
+              A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon. Register your email for early access.
             </p>
           </div>
 

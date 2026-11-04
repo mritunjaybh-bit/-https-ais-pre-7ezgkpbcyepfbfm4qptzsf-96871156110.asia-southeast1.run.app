@@ -6,6 +6,11 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://www.caphevietnam.in/partner</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://www.caphevietnam.in/flavoured</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
@@ -51,27 +56,10 @@
     <priority>0.7</priority>
   </url>
 
-  <!-- Products -->
-  <url><loc>https://www.caphevietnam.in/product/phin-culi-peaberry</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/da-lat-arabica-typica</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/buon-ma-thuot-robusta</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/signature-saigon-blend</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/french-butter-roast</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/egg-custard-ca-phe-trung</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/dark-chocolate-socola</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/toasted-coconut-cot-dua</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/sea-salt-caramel-ca-phe-muoi</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/mekong-durian-sau-rieng</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/spiced-cinnamon-que-hoi</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/pandan-leaf-la-dua</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/pink-lotus-hoa-sen</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/highland-avocado-bo-dalat</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/traditional-caramel-butter</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/instant-3in1-condensed-milk-box</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/pure-freeze-dried-black-jar</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/instant-hazelnut-creme-box</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/whole-bean-culi-peaberry-bag</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/whole-bean-langbiang-arabica-bag</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/authentic-stainless-phin-filter</loc><priority>0.85</priority></url>
-  <url><loc>https://www.caphevietnam.in/product/master-barista-phin-ceremony-kit</loc><priority>0.85</priority></url>
+  <!-- Active Products (Launching Soon) -->
+  <url><loc>https://www.caphevietnam.in/product/vietnamese-3in1-instant-coffee</loc><priority>0.85</priority></url>
+  <url><loc>https://www.caphevietnam.in/product/pure-vietnamese-instant-black-coffee</loc><priority>0.85</priority></url>
+  <url><loc>https://www.caphevietnam.in/product/coconut-coffee</loc><priority>0.85</priority></url>
+  <url><loc>https://www.caphevietnam.in/product/chocolate-coffee</loc><priority>0.85</priority></url>
+  <url><loc>https://www.caphevietnam.in/product/iced-mocha</loc><priority>0.85</priority></url>
 </urlset>

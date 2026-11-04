@@ -174,7 +174,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: 'paragraph',
-        text: 'While the western third-wave specialty movement has historically centered around Arabica beans, Vietnam is the world’s undisputed superpower of Coffea canephora (Robusta). More than 95% of Vietnam’s coffee harvest from the red volcanic soil of the Central Highlands consists of Robusta.',
+        text: 'While the western third-wave specialty movement has historically centered around Arabica beans, Vietnam is the world’s undisputed superpower of Coffea canephora (Robusta). More than 95% of Vietnam’s coffee harvest from the red volcanic soil of the inland highlands consists of Robusta.',
       },
       {
         type: 'list',
@@ -192,7 +192,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: 'paragraph',
-        text: 'Traditional western coffee roasters emphasize light or medium roast curves to preserve floral acidity. In Vietnam, centuries-old roasters in Buôn Ma Thuột perfected a technique known as "Rang Bơ" (butter roasting).',
+        text: 'Traditional western coffee roasters emphasize light or medium roast curves to preserve floral acidity. In Vietnam, traditional coffee roasters perfected a technique known as "Rang Bơ" (butter roasting).',
       },
       {
         type: 'paragraph',
@@ -232,7 +232,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         type: 'quote',
         text: 'Arabica whispers, but Robusta commands attention. When paired with condensed milk, it is pure culinary alchemy.',
-        author: 'Central Highlands Roasters Guild',
+        author: 'Vietnamese Roasters Guild',
       },
     ],
   },
@@ -271,7 +271,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: 'paragraph',
-        text: 'However, Arabica struggled in the humid lowlands, succumbing to coffee leaf rust. It was not until colonial botanists explored the Central Highlands — specifically the plateau of Buôn Ma Thuột in Đắk Lắk province — that they struck gold. The high elevation (500–800m), rich red basaltic volcanic soils, and distinct dry/monsoon seasons made the region one of the finest natural ecosystems on earth for resilient Robusta (Coffea canephora).',
+        text: 'However, Arabica struggled in the humid lowlands, succumbing to coffee leaf rust. It was not until colonial botanists explored the high inland plateaus that they struck gold. The high elevation (500–800m), rich red basaltic volcanic soils, and distinct dry/monsoon seasons made the region one of the finest natural ecosystems on earth for resilient Robusta (Coffea canephora).',
       },
       {
         type: 'heading',
@@ -298,7 +298,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: 'paragraph',
-        text: 'Following decades of conflict, Vietnam was struggling economically. In 1986, the government instituted sweeping economic reforms known as "Đổi Mới" (Restoration/Renovation), focusing agricultural development on the Central Highlands. Smallholder family farmers were granted rights to cultivate land, and coffee production exploded exponentially.',
+        text: 'Following decades of conflict, Vietnam was struggling economically. In 1986, the government instituted sweeping economic reforms known as "Đổi Mới" (Restoration/Renovation), focusing agricultural development on the high-plateau agricultural regions. Smallholder family farmers were granted rights to cultivate land, and coffee production exploded exponentially.',
       },
       {
         type: 'paragraph',

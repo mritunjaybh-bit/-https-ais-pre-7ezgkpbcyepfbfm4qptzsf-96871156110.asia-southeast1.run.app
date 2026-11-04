@@ -499,10 +499,10 @@ export const PhinBrewStudio: React.FC<PhinBrewStudioProps> = ({
             </p>
           </div>
 
-          {/* Bean Selection */}
+          {/* Ground Coffee Selection */}
           <div className="space-y-2">
             <label className="text-xs font-medium text-[#140d09] block tracking-wide">
-              1. Single-Origin Ground Powder:
+              1. Traditional Ground Coffee Roast:
             </label>
             <div className="grid grid-cols-1 gap-2">
               <button
@@ -515,7 +515,7 @@ export const PhinBrewStudio: React.FC<PhinBrewStudioProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between text-xs font-serif text-[#140d09]">
-                  <span>Buôn Ma Thuột Robusta</span>
+                  <span>Classic Bold Robusta</span>
                   <span className="text-[10px] font-sans text-[#c5a880] tracking-wider uppercase">Heavy Crema</span>
                 </div>
                 <p className="text-[11px] text-[#6e635d] font-light mt-0.5">
@@ -533,7 +533,7 @@ export const PhinBrewStudio: React.FC<PhinBrewStudioProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between text-xs font-serif text-[#140d09]">
-                  <span>Saigon Heritage Blend (80/20)</span>
+                  <span>Heritage Cafe Blend (80/20)</span>
                   <span className="text-[10px] font-sans text-[#c5a880] tracking-wider uppercase">Traditional</span>
                 </div>
                 <p className="text-[11px] text-[#6e635d] font-light mt-0.5">
@@ -551,7 +551,7 @@ export const PhinBrewStudio: React.FC<PhinBrewStudioProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between text-xs font-serif text-[#140d09]">
-                  <span>Đà Lạt High-Altitude Arabica</span>
+                  <span>High-Altitude Arabica Profile</span>
                   <span className="text-[10px] font-sans text-[#c5a880] tracking-wider uppercase">Floral</span>
                 </div>
                 <p className="text-[11px] text-[#6e635d] font-light mt-0.5">

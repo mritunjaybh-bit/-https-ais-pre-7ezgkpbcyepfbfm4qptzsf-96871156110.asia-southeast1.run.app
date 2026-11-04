@@ -90,20 +90,20 @@ export const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
   }[] = [
     {
       state: 'Order Placed & Roasting',
-      label: 'Batch Roasting',
-      description: 'Single-origin beans freshly drum-roasted in small batches.',
+      label: 'Order Confirmed',
+      description: 'Your coffee selection has been confirmed and queued for preparation.',
       icon: Flame,
     },
     {
       state: 'Packaged & Sealed',
-      label: 'Ground & Nitrogen Sealed',
-      description: 'Precision ground to spec and sealed in one-way degassing valve pouches.',
+      label: 'Carefully Packaged',
+      description: 'Quality checked and securely packaged in barrier protection pouches.',
       icon: Package,
     },
     {
       state: 'In Transit',
       label: 'Dispatched in Express Transit',
-      description: 'Handed over to air courier; heading to your regional delivery hub.',
+      description: 'Handed over to courier partner; heading to your regional delivery hub.',
       icon: Truck,
     },
     {
@@ -430,7 +430,7 @@ export const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
         <div className="bg-[#f4ecea] p-4 border-t border-[#d3c3c0] flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-[11px] text-[#504442]">
             <ShieldCheck className="w-4 h-4 text-emerald-700" />
-            <span>Direct-Trade Freshness & Sealed Foil Guarantee</span>
+            <span>Authentic Vietnamese Quality Guarantee</span>
           </div>
           <button
             onClick={onClose}

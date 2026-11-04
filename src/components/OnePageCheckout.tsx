@@ -465,6 +465,189 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
     }
   };
 
+  const isDirectCheckoutEnabled = Boolean(siteSettings?.directCheckoutEnabled);
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistPhone, setWaitlistPhone] = useState('');
+  const [waitlistInterest, setWaitlistInterest] = useState(
+    items.length > 0 ? items.map((i) => i.name).join(', ') : 'Vietnamese 3-in-1 Instant Coffee'
+  );
+  const [waitlistConsent, setWaitlistConsent] = useState(false);
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
+  const [waitlistError, setWaitlistError] = useState<string | null>(null);
+
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWaitlistError(null);
+    const clean = waitlistEmail.trim().toLowerCase();
+    if (!clean || !clean.includes('@')) {
+      setWaitlistError('Please provide a valid email address.');
+      return;
+    }
+    if (!waitlistConsent) {
+      setWaitlistError('Please tick the consent checkbox to receive launch notices.');
+      return;
+    }
+    setWaitlistSubmitting(true);
+    try {
+      const res = await fetch('/api/subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: clean,
+          phone: waitlistPhone.trim() || undefined,
+          interest: waitlistInterest.trim() || 'General Launch Collection',
+          consent: true,
+          source: 'checkout_waitlist_mode',
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setWaitlistSuccess(true);
+      } else {
+        setWaitlistError(data.error || 'Failed to submit. Please try again.');
+      }
+    } catch {
+      setWaitlistError('Network error. Please try again.');
+    } finally {
+      setWaitlistSubmitting(false);
+    }
+  };
+
+  // If direct checkout is not enabled by roastery owner, display Waitlist Mode
+  if (!isDirectCheckoutEnabled) {
+    return (
+      <div className="w-full max-w-2xl mx-auto px-4 py-16 sm:py-24 font-sans">
+        <div className="bg-[#140d09] text-[#fcfbf7] border border-[#c5a880]/40 p-8 sm:p-12 shadow-2xl relative space-y-8">
+          <div className="space-y-3 text-center border-b border-[#c5a880]/20 pb-6">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#c5a880] font-medium block">
+              Launching Soon in India
+            </span>
+            <h1 className="font-serif text-3xl sm:text-4xl font-normal text-[#fcfbf7]">
+              Checkout is in Waitlist Mode
+            </h1>
+            <p className="text-xs sm:text-sm text-[#dcd4cb] font-light max-w-lg mx-auto leading-relaxed">
+              Online payments and Cash on Delivery will activate upon our official brand launch in India. Our planned range is currently in final evaluation.
+            </p>
+          </div>
+
+          {waitlistSuccess ? (
+            <div className="text-center py-8 space-y-5">
+              <div className="w-14 h-14 rounded-full bg-[#c5a880]/15 border border-[#c5a880]/50 text-[#c5a880] flex items-center justify-center mx-auto">
+                <CheckCircle className="w-7 h-7" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-serif text-2xl text-[#fcfbf7]">
+                  You are registered on the waitlist
+                </h3>
+                <p className="text-xs text-[#a3978f] font-light leading-relaxed max-w-md mx-auto">
+                  We have recorded your details. You will receive private early-access notification at <span className="text-[#fcfbf7] underline">{waitlistEmail}</span> the moment orders open in India.
+                </p>
+              </div>
+              <div className="pt-4">
+                <button
+                  type="button"
+                  onClick={onBackToShop}
+                  className="px-8 py-3 bg-[#c5a880] hover:bg-[#d8be98] text-[#140d09] text-xs uppercase tracking-[0.2em] font-medium transition-colors cursor-pointer"
+                >
+                  Return to Planned Range
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleWaitlistSubmit} className="space-y-5">
+              {waitlistError && (
+                <div className="p-3 bg-red-950/60 border border-red-800/60 text-red-200 text-xs">
+                  {waitlistError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.18em] text-[#c5a880] mb-1.5">
+                    Product / Selection of Interest
+                  </label>
+                  <input
+                    type="text"
+                    value={waitlistInterest}
+                    onChange={(e) => setWaitlistInterest(e.target.value)}
+                    className="w-full bg-[#1e1511] border border-[#c5a880]/30 text-[#fcfbf7] text-xs px-3.5 py-2.5 focus:border-[#c5a880] focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.18em] text-[#c5a880] mb-1.5">
+                    Email Address <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="name@example.com"
+                    value={waitlistEmail}
+                    onChange={(e) => setWaitlistEmail(e.target.value)}
+                    className="w-full bg-[#1e1511] border border-[#c5a880]/30 text-[#fcfbf7] text-xs px-3.5 py-2.5 placeholder-[#6f645e] focus:border-[#c5a880] focus:outline-hidden"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-[0.18em] text-[#a3978f] mb-1.5">
+                    Phone Number <span className="text-[10px] text-[#6f645e] lowercase font-light">(optional)</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    value={waitlistPhone}
+                    onChange={(e) => setWaitlistPhone(e.target.value)}
+                    className="w-full bg-[#1e1511] border border-[#c5a880]/30 text-[#fcfbf7] text-xs px-3.5 py-2.5 placeholder-[#6f645e] focus:border-[#c5a880] focus:outline-hidden"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <label className="flex items-start gap-2.5 cursor-pointer text-xs text-[#a3978f] font-light leading-relaxed select-none">
+                    <input
+                      type="checkbox"
+                      checked={waitlistConsent}
+                      onChange={(e) => setWaitlistConsent(e.target.checked)}
+                      className="mt-0.5 rounded-none border-[#c5a880]/40 bg-[#1e1511] text-[#c5a880] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#c5a880]"
+                    />
+                    <span>
+                      I agree to receive launch updates and product availability notifications.
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={waitlistSubmitting}
+                  className="w-full sm:flex-1 py-3.5 bg-[#c5a880] hover:bg-[#d8be98] text-[#140d09] text-xs uppercase tracking-[0.2em] font-medium transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {waitlistSubmitting ? (
+                    <span>Registering...</span>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Join Launch Waitlist</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onBackToShop}
+                  className="w-full sm:w-auto px-5 py-3.5 border border-[#c5a880]/40 text-[#dcd4cb] hover:text-[#fcfbf7] text-xs uppercase tracking-[0.18em] transition-colors cursor-pointer"
+                >
+                  Back
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <div className="w-full max-w-[900px] mx-auto px-4 py-16 text-center space-y-5">
@@ -476,7 +659,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
             Your Coffee Cart is Empty
           </h2>
           <p className="text-xs text-[#504442] max-w-md mx-auto leading-relaxed">
-            Select your favorite Vietnamese coffee powders, 3-in-1 instant sachets, or artisanal Phin brewing filters to begin checkout.
+            Select your favorite Vietnamese coffee products to begin checkout.
           </p>
         </div>
         <button
@@ -485,7 +668,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#785a00] hover:bg-[#8e6b00] text-white font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Explore Coffee Catalog</span>
+          <span>Explore Planned Range</span>
         </button>
       </div>
     );
@@ -808,7 +991,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
                     onChange={(e) => setMarketingEmailConsent(e.target.checked)}
                     className="mt-0.5 rounded border-[#d3c3c0] text-[#785a00] focus:ring-0 cursor-pointer"
                   />
-                  <span>Receive private roastery notices, single-origin harvest releases, and tasting dispatches via Email.</span>
+                  <span>Receive brand announcements, new flavour releases, and tasting dispatches via Email.</span>
                 </label>
                 <label className="flex items-start gap-2 cursor-pointer text-xs text-[#504442]">
                   <input
@@ -1089,7 +1272,7 @@ export const OnePageCheckout: React.FC<OnePageCheckoutProps> = ({
               <div className="pt-2 border-t border-[#f4ecea] space-y-2 text-[11px] text-[#827472]">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-700 flex-shrink-0" />
-                  <span>Direct-Trade Certified • 100% Vietnamese Robusta & Arabica</span>
+                  <span>Authentic Vietnamese Origin Guarantee</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Lock className="w-4 h-4 text-[#785a00] flex-shrink-0" />
