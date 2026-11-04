@@ -539,8 +539,8 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
               <div className="flex items-center gap-2 text-[#504442]">
                 <Mail className="w-4 h-4 text-[#785a00] flex-shrink-0" />
                 <span>
-                  Questions about courier delivery or roast dates? Contact{' '}
-                  <strong className="text-[#271310] font-medium">support@caphevietnam.in</strong>
+                  Questions about courier delivery or order dispatch? Contact{' '}
+                  <strong className="text-[#271310] font-medium">mritunjay.bhardwaj@caphevietnam.in</strong>
                 </span>
               </div>
               <button

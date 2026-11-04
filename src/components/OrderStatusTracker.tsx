@@ -218,10 +218,10 @@ export const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
                 All order updates and tracking support are managed directly at:
               </p>
               <a
-                href="mailto:Mritunjay.Bhardwaj@caphevietnam.in"
+                href="mailto:mritunjay.bhardwaj@caphevietnam.in"
                 className="inline-block text-[#271310] font-mono font-semibold underline hover:text-[#785a00]"
               >
-                Mritunjay.Bhardwaj@caphevietnam.in
+                mritunjay.bhardwaj@caphevietnam.in
               </a>
             </div>
 
@@ -416,7 +416,7 @@ export const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
                   )}
                 </button>
                 <a
-                  href="mailto:support@caphevietnam.in"
+                  href="mailto:mritunjay.bhardwaj@caphevietnam.in"
                   className="text-[#785a00] underline font-semibold text-[11px] hover:text-[#271310] flex-shrink-0"
                 >
                   Email Support

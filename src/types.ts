@@ -197,6 +197,7 @@ export interface SiteSettings {
   announcementBarText: string;
   freeShippingThreshold: number;
   supportEmail: string;
+  publicContactEmail?: string;
   metaPixelId: string;
   directCheckoutEnabled?: boolean;
   footerLegalLine?: string;

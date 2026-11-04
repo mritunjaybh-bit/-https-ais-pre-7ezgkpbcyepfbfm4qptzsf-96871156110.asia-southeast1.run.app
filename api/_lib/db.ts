@@ -681,6 +681,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   announcementBarText: 'A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.',
   freeShippingThreshold: 0,
   supportEmail: 'mritunjay.bhardwaj@caphevietnam.in',
+  publicContactEmail: 'mritunjay.bhardwaj@caphevietnam.in',
   metaPixelId: '',
   footerLegalLine: 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).',
   showPartnerAddressPublicly: false,

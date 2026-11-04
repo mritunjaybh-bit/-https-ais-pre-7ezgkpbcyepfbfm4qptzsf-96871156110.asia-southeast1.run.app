@@ -57,8 +57,8 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const currencies: Currency[] = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'VND'];
-  const supportEmail = siteSettings?.supportEmail || 'support@caphevietnam.in';
-  const freeThreshold = siteSettings?.freeShippingThreshold || 799;
+  const supportEmail = siteSettings?.publicContactEmail || siteSettings?.supportEmail || 'mritunjay.bhardwaj@caphevietnam.in';
+  const isWaitlistMode = !siteSettings?.directCheckoutEnabled;
   const announcementText = siteSettings?.announcementBarText || 'A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.';
 
   return (
@@ -182,23 +182,25 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* Restrained Luxury Cart Button */}
-          <button
-            id="header-cart-button"
-            onClick={onOpenCart}
-            aria-label="Open shopping bag"
-            className="flex items-center gap-2 bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] px-3.5 py-1.5 rounded-full transition-all cursor-pointer border border-[#c5a880]/40"
-          >
-            <ShoppingBag className="w-3.5 h-3.5 text-[#c5a880]" />
-            <span className="text-xs font-light tracking-wider hidden sm:inline">
-              {cartCount > 0 ? formatPrice(cartTotalINR, currency) : 'Bag'}
-            </span>
-            {cartCount > 0 && (
-              <span className="bg-[#c5a880] text-[#140d09] text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-full leading-none">
-                {cartCount}
+          {/* Restrained Luxury Cart Button (Hidden in Waitlist Mode) */}
+          {!isWaitlistMode && (
+            <button
+              id="header-cart-button"
+              onClick={onOpenCart}
+              aria-label="Open shopping bag"
+              className="flex items-center gap-2 bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] px-3.5 py-1.5 rounded-full transition-all cursor-pointer border border-[#c5a880]/40"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 text-[#c5a880]" />
+              <span className="text-xs font-light tracking-wider hidden sm:inline">
+                {cartCount > 0 ? formatPrice(cartTotalINR, currency) : 'Bag'}
               </span>
-            )}
-          </button>
+              {cartCount > 0 && (
+                <span className="bg-[#c5a880] text-[#140d09] text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-full leading-none">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -210,19 +212,14 @@ export const Header: React.FC<HeaderProps> = ({
         >
           {[
             { id: 'shop', label: 'The Collection', href: '/' },
-            { id: 'flavoured', label: 'Flavoured Specialty', href: '/flavoured' },
-            { id: 'instant', label: 'Instant 3-in-1', href: '/instant' },
-            { id: 'brew-studio', label: 'Phin Ritual Studio', href: '/brew-studio' },
             { id: 'flavor-matcher', label: 'Taste Matcher', href: '/taste-matcher' },
-            { id: 'heritage', label: 'Terroir & Story', href: '/heritage' },
+            { id: 'heritage', label: 'Our Story', href: '/heritage' },
             { id: 'blog', label: 'Journal', href: '/blog' },
-            { id: 'circle', label: 'Cà Phê Circle', href: '/circle' },
+            { id: 'track-order', label: 'Track Order', href: '/track' },
           ].map((item) => {
             const isActive =
               item.id === 'blog'
                 ? activeTab === 'blog' || activeTab === 'blog-post'
-                : item.id === 'circle'
-                ? activeTab === 'circle' || activeTab === 'circle-terms'
                 : activeTab === item.id;
 
             return (

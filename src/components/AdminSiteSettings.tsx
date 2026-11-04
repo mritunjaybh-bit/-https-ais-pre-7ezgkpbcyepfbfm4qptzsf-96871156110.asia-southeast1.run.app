@@ -15,14 +15,19 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
 }) => {
   const [settings, setSettings] = useState<SiteSettings>({
     preOrderMode: false,
-    dispatchWindow: 'Dispatched within 24–48 hours from our roastery',
+    directCheckoutEnabled: false,
+    dispatchWindow: 'Batches prepared upon official launch',
     fssaiNumber: '',
     gstin: '',
-    whatsappNumber: '',
-    announcementBarText: 'Complimentary shipping across India on orders above ₹799',
-    freeShippingThreshold: 799,
-    supportEmail: 'care@caphevietnam.in',
+    whatsappNumber: '+91 87640 01534',
+    announcementBarText: 'A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.',
+    freeShippingThreshold: 0,
+    supportEmail: 'mritunjay.bhardwaj@caphevietnam.in',
+    publicContactEmail: 'mritunjay.bhardwaj@caphevietnam.in',
     metaPixelId: '',
+    footerLegalLine: 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).',
+    showPartnerAddressPublicly: false,
+    partnerAddress: '',
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -375,19 +380,25 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
             <p className="text-[10px] text-[#827472]">Orders at or above this cart value qualify for complimentary delivery.</p>
           </div>
 
-          {/* Support Email */}
+          {/* Public Contact Email */}
           <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
-              Customer Support Email
+              Public contact email
             </label>
             <input
               type="email"
-              value={settings.supportEmail}
-              onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
-              placeholder="care@caphevietnam.in"
+              value={settings.publicContactEmail || settings.supportEmail || ''}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  publicContactEmail: e.target.value,
+                  supportEmail: e.target.value,
+                })
+              }
+              placeholder="mritunjay.bhardwaj@caphevietnam.in"
               className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
             />
-            <p className="text-[10px] text-[#827472]">Referenced across footer, invoice confirmations, and legal documents.</p>
+            <p className="text-[10px] text-[#827472]">Centralised public contact email used across footer, announcement bar, Circle policies, partner page, and legal documents.</p>
           </div>
 
           {/* Meta Pixel ID */}

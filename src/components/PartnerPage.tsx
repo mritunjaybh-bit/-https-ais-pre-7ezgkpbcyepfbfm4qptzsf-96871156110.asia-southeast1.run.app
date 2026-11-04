@@ -26,13 +26,22 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
   siteSettings,
   onSelectTab,
 }) => {
-  const [pdfAvailable, setPdfAvailable] = useState(true);
+  const [pdfAvailable, setPdfAvailable] = useState(false);
 
   useEffect(() => {
-    // Check if introduction PDF is available on the server
+    // Check if introduction PDF is available on the server and is not empty
     fetch('/downloads/CaPhe_Company_Introduction_India_Vietnam.pdf', { method: 'HEAD' })
       .then((res) => {
-        if (!res.ok) setPdfAvailable(false);
+        if (!res.ok) {
+          setPdfAvailable(false);
+          return;
+        }
+        const len = res.headers.get('content-length');
+        if (len !== null && parseInt(len, 10) <= 0) {
+          setPdfAvailable(false);
+        } else {
+          setPdfAvailable(true);
+        }
       })
       .catch(() => setPdfAvailable(false));
   }, []);
@@ -101,7 +110,7 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
             Who We Are
           </h2>
           <p className="text-sm sm:text-base text-[#4a3f37] font-light leading-relaxed">
-            Cà Phê is an emerging luxury coffee house dedicated to bringing authentic Vietnamese coffee culture to India&apos;s growing community of discerning coffee enthusiasts. We blend centuries of Southeast Asian roasting traditions with modern refinement, curating convenient and distinctive instant formats, flavoured recipes, and traditional preparations. Our mission is to build lasting institutional bridges with world-class Vietnamese growers, processors, and manufacturers who share our uncompromising commitment to quality.
+            SuleVina Global Ventures (OPC) Private Limited (incorporation in progress) is an India-focused venture developing premium consumer product opportunities through thoughtful international sourcing and brand building. Through Cà Phê, we are exploring the introduction of Vietnamese-origin coffee products to the Indian market.
           </p>
         </div>
       </section>
@@ -134,7 +143,7 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
                 Existing-Product Distribution
               </h3>
               <p className="text-xs text-[#6e635d] font-light leading-relaxed">
-                Partnering with established Vietnamese manufacturers and brands seeking compliant, luxury distribution into India&apos;s premier retail, hospitality, and direct-to-consumer luxury channels.
+                Sourcing and distributing suitable Vietnamese coffee products in India, subject to mutually agreed commercial and regulatory arrangements.
               </p>
             </div>
 
@@ -150,7 +159,7 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
                 OEM & Private Label
               </h3>
               <p className="text-xs text-[#6e635d] font-light leading-relaxed">
-                Collaborating with accredited processing facilities for custom formulations, co-packing, and bespoke packaging under the Cà Phê brand identity tailored specifically for Indian palate expectations.
+                Exploring products manufactured to agreed specifications under the Cà Phê brand, with formats and minimum order quantities aligned to market requirements.
               </p>
             </div>
 
@@ -166,7 +175,7 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
                 Long-Term Sourcing
               </h3>
               <p className="text-xs text-[#6e635d] font-light leading-relaxed">
-                Forming transparent, sustained grower contracts and estate partnerships in Vietnam with reliable forward commitments, ethical commercial pricing, and scheduled harvest allocation.
+                Building a dependable relationship based on product quality, consistency, transparent communication, reliable supply and commercially sustainable terms.
               </p>
             </div>
           </div>

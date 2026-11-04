@@ -30,7 +30,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
 
   const fssai = siteSettings?.fssaiNumber;
   const gstin = siteSettings?.gstin;
-  const supportEmail = siteSettings?.supportEmail || 'support@caphevietnam.in';
+  const supportEmail = siteSettings?.publicContactEmail || siteSettings?.supportEmail || 'mritunjay.bhardwaj@caphevietnam.in';
   const whatsapp = siteSettings?.whatsappNumber;
   const dispatchWindow = siteSettings?.dispatchWindow || '24 to 48 business hours';
   const freeThreshold = siteSettings?.freeShippingThreshold || 799;
@@ -42,7 +42,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
     { id: 'shipping', label: 'Shipping & Delivery', icon: Truck },
     { id: 'contact', label: 'Contact & Inquiries', icon: Mail },
     { id: 'faq', label: 'Knowledge & FAQ', icon: HelpCircle },
-    { id: 'about', label: 'Our Story & Terroirs', icon: BookOpen },
+    { id: 'about', label: 'Our Story', icon: BookOpen },
   ];
 
   return (
@@ -52,7 +52,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
         <div className="p-4 sm:p-6 bg-[#140d09] text-[#fcfbf7] border-b border-[#c5a880]/20 flex items-center justify-between shrink-0">
           <div>
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#c5a880] block font-medium">
-              Legal & Roastery Transparency
+              Legal & Brand Transparency
             </span>
             <h2 className="text-xl sm:text-2xl font-serif text-[#fcfbf7] tracking-tight">
               Cà Phê Vietnam Policies & Information
@@ -155,7 +155,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
 
                 <h4 className="text-sm font-serif text-[#140d09]">2. Product Availability & Pricing</h4>
                 <p>
-                  All prices listed on the website are in Indian Rupees (INR) and are <strong>inclusive of applicable Goods & Services Tax (GST)</strong>. In the event of a typographical error or harvest supply stock-out, we reserve the right to cancel an order and immediately refund the customer in full.
+                  All prices listed on the website are in Indian Rupees (INR) and are <strong>inclusive of applicable Goods & Services Tax (GST)</strong>. In the event of a typographical error or supply stock-out, we reserve the right to cancel an order and immediately refund the customer in full.
                 </p>
 
                 <h4 className="text-sm font-serif text-[#140d09]">3. Intellectual Property</h4>
@@ -177,7 +177,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
               <div className="border-b border-[#c5a880]/20 pb-4">
                 <h3 className="text-xl font-serif text-[#140d09]">Refund & Cancellation Policy</h3>
                 <p className="text-[11px] text-[#8c827a] mt-1">
-                  Strict food safety standards for consumable roastery goods.
+                  Strict food safety standards for consumable products.
                 </p>
               </div>
 
@@ -230,7 +230,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                       {dispatchWindow}
                     </p>
                     <p className="text-[10px] text-[#8c827a]">
-                      Freshly roasted micro-lots roasted in batches to ensure peak aroma.
+                      Prepared in fresh batches to ensure peak aroma.
                     </p>
                   </div>
                   <div className="p-4 rounded-xl border border-[#c5a880]/30 bg-white/50 space-y-1">
@@ -264,9 +264,9 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
           {activeDoc === 'contact' && (
             <div className="space-y-6">
               <div className="border-b border-[#c5a880]/20 pb-4">
-                <h3 className="text-xl font-serif text-[#140d09]">Roastery Concierge & Corporate Inquiries</h3>
+                <h3 className="text-xl font-serif text-[#140d09]">Customer Care & Business Inquiries</h3>
                 <p className="text-[11px] text-[#8c827a] mt-1">
-                  We are here to assist with brew recipes, corporate gifting, wholesale, and orders.
+                  We are here to assist with inquiries, corporate gifting, partnerships, and orders.
                 </p>
               </div>
 
@@ -285,7 +285,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                   {whatsapp && (
                     <div className="p-4 rounded-xl border border-[#c5a880]/20 bg-white space-y-2">
                       <span className="text-[10px] uppercase tracking-[0.2em] text-[#c5a880] block font-medium">
-                        WhatsApp Concierge
+                        WhatsApp Support
                       </span>
                       <a
                         href={`https://wa.me/${whatsapp.replace(/[^0-9]/g, '')}`}
@@ -295,17 +295,17 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                       >
                         {whatsapp}
                       </a>
-                      <p className="text-[10px] text-[#8c827a]">Direct messaging with our roastery team.</p>
+                      <p className="text-[10px] text-[#8c827a]">Direct messaging with our customer care team.</p>
                     </div>
                   )}
                 </div>
 
                 <div className="p-4 rounded-xl bg-[#140d09]/5 border border-[#c5a880]/20 space-y-2">
                   <span className="text-[10px] uppercase tracking-[0.2em] text-[#c5a880] block font-medium">
-                    Statutory Roastery Registry
+                    Statutory Registry
                   </span>
                   <div className="space-y-1 text-xs">
-                    <p><strong>Brand Entity:</strong> Cà Phê Vietnam Artisanal Roastery</p>
+                    <p><strong>Brand Entity:</strong> Cà Phê Vietnam</p>
                     <p><strong>Registered Office:</strong> [Edit before launch: Registered Business Address, Karnataka, India - 560001]</p>
                     {fssai && <p><strong>FSSAI Central Licence:</strong> <span className="font-mono">{fssai}</span></p>}
                     {gstin && <p><strong>GST Identification Number (GSTIN):</strong> <span className="font-mono">{gstin}</span></p>}
@@ -319,9 +319,9 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
           {activeDoc === 'faq' && (
             <div className="space-y-6">
               <div className="border-b border-[#c5a880]/20 pb-4">
-                <h3 className="text-xl font-serif text-[#140d09]">Artisanal Brewing Knowledge & FAQ</h3>
+                <h3 className="text-xl font-serif text-[#140d09]">Brewing Knowledge & FAQ</h3>
                 <p className="text-[11px] text-[#8c827a] mt-1">
-                  Common questions on Vietnamese coffee, Phin brewing, and bean chemistry.
+                  Common questions on Vietnamese coffee and brewing styles.
                 </p>
               </div>
 
@@ -329,7 +329,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                 <div className="space-y-1.5">
                   <h4 className="text-sm font-serif text-[#140d09]">What makes authentic Vietnamese coffee different?</h4>
                   <p>
-                    Vietnam's high-plateau volcanic soils yield prized Robusta and Arabica coffees with distinctive flavor intensity and bold caffeine punch. Traditionally slow-roasted with notes of dark cacao, caramelized sugar, and hazelnut, it drips drop-by-drop through a gravity Phin filter.
+                    Vietnam's coffee culture features distinctive flavour intensity and bold profile. Traditionally slow-prepared, it pairs exceptionally with sweetened condensed milk.
                   </p>
                 </div>
 

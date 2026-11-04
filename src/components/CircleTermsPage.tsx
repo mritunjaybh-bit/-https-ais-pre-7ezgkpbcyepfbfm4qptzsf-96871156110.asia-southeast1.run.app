@@ -141,10 +141,10 @@ export const CircleTermsPage: React.FC<CircleTermsPageProps> = ({
               <span>Member Inquiries & Support</span>
             </h2>
             <p>
-              For balance discrepancies, tier assistance, or account merges, our private roastery concierge is at your service:
+              For balance discrepancies, tier assistance, or account inquiries, our customer care team is at your service:
             </p>
             <div className="font-mono text-xs text-[#140d09] bg-white p-3 rounded-lg border border-[#c5a880]/30 inline-block">
-              circle@caphevietnam.in • support@caphevietnam.in
+              mritunjay.bhardwaj@caphevietnam.in
             </div>
           </section>
         </div>

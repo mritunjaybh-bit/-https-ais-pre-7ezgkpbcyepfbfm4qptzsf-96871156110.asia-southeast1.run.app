@@ -36,7 +36,7 @@ export const Footer: React.FC<FooterProps> = ({
     setEmail('');
   };
 
-  const supportEmail = siteSettings?.supportEmail || 'support@caphevietnam.in';
+  const supportEmail = siteSettings?.publicContactEmail || siteSettings?.supportEmail || 'mritunjay.bhardwaj@caphevietnam.in';
   const whatsapp = siteSettings?.whatsappNumber;
   const fssai = siteSettings?.fssaiNumber;
   const gstin = siteSettings?.gstin;
@@ -56,10 +56,10 @@ export const Footer: React.FC<FooterProps> = ({
                 A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.
               </p>
 
-              {/* Orders Update & Roastery Desk */}
+              {/* Customer Care Desk */}
               <div className="p-4 rounded-xl border border-[#c5a880]/20 bg-white/5 space-y-1">
                 <span className="text-[9px] uppercase tracking-[0.2em] text-[#c5a880] block font-medium">
-                  Client Concierge & Inquiries
+                  Customer Care & Inquiries
                 </span>
                 <a
                   href={`mailto:${supportEmail}`}
@@ -83,15 +83,12 @@ export const Footer: React.FC<FooterProps> = ({
               <ul className="space-y-2.5 text-[#a3978f]">
                 {[
                   { label: 'The Collection', tab: 'shop', href: '/' },
-                  { label: 'Partner with us', tab: 'partner', href: '/partner' },
-                  { label: 'Flavoured Specialty', tab: 'flavoured', href: '/flavoured' },
-                  { label: 'Instant 3-in-1', tab: 'instant', href: '/instant' },
-                  { label: 'Phin Gravity Studio', tab: 'brew-studio', href: '/brew-studio' },
                   { label: 'Taste Matcher', tab: 'flavor-matcher', href: '/taste-matcher' },
-                  { label: 'Heritage Terroirs', tab: 'heritage', href: '/heritage' },
+                  { label: 'Our Story', tab: 'heritage', href: '/heritage' },
                   { label: 'The Journal', tab: 'blog', href: '/blog' },
                   { label: 'Track Order', tab: 'track-order', href: '/track' },
-                  { label: 'Cà Phê Circle (Rewards)', tab: 'circle', href: '/circle' },
+                  { label: 'Partner with us', tab: 'partner', href: '/partner' },
+                  { label: 'Cà Phê Circle', tab: 'circle', href: '/circle' },
                 ].map((link) => (
                   <li key={link.tab}>
                     <a
@@ -114,16 +111,16 @@ export const Footer: React.FC<FooterProps> = ({
             {/* Private Dispatch List & Policies (4 cols) */}
             <div className="lg:col-span-4 space-y-4 text-xs font-light">
               <h4 className="text-xs font-medium text-[#c5a880] uppercase tracking-[0.25em]">
-                The Roastery Dispatch
+                Launch Updates
               </h4>
               <p className="text-[#a3978f] leading-relaxed">
-                Receive private notices for micro-lot harvest releases, seasonal roasts, and traditional brewing dispatches.
+                Be the first to know when we launch. No spam.
               </p>
 
               {subscribed ? (
                 <div className="p-4 rounded-xl border border-[#c5a880]/40 bg-white/5 flex items-center gap-2.5 text-xs text-[#c5a880]">
                   <Check className="w-4 h-4 text-[#c5a880]" />
-                  <span>You are subscribed to the private roastery dispatch.</span>
+                  <span>You are subscribed to launch updates.</span>
                 </div>
               ) : (
                 <form onSubmit={handleSubscribe} className="space-y-2.5">
@@ -253,44 +250,24 @@ export const Footer: React.FC<FooterProps> = ({
               <span>Vietnamese Heritage</span>
               <span>•</span>
               <span>Launching Soon</span>
-              <span>•</span>
-              <a
-                href="/admin"
-                onClick={(e) => {
-                  if (e.metaKey || e.ctrlKey || e.button === 1) return;
-                  e.preventDefault();
-                  onSelectTab('admin');
-                  try {
-                    window.history.pushState({}, '', '/admin');
-                  } catch {
-                    // Ignore
-                  }
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="hover:text-[#c5a880] transition-colors flex items-center gap-1 cursor-pointer"
-                title="Roastery Owner Portal"
-              >
-                <Lock className="w-3 h-3 text-[#c5a880]" />
-                <span>Owner Portal</span>
-              </a>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Floating WhatsApp Concierge Button (ONLY displayed if whatsappNumber is set in Site Settings) */}
+      {/* Floating WhatsApp Customer Care Button (ONLY displayed if whatsappNumber is set in Site Settings) */}
       {whatsapp && (
-        <aside aria-label="Customer Support Concierge">
+        <aside aria-label="Customer Support">
           <a
             href={`https://wa.me/${whatsapp.replace(/[^0-9]/g, '')}`}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Chat with Roastery Concierge on WhatsApp"
+            aria-label="Chat with Customer Care on WhatsApp"
             className="fixed bottom-6 right-6 z-40 bg-[#25D366] hover:bg-[#20ba59] text-white p-3.5 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-2 group cursor-pointer border-2 border-white/20"
           >
             <MessageCircle className="w-5 h-5" />
             <span className="text-xs font-medium tracking-wide max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap">
-              Roastery Concierge
+              Customer Care
             </span>
           </a>
         </aside>

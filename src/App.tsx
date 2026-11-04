@@ -329,6 +329,19 @@ export default function App() {
       if (e?.detail) setSiteSettings(e.detail);
     };
     window.addEventListener('caphe_site_settings_updated', handleSettingsUpdated as EventListener);
+
+    // Reset any cart saved in the browser from earlier testing
+    try {
+      localStorage.removeItem('caphe_cart');
+      localStorage.removeItem('caphe_cart_v1');
+      localStorage.removeItem('caphe_cart_items');
+      localStorage.removeItem('cart');
+      localStorage.removeItem('caphe_shopping_bag');
+      sessionStorage.removeItem('caphe_cart');
+    } catch {
+      // ignore
+    }
+
     return () => {
       window.removeEventListener('caphe_site_settings_updated', handleSettingsUpdated as EventListener);
     };
@@ -351,7 +364,7 @@ export default function App() {
           search.get('email') ||
           search.get('phone');
 
-        // Roastery Owner Admin Portal & Setup Routes
+        // Private Admin Portal & Setup Routes (accessible only via direct URL)
         if (
           path === '/admin' ||
           path.startsWith('/admin') ||
@@ -429,19 +442,19 @@ export default function App() {
           return;
         }
 
-        // Shop Catalog Categories & Views
-        if (path === '/instant' || path.startsWith('/instant')) {
-          setActiveTab('instant');
-          return;
-        }
-
-        if (path === '/flavoured' || path === '/flavored' || path.startsWith('/flavoured') || path.startsWith('/flavored')) {
-          setActiveTab('flavoured');
-          return;
-        }
-
-        if (path === '/brew-studio' || path === '/brew' || path.startsWith('/brew')) {
-          setActiveTab('brew-studio');
+        // Catalog navigation
+        if (
+          path === '/instant' ||
+          path.startsWith('/instant') ||
+          path === '/flavoured' ||
+          path === '/flavored' ||
+          path.startsWith('/flavoured') ||
+          path.startsWith('/flavored') ||
+          path === '/brew-studio' ||
+          path === '/brew' ||
+          path.startsWith('/brew')
+        ) {
+          setActiveTab('shop');
           return;
         }
 
@@ -631,44 +644,18 @@ export default function App() {
 
       {/* Main Dynamic View Content */}
       <main className="flex-1">
-        {/* Hero Banner displayed on Shop / Flavoured / Instant Tabs */}
-        {(activeTab === 'shop' || activeTab === 'flavoured' || activeTab === 'instant') && (
+        {/* Hero Banner displayed on Shop Tab */}
+        {activeTab === 'shop' && (
           <HeroBanner
             onSelectTab={handleSelectTab}
             onOpenMatcher={() => handleSelectTab('flavor-matcher')}
           />
         )}
 
-        {/* Tab 1: Shop All Coffee Powders & Instant */}
-        {activeTab === 'shop' && (
+        {/* Tab 1: Shop The Collection (Unified 5 Planned Products in Waitlist Mode) */}
+        {(activeTab === 'shop' || activeTab === 'flavoured' || activeTab === 'instant') && (
           <ProductCatalogSection
             currency={currency}
-            onOpenProductModal={handleSelectProduct}
-            onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
-            onOpenPreOrderModal={(prod) => setPreOrderProduct(prod)}
-            onAddToCart={handleAddToCart}
-            siteSettings={siteSettings}
-          />
-        )}
-
-        {/* Tab 2: Flavoured Vietnamese Coffees (Egg, Chocolate, Coconut, etc.) */}
-        {activeTab === 'flavoured' && (
-          <ProductCatalogSection
-            currency={currency}
-            initialCategory="flavoured-coffee"
-            onOpenProductModal={handleSelectProduct}
-            onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
-            onOpenPreOrderModal={(prod) => setPreOrderProduct(prod)}
-            onAddToCart={handleAddToCart}
-            siteSettings={siteSettings}
-          />
-        )}
-
-        {/* Tab 3: Instant Coffee Category Focused View */}
-        {activeTab === 'instant' && (
-          <ProductCatalogSection
-            currency={currency}
-            initialCategory="instant-coffee"
             onOpenProductModal={handleSelectProduct}
             onOpenRecipeModal={(prod) => setRecipeModalProduct(prod)}
             onOpenPreOrderModal={(prod) => setPreOrderProduct(prod)}
@@ -689,17 +676,8 @@ export default function App() {
             }}
             onBackToShop={() => handleSelectTab('shop')}
             onSelectRelatedProduct={handleSelectProduct}
-            onOpenBrewStudio={() => handleSelectTab('brew-studio')}
+            onOpenBrewStudio={() => handleSelectTab('heritage')}
             siteSettings={siteSettings}
-          />
-        )}
-
-        {/* Tab 4: Interactive Phin Brewing Studio */}
-        {activeTab === 'brew-studio' && (
-          <PhinBrewStudio
-            currency={currency}
-            onAddToCart={handleAddToCart}
-            onOpenProductModal={handleSelectProduct}
           />
         )}
 
