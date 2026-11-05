@@ -268,11 +268,11 @@ export const CoffeeMasterChat: React.FC<CoffeeMasterChatProps> = ({
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 left-6 z-40 bg-[#140d09] hover:bg-[#2b1f1a] text-[#c5a880] px-4 py-3 rounded-none shadow-2xl transition-all duration-300 flex items-center gap-2.5 border border-[#c5a880]/60 cursor-pointer group"
+          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] z-40 bg-[#140d09] hover:bg-[#221611] text-[#c5a880] w-12 h-12 md:w-auto md:h-12 md:px-5 rounded-full shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 border border-[#c5a880]/60 cursor-pointer group active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#c5a880]"
           aria-label="Open Coffee Sommelier Assistant"
         >
-          <Sparkles className="w-4 h-4 text-[#c5a880]" />
-          <span className="text-xs uppercase tracking-[0.2em] font-medium hidden sm:inline">
+          <Sparkles className="w-5 h-5 text-[#c5a880] shrink-0" />
+          <span className="text-xs uppercase tracking-[0.2em] font-medium hidden md:inline whitespace-nowrap">
             Taste Sommelier
           </span>
         </button>

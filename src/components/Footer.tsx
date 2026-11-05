@@ -3,6 +3,7 @@ import { Logo } from './Logo';
 import { ActiveTab, SiteSettings } from '../types';
 import { LegalDocType } from './LegalPagesModal';
 import { Check, Lock, MessageCircle } from 'lucide-react';
+import { useMusic } from '../context/MusicContext';
 
 interface FooterProps {
   onSelectTab: (tab: ActiveTab) => void;
@@ -17,6 +18,7 @@ export const Footer: React.FC<FooterProps> = ({
   siteSettings,
   onOpenLegalDoc,
 }) => {
+  const { currentTrack } = useMusic();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -43,7 +45,7 @@ export const Footer: React.FC<FooterProps> = ({
 
   return (
     <>
-      <footer className="w-full max-w-full overflow-hidden bg-[#140d09] text-[#fcfbf7] pt-16 pb-12 border-t border-[#c5a880]/20 font-sans">
+      <footer className="w-full max-w-full overflow-hidden bg-[#140d09] text-[#fcfbf7] pt-16 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] border-t border-[#c5a880]/20 font-sans">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Main Footer Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 pb-14 border-b border-[#c5a880]/20">
@@ -140,7 +142,7 @@ export const Footer: React.FC<FooterProps> = ({
                       Join
                     </button>
                   </div>
-                  <p className="text-[10px] text-[#8c827a]">No spam. Strictly seasonal roastery announcements.</p>
+                  <p className="text-[10px] text-[#8c827a]">No spam. We will only write when we launch.</p>
                 </form>
               )}
 
@@ -246,7 +248,13 @@ export const Footer: React.FC<FooterProps> = ({
             <p className="text-center sm:text-left">
               {siteSettings?.footerLegalLine || 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).'}
             </p>
-            <div className="flex items-center gap-4 text-[11px]">
+            <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-4 text-[11px]">
+              {currentTrack?.title && currentTrack?.artist && (
+                <>
+                  <span className="text-[#a3978f]">Music: {currentTrack.title}, {currentTrack.artist}</span>
+                  <span>•</span>
+                </>
+              )}
               <span>Vietnamese Heritage</span>
               <span>•</span>
               <span>Launching Soon</span>
@@ -263,7 +271,7 @@ export const Footer: React.FC<FooterProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Chat with Customer Care on WhatsApp"
-            className="fixed bottom-6 right-6 z-40 bg-[#25D366] hover:bg-[#20ba59] text-white p-3.5 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-2 group cursor-pointer border-2 border-white/20"
+            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] z-40 bg-[#25D366] hover:bg-[#20ba59] text-white p-3.5 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-2 group cursor-pointer border-2 border-white/20"
           >
             <MessageCircle className="w-5 h-5" />
             <span className="text-xs font-medium tracking-wide max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap">
