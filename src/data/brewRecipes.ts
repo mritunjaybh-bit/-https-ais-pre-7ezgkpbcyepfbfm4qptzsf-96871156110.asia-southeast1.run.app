@@ -468,7 +468,7 @@ export const BREW_RECIPES: Record<string, BrewRecipe> = {
       },
     ],
     baristaTip:
-      'Traditionally reserved for the Nguyen Dynasty royalty in Huế, lotus flowers are harvested at 4 AM while the petals are closed around night mist to seal in the nectar.',
+      'Traditionally appreciated across Vietnam, lotus flowers are gathered in the early dawn while petals hold morning dew to seal in natural floral aroma.',
   },
 
   // 13. Saigon Heritage Phin Coffee Powder
@@ -555,7 +555,7 @@ export const BREW_RECIPES: Record<string, BrewRecipe> = {
       },
     ],
     baristaTip:
-      'Only 5% of any coffee harvest yields peaberry beans (culi), where a single spherical seed absorbs all the plant nutrition rather than splitting into two flat beans.',
+      'Peaberry beans (culi) occur when a single round seed forms naturally inside the coffee cherry rather than splitting into two flat beans.',
   },
 
   // 15. Highland Arabica Powder
@@ -592,7 +592,7 @@ export const BREW_RECIPES: Record<string, BrewRecipe> = {
       },
     ],
     baristaTip:
-      'Grown at 1,500m elevation in the volcanic mist of Mount Lang Biang, this high-grown Arabica offers a delicate, tea-like clarity contrasting with coastal Robusta.',
+      'Cultivated in highland mountain sanctuaries, highland Arabica offers a delicate, tea-like clarity contrasting with robust lowland varieties.',
   },
 
   // 16. Saigon 3-in-1 Condensed Milk Instant Coffee
@@ -746,7 +746,7 @@ export const BREW_RECIPES: Record<string, BrewRecipe> = {
 
   // 20. Complete Vietnamese Home Barista Starter Kit
   'vietnamese-barista-starter-bundle': {
-    name: 'Complete Master Barista 4-Stage Phin Ceremony',
+    name: 'Complete Traditional 4-Stage Phin Ceremony',
     bestFor: 'Initiation into Authentic Vietnamese Coffee Culture',
     servingTemp: 'Hot or Iced Cà Phê Sữa Đá',
     prepTime: '5 Minutes',

@@ -100,6 +100,13 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                   Coming soon
                 </span>
               </div>
+
+              {/* Illustrative Image Badge */}
+              <div className="absolute bottom-4 left-4 pointer-events-none">
+                <span className="bg-[#140d09]/85 backdrop-blur-xs text-[#fcfbf7] text-[9px] font-light tracking-[0.15em] uppercase px-2.5 py-1">
+                  Illustrative image
+                </span>
+              </div>
             </div>
 
             {/* Packaging Evaluation Note */}
@@ -149,25 +156,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 {liveProduct.description}
               </p>
             </div>
-
-            {/* Tasting Notes */}
-            {liveProduct.tastingNotes && liveProduct.tastingNotes.length > 0 && (
-              <div className="space-y-2.5">
-                <span className="text-[10px] font-medium text-[#c5a880] uppercase tracking-[0.2em] block">
-                  Sensory Profile
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {liveProduct.tastingNotes.map((note, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs bg-white border border-[#c5a880]/30 text-[#140d09] px-3 py-1 font-light"
-                    >
-                      {note}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Waitlist Button */}
             <div className="pt-6 border-t border-[#c5a880]/20 space-y-4">

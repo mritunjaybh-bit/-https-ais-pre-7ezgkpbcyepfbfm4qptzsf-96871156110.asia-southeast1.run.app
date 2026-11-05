@@ -136,16 +136,16 @@ export const CirclePage: React.FC<CirclePageProps> = ({ onBackToShop, onOpenTerm
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a170e]/80 via-[#140d09] to-[#0c0806]" />
         
         <div className="relative z-10 max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 text-[#c5a880] text-[10px] font-medium tracking-[0.3em] uppercase border-b border-[#c5a880]/40 pb-1 mx-auto">
-            <Award className="w-3.5 h-3.5" />
-            <span>Maison Cà Phê Circle • Connoisseur Rewards</span>
+          <div className="inline-flex items-center gap-2 text-[#c5a880] text-[10px] font-medium tracking-[0.3em] uppercase border border-[#c5a880]/40 px-3 py-1 rounded-full mx-auto">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Opens at launch</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-normal font-serif text-[#fcfbf7] tracking-tight">
             The Cà Phê Circle
           </h1>
           <p className="text-sm sm:text-base text-[#a3978f] font-light leading-relaxed max-w-xl mx-auto">
-            Our exclusive patron society. Earn Beans on every slow-roasted harvest, enjoy tier privileges, and redeem points toward your daily Vietnamese coffee ritual.
+            Our patron society. Opens at launch. Earn Beans on purchases, enjoy tier multipliers, and redeem points toward your coffee orders.
           </p>
 
           <div className="pt-2 flex items-center justify-center gap-3">
@@ -451,19 +451,15 @@ export const CirclePage: React.FC<CirclePageProps> = ({ onBackToShop, onOpenTerm
               <ul className="text-xs text-[#6e635d] space-y-2 border-t border-[#c5a880]/15 pt-3">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>100 Welcome Beans upon joining</span>
+                  <span>1.0x Beans multiplier on all orders</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>1 Bean per ₹1 spent (Standard 1.0x)</span>
+                  <span>Early access to new launches</span>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-2 text-[#8c827a] italic">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>+200 Beans on your first order</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>50 Beans per approved tasting review</span>
+                  <span>Other perks will be confirmed at launch.</span>
                 </li>
               </ul>
             </div>
@@ -471,7 +467,7 @@ export const CirclePage: React.FC<CirclePageProps> = ({ onBackToShop, onOpenTerm
             {/* Reserve */}
             <div className="p-6 rounded-2xl bg-[#fcfbf7] border-2 border-[#c5a880] shadow-md space-y-4 relative">
               <div className="absolute top-3 right-3 bg-[#c5a880] text-[#140d09] text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
-                Most Popular
+                Tier 02
               </div>
               <div className="space-y-1">
                 <span className="text-[9px] uppercase tracking-widest text-[#c5a880] font-bold">Tier 02</span>
@@ -481,19 +477,15 @@ export const CirclePage: React.FC<CirclePageProps> = ({ onBackToShop, onOpenTerm
               <ul className="text-xs text-[#6e635d] space-y-2 border-t border-[#c5a880]/15 pt-3">
                 <li className="flex items-center gap-2 font-medium text-[#140d09]">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>1.25x Beans multiplier on all roasts</span>
+                  <span>1.25x Beans multiplier on all orders</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>Priority access to limited harvest drops</span>
+                  <span>Early access to new launches</span>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-2 text-[#8c827a] italic">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>150 Beans in your birthday month</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>All Origin tier benefits included</span>
+                  <span>Other perks will be confirmed at launch.</span>
                 </li>
               </ul>
             </div>
@@ -512,15 +504,11 @@ export const CirclePage: React.FC<CirclePageProps> = ({ onBackToShop, onOpenTerm
                 </li>
                 <li className="flex items-center gap-2 font-medium text-white">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>Complimentary Shipping with zero threshold</span>
+                  <span>Early access to new launches</span>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-2 text-[#a3978f] italic">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>Direct master barista consulting</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a880] shrink-0" />
-                  <span>First access to rare Cà Phê Chồn micro-lots</span>
+                  <span>Other perks will be confirmed at launch.</span>
                 </li>
               </ul>
             </div>

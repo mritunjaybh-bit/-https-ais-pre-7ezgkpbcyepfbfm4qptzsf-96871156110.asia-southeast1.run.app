@@ -26,24 +26,41 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
   siteSettings,
   onSelectTab,
 }) => {
-  const [pdfAvailable, setPdfAvailable] = useState(false);
+  const [companyIntroPdfAvailable, setCompanyIntroPdfAvailable] = useState(false);
+  const [brandPresentationPdfAvailable, setBrandPresentationPdfAvailable] = useState(false);
 
   useEffect(() => {
-    // Check if introduction PDF is available on the server and is not empty
+    // Check if company introduction PDF is available on the server and is not empty
     fetch('/downloads/CaPhe_Company_Introduction_India_Vietnam.pdf', { method: 'HEAD' })
       .then((res) => {
         if (!res.ok) {
-          setPdfAvailable(false);
+          setCompanyIntroPdfAvailable(false);
           return;
         }
         const len = res.headers.get('content-length');
         if (len !== null && parseInt(len, 10) <= 0) {
-          setPdfAvailable(false);
+          setCompanyIntroPdfAvailable(false);
         } else {
-          setPdfAvailable(true);
+          setCompanyIntroPdfAvailable(true);
         }
       })
-      .catch(() => setPdfAvailable(false));
+      .catch(() => setCompanyIntroPdfAvailable(false));
+
+    // Check if brand presentation PDF is available on the server and is not empty
+    fetch('/downloads/CaPhe_Brand_Presentation.pdf', { method: 'HEAD' })
+      .then((res) => {
+        if (!res.ok) {
+          setBrandPresentationPdfAvailable(false);
+          return;
+        }
+        const len = res.headers.get('content-length');
+        if (len !== null && parseInt(len, 10) <= 0) {
+          setBrandPresentationPdfAvailable(false);
+        } else {
+          setBrandPresentationPdfAvailable(true);
+        }
+      })
+      .catch(() => setBrandPresentationPdfAvailable(false));
   }, []);
 
   const mailtoSubject = encodeURIComponent('Inquiry: Partnering with Cà Phê');
@@ -86,14 +103,25 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
               <ArrowRight className="w-3.5 h-3.5" />
             </a>
 
-            {pdfAvailable && (
+            {companyIntroPdfAvailable && (
               <a
                 href="/downloads/CaPhe_Company_Introduction_India_Vietnam.pdf"
                 download="CaPhe_Company_Introduction_India_Vietnam.pdf"
                 className="px-6 py-3 border border-[#c5a880]/60 hover:bg-[#c5a880]/10 text-[#fcfbf7] text-xs uppercase tracking-[0.2em] font-medium transition-all duration-300 inline-flex items-center gap-2"
               >
                 <FileDown className="w-3.5 h-3.5 text-[#c5a880]" />
-                <span>Download Company Introduction (PDF)</span>
+                <span>Download company introduction (PDF)</span>
+              </a>
+            )}
+
+            {brandPresentationPdfAvailable && (
+              <a
+                href="/downloads/CaPhe_Brand_Presentation.pdf"
+                download="CaPhe_Brand_Presentation.pdf"
+                className="px-6 py-3 border border-[#c5a880]/60 hover:bg-[#c5a880]/10 text-[#fcfbf7] text-xs uppercase tracking-[0.2em] font-medium transition-all duration-300 inline-flex items-center gap-2"
+              >
+                <FileDown className="w-3.5 h-3.5 text-[#c5a880]" />
+                <span>Download brand presentation (PDF)</span>
               </a>
             )}
           </div>
@@ -384,11 +412,11 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-serif text-[#fcfbf7] font-normal">
-            Business & Bulk Enquiries
+            Business Enquiries
           </h2>
 
           <p className="text-xs sm:text-sm text-[#dcd4cb] font-light leading-relaxed max-w-2xl mx-auto">
-            We actively engage with luxury boutique hotels, specialty café chains, fine dining establishments, and corporate gifting managers seeking curated Vietnamese coffee setups, bespoke gifting hampers, and wholesale supply agreements across India.
+            We welcome enquiries from hotels, cafés, resorts and corporate gifting teams.
           </p>
 
           <div className="pt-2">
@@ -531,25 +559,37 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
         </div>
       </section>
 
-      {/* SECTION 13: DOWNLOAD COMPANY INTRODUCTION PDF BUTTON (HIDDEN IF FILE MISSING) */}
-      {pdfAvailable && (
+      {/* SECTION 13: DOWNLOAD PDF BUTTONS (HIDDEN IF FILE MISSING OR EMPTY) */}
+      {(companyIntroPdfAvailable || brandPresentationPdfAvailable) && (
         <section className="py-12 bg-white text-center border-b border-[#c5a880]/20">
           <div className="max-w-xl mx-auto px-6 space-y-4">
             <h3 className="font-serif text-xl text-[#140d09]">
               Institutional Dossier
             </h3>
             <p className="text-xs text-[#6e635d] font-light leading-relaxed">
-              Download our comprehensive briefing document outlining corporate vision, commercial scope, and import timelines.
+              Download our comprehensive briefing documents outlining corporate vision, commercial scope, and import timelines.
             </p>
-            <div>
-              <a
-                href="/downloads/CaPhe_Company_Introduction_India_Vietnam.pdf"
-                download="CaPhe_Company_Introduction_India_Vietnam.pdf"
-                className="px-6 py-3 border border-[#140d09] bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] text-xs uppercase tracking-[0.2em] font-medium transition-all inline-flex items-center gap-2"
-              >
-                <FileDown className="w-3.5 h-3.5 text-[#c5a880]" />
-                <span>Download Company Introduction (PDF)</span>
-              </a>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {companyIntroPdfAvailable && (
+                <a
+                  href="/downloads/CaPhe_Company_Introduction_India_Vietnam.pdf"
+                  download="CaPhe_Company_Introduction_India_Vietnam.pdf"
+                  className="px-6 py-3 border border-[#140d09] bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] text-xs uppercase tracking-[0.2em] font-medium transition-all inline-flex items-center gap-2"
+                >
+                  <FileDown className="w-3.5 h-3.5 text-[#c5a880]" />
+                  <span>Download company introduction (PDF)</span>
+                </a>
+              )}
+              {brandPresentationPdfAvailable && (
+                <a
+                  href="/downloads/CaPhe_Brand_Presentation.pdf"
+                  download="CaPhe_Brand_Presentation.pdf"
+                  className="px-6 py-3 border border-[#140d09] bg-[#140d09] hover:bg-[#2b1f1a] text-[#fcfbf7] text-xs uppercase tracking-[0.2em] font-medium transition-all inline-flex items-center gap-2"
+                >
+                  <FileDown className="w-3.5 h-3.5 text-[#c5a880]" />
+                  <span>Download brand presentation (PDF)</span>
+                </a>
+              )}
             </div>
           </div>
         </section>

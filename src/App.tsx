@@ -196,7 +196,7 @@ export default function App() {
       items: finalItems,
       createdAt: (details as any).createdAt || Date.now(),
       timestamp: (details as any).timestamp || new Date().toISOString(),
-      status: (details as any).status || 'Order Placed & Roasting',
+      status: (details as any).status || 'Order Placed & Processing',
       courierPartner: (details as any).courierPartner || (details.shippingType === 'express' ? 'BlueDart Air Express' : 'Delhivery Surface'),
       trackingNumber: (details as any).trackingNumber || `BD-EXP-${Math.floor(10000000 + Math.random() * 90000000)}`,
       paymentStatus: details.paymentStatus || 'paid',
@@ -558,7 +558,7 @@ export default function App() {
     }
   };
 
-  // Update status (Admin / Roastery Owner only)
+  // Update status (Admin / Portal Owner only)
   const handleUpdateOrderStatus = (orderId: string, newStatus: OrderState) => {
     updateStoredOrderStatus(orderId, newStatus);
     setOrders((prev) =>
@@ -566,7 +566,7 @@ export default function App() {
     );
   };
 
-  // Dedicated, Pure Roastery Owner Portal Interface (100% separate from customer storefront)
+  // Dedicated Owner & Staff Admin Portal Interface (100% separate from customer storefront)
   if (activeTab === 'admin') {
     return (
       <div className="min-h-screen bg-[#180e0c] text-[#f5ebe6] w-full flex flex-col font-sans selection:bg-[#feca4d] selection:text-[#271310]">

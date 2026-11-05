@@ -50,13 +50,13 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
           className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#271310] tracking-tight leading-tight font-serif"
           style={{ fontFamily: 'Playfair Display, serif' }}
         >
-          The Soul of Vietnamese Coffee: Patience, Basalt Earth & Craft
+          The Soul of Vietnamese Coffee: Patience & Craft
         </h2>
         <p
           className="mt-4 text-base text-[#504442] leading-relaxed"
           style={{ fontFamily: 'Montserrat, sans-serif' }}
         >
-          From the mineral-dense volcanic soils of Vietnam's fertile highlands to the buzzing sidewalk stools of Hanoi and Saigon, Vietnamese coffee is more than a beverage—it is a cultural ritual of mindful stillness, resilience, and culinary brilliance.
+          From the vibrant coffee-growing highlands to the buzzing sidewalk stools of Hanoi and Saigon, Vietnamese coffee is a cultural ritual of mindful stillness, community, and culinary tradition.
         </p>
       </div>
 
@@ -219,91 +219,63 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
         </div>
       </div>
 
-      {/* Terroirs Breakdown */}
+      {/* Our Story: Vietnamese Coffee Tradition */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-        {/* Highland Terroir Card */}
+        {/* Tradition Card 1 */}
         <div className="bg-[#faf2f0] rounded-xl border border-[#d3c3c0]/40 overflow-hidden shadow-xs">
           <div className="aspect-[16/9] w-full bg-[#eee6e5] relative">
             <img
               src="https://images.unsplash.com/photo-1587734195503-904fca47e0e9?auto=format&fit=crop&w=800&q=80"
-              alt="Vietnamese Coffee Estate"
+              alt="Vietnamese Coffee Landscape"
               className="w-full h-full object-cover"
             />
             <div className="absolute top-3 left-3 bg-[#271310] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
-              Robusta Capital of the World
+              Vietnamese Coffee Tradition
             </div>
           </div>
           <div className="p-6 sm:p-8 space-y-3">
             <div className="flex items-center gap-2 text-xs font-semibold text-[#785a00]">
               <MapPin className="w-4 h-4" />
-              <span>Vietnam High-Plateau Highlands</span>
+              <span>The Highland Plateau Tradition</span>
             </div>
             <h3
               className="text-2xl font-bold text-[#271310] font-serif"
               style={{ fontFamily: 'Playfair Display, serif' }}
             >
-              The Ancient Red Basalt Volcanic Soil
+              Bold Character & Deep Balance
             </h3>
             <p className="text-xs sm:text-sm text-[#504442] leading-relaxed">
-              Volcanic activity created mineral-dense basalt earth (Đất Đỏ Bazan). This terroir produces resilient Robusta with substantial caffeine, rich syrupy body, zero sourness, and natural notes of Belgian dark chocolate, roasted hazelnuts, and cedar.
+              Vietnam's high-plateau agricultural regions have nurtured generations of coffee growers. Resilient Robusta varieties yield a full-bodied cup with natural cocoa and toasted nut notes, creating the foundation for iconic Vietnamese brewing styles.
             </p>
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#d3c3c0]/40 text-center">
-              <div className="bg-[#fff8f6] p-2 rounded">
-                <p className="text-[10px] text-[#504442]">Elevation</p>
-                <p className="text-xs font-bold text-[#271310]">800 - 950m</p>
-              </div>
-              <div className="bg-[#fff8f6] p-2 rounded">
-                <p className="text-[10px] text-[#504442]">Soil Type</p>
-                <p className="text-xs font-bold text-[#271310]">Volcanic Basalt</p>
-              </div>
-              <div className="bg-[#fff8f6] p-2 rounded">
-                <p className="text-[10px] text-[#504442]">Caffeine</p>
-                <p className="text-xs font-bold text-[#785a00]">2.5% - 2.8%</p>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Highland Terroir Card */}
+        {/* Tradition Card 2 */}
         <div className="bg-[#faf2f0] rounded-xl border border-[#d3c3c0]/40 overflow-hidden shadow-xs">
           <div className="aspect-[16/9] w-full bg-[#eee6e5] relative">
             <img
               src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=800&q=80"
-              alt="Highland Misty Mountains"
+              alt="Highland Mountain Landscape"
               className="w-full h-full object-cover"
             />
             <div className="absolute top-3 left-3 bg-[#081c17] text-[#d0e8de] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
-              Highland Cloud Forest
+              Highland Climate
             </div>
           </div>
           <div className="p-6 sm:p-8 space-y-3">
             <div className="flex items-center gap-2 text-xs font-semibold text-[#785a00]">
               <MapPin className="w-4 h-4" />
-              <span>Highland Cloud Elevation</span>
+              <span>Highland Growing Regions</span>
             </div>
             <h3
               className="text-2xl font-bold text-[#271310] font-serif"
               style={{ fontFamily: 'Playfair Display, serif' }}
             >
-              Misty Mountain Spring Fermentation
+              Misty Valleys & Highland Groves
             </h3>
             <p className="text-xs sm:text-sm text-[#504442] leading-relaxed">
-              Shrouded in year-round mountain mist and crisp temperatures, Mount Lang Biang provides the slow cherry maturation required for rare Arabica Typica and Bourbon. Grown organically by indigenous K’Ho families with notes of wild jasmine blossom, bergamot, and crisp Fuji apple.
+              With cool mountain mornings and distinct microclimates, Vietnam's highland valleys provide a complementary growing environment for diverse varieties, celebrated for their balanced aromatics and sweet, clean finish.
             </p>
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#d3c3c0]/40 text-center">
-              <div className="bg-[#fff8f6] p-2 rounded">
-                <p className="text-[10px] text-[#504442]">Elevation</p>
-                <p className="text-xs font-bold text-[#271310]">1,500 - 1,650m</p>
-              </div>
-              <div className="bg-[#fff8f6] p-2 rounded">
-                <p className="text-[10px] text-[#504442]">Microclimate</p>
-                <p className="text-xs font-bold text-[#271310]">Misty Cloud Forest</p>
-              </div>
-              <div className="bg-[#fff8f6] p-2 rounded">
-                <p className="text-[10px] text-[#504442]">Acidity</p>
-                <p className="text-xs font-bold text-[#785a00]">Citrus & Floral</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

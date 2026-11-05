@@ -105,11 +105,6 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
               {post.category}
             </span>
             <div className="flex items-center gap-1 text-[#827472]">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{post.publishDate}</span>
-            </div>
-            <span className="text-[#827472]">•</span>
-            <div className="flex items-center gap-1 text-[#827472]">
               <Clock className="w-3.5 h-3.5" />
               <span>{post.readTime}</span>
             </div>
@@ -128,17 +123,12 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
 
           {/* Author Byline */}
           <div className="flex items-center gap-3 pt-3 border-t border-[#d3c3c0]/40">
-            <img
-              src={post.author.avatar}
-              alt={post.author.name}
-              className="w-10 h-10 rounded-full object-cover border border-[#d3c3c0] shadow-xs"
-            />
             <div>
               <div className="text-xs font-bold text-[#271310]">
-                {post.author.name}
+                By Cà Phê Editorial
               </div>
               <div className="text-[11px] text-[#827472]">
-                {post.author.role}
+                Vietnamese Coffee Tradition
               </div>
             </div>
           </div>

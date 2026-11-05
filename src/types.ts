@@ -46,8 +46,8 @@ export interface ProductItem {
   badge?: string;
   roastLevel?: 'Light' | 'Medium' | 'Medium-Dark' | 'Dark' | 'French Butter Roast';
   beanBlend?: string;
-  caffeineScore: number; // 1 to 5
-  tastingNotes: string[];
+  caffeineScore?: number; // 1 to 5
+  tastingNotes?: string[];
   originRegion?: string;
   elevation?: string;
   process?: string;

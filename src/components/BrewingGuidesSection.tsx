@@ -191,7 +191,7 @@ const BREWING_GUIDES: BrewingGuide[] = [
     brewTime: '5 mins',
     temperature: '94°C Hot Black Coffee + Warm Bain-Marie Bath',
     recommendedProductSlug: 'hanoi-egg-coffee-heritage-ground-powder',
-    headerImage: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=1000&q=80',
+    headerImage: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1000&q=80',
     equipment: [
       '1x Electric hand whisk / milk frother or wire balloon whisk',
       '1x Deep mixing bowl (for whipping sabayon)',
@@ -603,65 +603,28 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
       <div className="bg-[#faf2f0] border border-[#d3c3c0]/60 rounded-3xl overflow-hidden shadow-md mb-12">
         {/* Guide Overview Banner */}
         <div className="bg-[#271310] text-white p-6 sm:p-8 lg:p-10 relative overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
-            <div className="lg:col-span-8 space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#feca4d] bg-white/10 px-2.5 py-0.5 rounded-full">
-                  {currentGuide.origin}
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#d3c3c0] bg-white/10 px-2.5 py-0.5 rounded-full">
-                  Prep: {currentGuide.prepTime} • Brew: {currentGuide.brewTime}
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#feca4d] bg-white/10 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                  <Thermometer className="w-3 h-3 text-[#feca4d]" /> {currentGuide.temperature}
-                </span>
-              </div>
-
-              <h3
-                className="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif leading-tight"
-                style={{ fontFamily: 'Playfair Display, serif' }}
-              >
-                {currentGuide.name}
-              </h3>
-              <p className="text-xs sm:text-sm text-[#d3c3c0] leading-relaxed max-w-2xl">
-                {currentGuide.subtitle}
-              </p>
+          <div className="relative z-10 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#feca4d] bg-white/10 px-2.5 py-0.5 rounded-full">
+                {currentGuide.origin}
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#d3c3c0] bg-white/10 px-2.5 py-0.5 rounded-full">
+                Prep: {currentGuide.prepTime} • Brew: {currentGuide.brewTime}
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#feca4d] bg-white/10 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <Thermometer className="w-3 h-3 text-[#feca4d]" /> {currentGuide.temperature}
+              </span>
             </div>
 
-            {/* Quick Recommended Blend Shortcut */}
-            <div className="lg:col-span-4 bg-white/10 backdrop-blur-xs border border-white/20 rounded-2xl p-4 space-y-2.5">
-              <div className="flex items-center justify-between text-[11px] font-bold text-[#feca4d]">
-                <span className="flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" /> Recommended Coffee:
-                </span>
-                <span>{formatPrice(recommendedProduct.basePriceINR, currency as Currency)}</span>
-              </div>
-              <p className="text-xs font-semibold text-white line-clamp-1">
-                {recommendedProduct.name}
-              </p>
-              <p className="text-[10px] text-[#d3c3c0] line-clamp-2">
-                {recommendedProduct.tagline}
-              </p>
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => handleQuickAddProduct(recommendedProduct)}
-                  className="flex-1 py-1.5 px-3 bg-[#feca4d] hover:bg-[#ffc229] text-[#271310] text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Add Coffee (₹{recommendedProduct.basePriceINR})
-                </button>
-                {onOpenProductModal && (
-                  <button
-                    type="button"
-                    onClick={() => onOpenProductModal(recommendedProduct)}
-                    className="p-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
-                    title="View details"
-                  >
-                    <Info className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
+            <h3
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif leading-tight"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+            >
+              {currentGuide.name}
+            </h3>
+            <p className="text-xs sm:text-sm text-[#d3c3c0] leading-relaxed max-w-2xl">
+              {currentGuide.subtitle}
+            </p>
           </div>
         </div>
 

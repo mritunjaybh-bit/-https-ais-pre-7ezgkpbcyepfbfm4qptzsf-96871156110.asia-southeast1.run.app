@@ -157,17 +157,12 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
                 {/* Author Info */}
                 <div className="flex items-center justify-between pt-2 border-t border-[#d3c3c0]/40">
                   <div className="flex items-center gap-2.5">
-                    <img
-                      src={featuredPost.author.avatar}
-                      alt={featuredPost.author.name}
-                      className="w-8 h-8 rounded-full object-cover border border-[#d3c3c0]"
-                    />
                     <div>
                       <div className="text-xs font-semibold text-[#271310]">
-                        {featuredPost.author.name}
+                        By Cà Phê Editorial
                       </div>
                       <div className="text-[10px] text-[#827472]">
-                        {featuredPost.author.role}
+                        Vietnamese Coffee Tradition
                       </div>
                     </div>
                   </div>
@@ -242,17 +237,10 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
                   {/* Card Body */}
                   <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
                     <div className="space-y-2.5">
-                      {/* Meta stats: Date & Read Time */}
-                      <div className="flex items-center gap-3 text-[11px] text-[#827472]">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>{post.publishDate}</span>
-                        </div>
-                        <span>•</span>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{post.readTime}</span>
-                        </div>
+                      {/* Meta stats: Read Time */}
+                      <div className="flex items-center gap-2 text-[11px] text-[#827472]">
+                        <Clock className="w-3 h-3" />
+                        <span>{post.readTime}</span>
                       </div>
 
                       {/* Title */}
@@ -272,13 +260,8 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
                     {/* Footer: Author & Read Link */}
                     <div className="pt-3 border-t border-[#d3c3c0]/40 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <img
-                          src={post.author.avatar}
-                          alt={post.author.name}
-                          className="w-6 h-6 rounded-full object-cover border border-[#d3c3c0]"
-                        />
                         <span className="text-[11px] font-medium text-[#504442]">
-                          {post.author.name}
+                          By Cà Phê Editorial
                         </span>
                       </div>
 

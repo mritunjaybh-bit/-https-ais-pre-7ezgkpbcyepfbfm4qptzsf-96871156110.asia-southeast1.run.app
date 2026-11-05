@@ -58,6 +58,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 Coming soon
               </span>
             </div>
+
+            <div className="absolute bottom-4 left-4">
+              <span className="bg-[#140d09]/85 backdrop-blur-xs text-[#fcfbf7] text-[9px] font-light tracking-[0.15em] uppercase px-2.5 py-1">
+                Illustrative image
+              </span>
+            </div>
           </div>
 
           {/* Modal Content */}
@@ -76,25 +82,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 {product.description}
               </p>
             </div>
-
-            {/* Tasting Notes */}
-            {product.tastingNotes && product.tastingNotes.length > 0 && (
-              <div className="space-y-2">
-                <span className="text-[10px] uppercase tracking-[0.2em] text-[#8c827a] block">
-                  Sensory Notes
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {product.tastingNotes.map((note, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs text-[#fcfbf7] bg-white/5 border border-[#c5a880]/30 px-3 py-1 font-light"
-                    >
-                      {note}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Packaging Note */}
             <div className="p-4 bg-white/5 border border-[#c5a880]/20 text-xs text-[#a3978f] font-light italic">

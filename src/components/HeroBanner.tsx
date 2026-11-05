@@ -33,9 +33,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             {/* Display Headline */}
             <div className="space-y-4">
               <h1 className="text-4xl sm:text-6xl lg:text-7xl font-normal tracking-tight leading-[1.08] font-serif text-[#fcfbf7]">
-                Vietnamese origin. <br />
-                <span className="italic font-serif text-[#c5a880]">Authentic craft.</span> <br />
-                Launching soon.
+                Vietnamese-origin coffee. <br />
+                <span className="italic font-serif text-[#c5a880]">Launching soon.</span>
               </h1>
               <p className="text-sm sm:text-base text-[#a3978f] max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
                 A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.

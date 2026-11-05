@@ -183,12 +183,10 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
                   </button>
                 </div>
 
-                {/* Subtle Roast Tag */}
-                {product.roastLevel && (
-                  <div className="absolute bottom-3 left-3 text-[9px] font-light tracking-[0.15em] uppercase text-[#fcfbf7] bg-[#140d09]/75 px-2 py-0.5 backdrop-blur-xs">
-                    {product.roastLevel} Roast
-                  </div>
-                )}
+                {/* Illustrative Image Badge */}
+                <div className="absolute bottom-3 left-3 text-[9px] font-light tracking-[0.15em] uppercase text-[#fcfbf7] bg-[#140d09]/75 px-2 py-0.5 backdrop-blur-xs">
+                  Illustrative image
+                </div>
               </div>
 
               {/* Card Body */}
@@ -223,18 +221,6 @@ export const ProductCatalogSection: React.FC<ProductCatalogSectionProps> = ({
                   <p className="text-xs text-[#6e635d] font-light mt-2.5 line-clamp-2 leading-relaxed">
                     {product.tagline}
                   </p>
-
-                  {/* Tasting Notes */}
-                  <div className="flex flex-wrap gap-1.5 mt-3 pt-1">
-                    {product.tastingNotes.slice(0, 3).map((note, idx) => (
-                      <span
-                        key={idx}
-                        className="text-[10px] text-[#6e635d] font-light tracking-wide bg-[#fcfbf7] border border-[#c5a880]/20 px-2 py-0.5"
-                      >
-                        {note}
-                      </span>
-                    ))}
-                  </div>
                 </div>
 
                 {/* Action Strip: No Price, Only "Join the waitlist" */}

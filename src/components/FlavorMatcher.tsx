@@ -279,16 +279,18 @@ export const FlavorMatcher: React.FC<FlavorMatcherProps> = ({
                   {matchedProduct.description}
                 </p>
 
-                <div className="flex flex-wrap gap-1.5 pt-2 justify-center md:justify-start">
-                  {matchedProduct.tastingNotes.map((note, idx) => (
-                    <span
-                      key={idx}
-                      className="text-[10px] text-[#fcfbf7] bg-[#140d09] border border-[#c5a880]/30 px-2.5 py-0.5"
-                    >
-                      {note}
-                    </span>
-                  ))}
-                </div>
+                {matchedProduct.tastingNotes && matchedProduct.tastingNotes.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-2 justify-center md:justify-start">
+                    {matchedProduct.tastingNotes.map((note, idx) => (
+                      <span
+                        key={idx}
+                        className="text-[10px] text-[#fcfbf7] bg-[#140d09] border border-[#c5a880]/30 px-2.5 py-0.5"
+                      >
+                        {note}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
