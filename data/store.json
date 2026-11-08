@@ -888,7 +888,16 @@
       "emailSentSuccess": true
     }
   ],
-  "subscribers": [],
+  "subscribers": [
+    {
+      "id": "sub-1793954269154-4ac687",
+      "email": "test@example.com",
+      "createdAt": "2026-11-06T08:37:49.154Z",
+      "source": "waitlist_modal",
+      "discountCode": "XINCHAO10",
+      "consent": true
+    }
+  ],
   "adminConfig": {
     "isSetupComplete": true,
     "setupAt": "2026-09-27T12:23:07.966Z"

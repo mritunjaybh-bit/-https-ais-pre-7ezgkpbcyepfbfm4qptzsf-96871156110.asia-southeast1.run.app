@@ -331,7 +331,18 @@ export const CoffeeMasterChat: React.FC<CoffeeMasterChatProps> = ({
                         : 'bg-[#1e1511] text-[#fcfbf7] border border-[#c5a880]/30'
                     }`}
                   >
-                    <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
+                    <p className="whitespace-pre-line leading-relaxed">
+                      {msg.text.split(/(\*\*[^*]+\*\*)/g).map((chunk, idx) => {
+                        if (chunk.startsWith('**') && chunk.endsWith('**')) {
+                          return (
+                            <strong key={idx} className="font-semibold text-[#c5a880]">
+                              {chunk.slice(2, -2)}
+                            </strong>
+                          );
+                        }
+                        return chunk;
+                      })}
+                    </p>
                   </div>
 
                   {/* Recommended Products Card */}

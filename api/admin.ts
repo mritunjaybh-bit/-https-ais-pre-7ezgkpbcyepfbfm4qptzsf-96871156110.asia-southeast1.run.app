@@ -31,7 +31,10 @@ import {
   updateDbReviewStatus,
   deleteDbReview,
   getDbCircleMembers,
+  checkFirestoreHealth,
+  DatabaseNotConfiguredError,
   type UserAccount,
+  type AdminConfig,
 } from './_lib/db.ts';
 import {
   generateSessionToken,
@@ -146,8 +149,26 @@ export async function adminHandler(req: Request, res: Response) {
       .toString()
       .toLowerCase();
 
-    const config = getDbAdminConfig();
-    const users = getDbUsers();
+    // -------------------------------------------------------------
+    // ACTION: firestore-health / db-health
+    // -------------------------------------------------------------
+    if (action === 'firestore-health' || action === 'db-health' || action === 'health-check') {
+      const healthResult = await checkFirestoreHealth();
+      return safeJson(healthResult.success ? 200 : 503, healthResult);
+    }
+
+    let config: AdminConfig;
+    let users: UserAccount[];
+    try {
+      config = await getDbAdminConfig();
+      users = await getDbUsers();
+    } catch (dbErr: any) {
+      if (dbErr instanceof DatabaseNotConfiguredError || dbErr?.message === 'database not configured') {
+        return safeJson(503, { error: 'database not configured' });
+      }
+      throw dbErr;
+    }
+
     const ownerUser = users.find((u) => u && (u.role === 'owner' || !u.role) && u.status !== 'deactivated');
     const isSetupDone = Boolean(config.isSetupComplete && (ownerUser || users.length > 0));
 
@@ -168,7 +189,7 @@ export async function adminHandler(req: Request, res: Response) {
     // -------------------------------------------------------------
     if (action === 'reset-setup') {
       try {
-        resetDatabaseAuth();
+        await resetDatabaseAuth();
         clearInMemorySessions();
         return safeJson(200, {
           success: true,
@@ -210,12 +231,12 @@ export async function adminHandler(req: Request, res: Response) {
         }
 
         // Check uniqueness
-        if (findDbUserByIdentifier(cleanUser) || findDbUserByIdentifier(cleanEmail)) {
+        if ((await findDbUserByIdentifier(cleanUser)) || (await findDbUserByIdentifier(cleanEmail))) {
           return safeJson(400, { error: 'An account with that username or email already exists.' });
         }
 
         // Create primary Owner account
-        const newOwner = createDbUser({
+        const newOwner = await createDbUser({
           username: cleanUser,
           email: cleanEmail,
           name: name ? String(name).trim() : cleanUser,
@@ -224,7 +245,7 @@ export async function adminHandler(req: Request, res: Response) {
           status: 'active',
         });
 
-        updateDbAdminConfig({
+        await updateDbAdminConfig({
           isSetupComplete: true,
           setupAt: new Date().toISOString(),
         });
@@ -282,7 +303,7 @@ export async function adminHandler(req: Request, res: Response) {
           });
         }
 
-        const user = findDbUserByIdentifier(String(username));
+        const user = await findDbUserByIdentifier(String(username));
         if (!user) {
           const failStatus = recordFailedLogin(rateLimitKey);
           if (failStatus.locked) {
@@ -319,7 +340,7 @@ export async function adminHandler(req: Request, res: Response) {
         }
 
         resetLoginRateLimit(rateLimitKey);
-        updateDbUser(user.id, { lastLoginAt: new Date().toISOString() });
+        await updateDbUser(user.id, { lastLoginAt: new Date().toISOString() });
         const sessionToken = generateSessionToken(user);
 
         return safeJson(200, {
@@ -371,8 +392,9 @@ export async function adminHandler(req: Request, res: Response) {
       }
     }
 
+
     // -------------------------------------------------------------
-    // ACTION: forgot-id / forgot-username-request (Recover Owner ID & Email)
+    // ACTION: forgot-id / forgot-username-request
     // -------------------------------------------------------------
     if (
       action === 'forgot-id' ||
@@ -394,7 +416,7 @@ export async function adminHandler(req: Request, res: Response) {
           });
         }
 
-        const result = findDbUserByRecovery(query);
+        const result = await findDbUserByRecovery(query);
         if (!result || !result.user) {
           return safeJson(404, {
             error:
@@ -404,7 +426,6 @@ export async function adminHandler(req: Request, res: Response) {
 
         const { user, matchReason } = result;
 
-        // Send credential email asynchronously in background
         sendAccountRecoveryEmail(user.email, user.username, user.name).catch((emailErr) => {
           console.error('[Recovery Email Send Error]:', emailErr);
         });
@@ -450,7 +471,7 @@ export async function adminHandler(req: Request, res: Response) {
           return safeJson(400, { error: 'Username or registered email address is required.' });
         }
 
-        const targetUser = findDbUserByIdentifier(targetIdentifier);
+        const targetUser = await findDbUserByIdentifier(targetIdentifier);
         if (!targetUser) {
           return safeJson(404, {
             error: 'No active account found for that username or email.',
@@ -467,9 +488,9 @@ export async function adminHandler(req: Request, res: Response) {
         const resetToken = crypto.randomBytes(24).toString('hex');
         const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-        console.log(`[AUTH] Password Reset OTP for ${targetUser.email} (${targetUser.username}): ${otp}`);
+        console.log(`[AUTH] Password Reset OTP generated for ${targetUser.email}`);
 
-        saveDbOtp(resetToken, {
+        await saveDbOtp(resetToken, {
           otp,
           email: targetUser.email,
           userId: targetUser.id,
@@ -518,16 +539,16 @@ export async function adminHandler(req: Request, res: Response) {
           return safeJson(400, { error: 'Password must be at least 6 characters long.' });
         }
 
-        const record = getDbOtp(resetToken);
+        const record = await getDbOtp(resetToken);
         if (!record) {
           return safeJson(400, {
             error: 'Password reset request has expired or is invalid. Please request a new code.',
           });
         }
 
-        // OTP 10-minute expiry check (Phase 0 requirement)
+        // OTP 10-minute expiry check
         if (record.expiresAt && Date.now() > record.expiresAt) {
-          deleteDbOtp(resetToken);
+          await deleteDbOtp(resetToken);
           return safeJson(400, {
             error: 'Verification code has expired (valid for 10 minutes). Please request a new code.',
           });
@@ -537,16 +558,16 @@ export async function adminHandler(req: Request, res: Response) {
           return safeJson(400, { error: 'Invalid verification code. Please check your email.' });
         }
 
-        const targetUser = findDbUserById(record.userId);
+        const targetUser = await findDbUserById(record.userId);
         if (!targetUser) {
-          deleteDbOtp(resetToken);
+          await deleteDbOtp(resetToken);
           return safeJson(404, { error: 'User account not found.' });
         }
 
-        updateDbUser(targetUser.id, {
+        await updateDbUser(targetUser.id, {
           passwordHash: hashPassword(String(newPassword)),
         });
-        deleteDbOtp(resetToken);
+        await deleteDbOtp(resetToken);
 
         const sessionToken = generateSessionToken(targetUser);
         return safeJson(200, {
@@ -579,7 +600,7 @@ export async function adminHandler(req: Request, res: Response) {
         return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
       }
 
-      updateDbUser(auth.user.id, {
+      await updateDbUser(auth.user.id, {
         passwordHash: hashPassword(String(newPassword)),
       });
       return res.status(200).json({ success: true, message: 'Password updated successfully' });
@@ -609,7 +630,7 @@ export async function adminHandler(req: Request, res: Response) {
 
       // List Staff
       if (action === 'staff' || action === 'staff-list' || action === 'get-staff') {
-        const allUsers = getDbUsers();
+        const allUsers = await getDbUsers();
         const staffList = allUsers.filter((u) => u.role === 'staff').map(sanitizeUser);
         return res.status(200).json({ staff: staffList, count: staffList.length });
       }
@@ -635,15 +656,15 @@ export async function adminHandler(req: Request, res: Response) {
           return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
         }
 
-        if (findDbUserByIdentifier(cleanUser)) {
+        if (await findDbUserByIdentifier(cleanUser)) {
           return res.status(400).json({ error: `Username "${cleanUser}" is already in use.` });
         }
 
-        if (findDbUserByIdentifier(cleanEmail)) {
+        if (await findDbUserByIdentifier(cleanEmail)) {
           return res.status(400).json({ error: `Email "${cleanEmail}" is already registered.` });
         }
 
-        const newStaff = createDbUser({
+        const newStaff = await createDbUser({
           name: String(name).trim(),
           username: cleanUser,
           email: cleanEmail,
@@ -666,7 +687,7 @@ export async function adminHandler(req: Request, res: Response) {
           return res.status(400).json({ error: 'Valid staff id and status ("active" | "deactivated") are required.' });
         }
 
-        const targetUser = findDbUserById(String(id));
+        const targetUser = await findDbUserById(String(id));
         if (!targetUser) {
           return res.status(404).json({ error: 'Staff account not found.' });
         }
@@ -675,7 +696,7 @@ export async function adminHandler(req: Request, res: Response) {
           return res.status(400).json({ error: 'Cannot deactivate an Owner account.' });
         }
 
-        const updated = updateDbUser(targetUser.id, { status });
+        const updated = await updateDbUser(targetUser.id, { status });
         return res.status(200).json({
           success: true,
           message: `Staff account ${status === 'active' ? 'activated' : 'deactivated'}.`,
@@ -690,7 +711,7 @@ export async function adminHandler(req: Request, res: Response) {
           return res.status(400).json({ error: 'Staff account id is required.' });
         }
 
-        const targetUser = findDbUserById(targetId);
+        const targetUser = await findDbUserById(targetId);
         if (!targetUser) {
           return res.status(404).json({ error: 'Staff account not found.' });
         }
@@ -699,7 +720,7 @@ export async function adminHandler(req: Request, res: Response) {
           return res.status(400).json({ error: 'Cannot delete an Owner account.' });
         }
 
-        deleteDbUser(targetId);
+        await deleteDbUser(targetId);
         return safeJson(200, {
           success: true,
           message: `Staff account "${targetUser.name}" permanently deleted.`,
@@ -721,7 +742,7 @@ export async function adminHandler(req: Request, res: Response) {
         if (auth.user.role !== 'owner') {
           return safeJson(403, { error: 'Forbidden: Only the Roastery Owner can update site settings.' });
         }
-        const updated = updateDbSiteSettings(req.body.settings || req.body);
+        const updated = await updateDbSiteSettings(req.body.settings || req.body);
         return safeJson(200, {
           success: true,
           message: 'Site settings updated successfully',
@@ -730,7 +751,7 @@ export async function adminHandler(req: Request, res: Response) {
       }
 
       // Read Settings
-      return safeJson(200, { settings: getDbSiteSettings() });
+      return safeJson(200, { settings: await getDbSiteSettings() });
     }
 
     // -------------------------------------------------------------
@@ -751,14 +772,14 @@ export async function adminHandler(req: Request, res: Response) {
         if (!id || !status) {
           return safeJson(400, { error: 'Pre-order ID and status are required.' });
         }
-        const updated = updateDbPreOrderStatus(String(id), status);
+        const updated = await updateDbPreOrderStatus(String(id), status);
         if (!updated) {
           return safeJson(404, { error: 'Pre-order not found' });
         }
         return safeJson(200, { success: true, preOrder: updated });
       }
 
-      const preOrders = getDbPreOrders();
+      const preOrders = await getDbPreOrders();
       return safeJson(200, { preOrders, count: preOrders.length });
     }
 
@@ -779,28 +800,28 @@ export async function adminHandler(req: Request, res: Response) {
 
       if (action === 'approve-review' && req.method === 'POST') {
         const id = String(req.body.id || req.query.id);
-        const updated = updateDbReviewStatus(id, 'approved');
+        const updated = await updateDbReviewStatus(id, 'approved');
         return safeJson(200, { success: Boolean(updated), review: updated });
       }
 
       if (action === 'reject-review' && req.method === 'POST') {
         const id = String(req.body.id || req.query.id);
-        const updated = updateDbReviewStatus(id, 'rejected');
+        const updated = await updateDbReviewStatus(id, 'rejected');
         return safeJson(200, { success: Boolean(updated), review: updated });
       }
 
       if (action === 'delete-review' && (req.method === 'POST' || req.method === 'DELETE')) {
         const id = String(req.body.id || req.query.id);
-        const deleted = deleteDbReview(id);
+        const deleted = await deleteDbReview(id);
         return safeJson(200, { success: deleted });
       }
 
-      const allReviews = getDbReviews(true); // Return all reviews for moderation
+      const allReviews = await getDbReviews(true);
       return safeJson(200, { reviews: allReviews, count: allReviews.length });
     }
 
     // -------------------------------------------------------------
-    // CÀ PHÊ CIRCLE MEMBERS (OWNER & STAFF)
+    // CÀ PHÊ CIRCLE MEMBERS (OWNER & STAFF) - Disabled until launch
     // -------------------------------------------------------------
     if (action === 'circle-members' || action === 'circle-members-list') {
       const auth = verifySessionToken(token);
@@ -808,7 +829,7 @@ export async function adminHandler(req: Request, res: Response) {
         return safeJson(401, { error: 'Unauthorized: Session invalid or expired' });
       }
       const members = getDbCircleMembers();
-      return safeJson(200, { members, count: members.length });
+      return safeJson(200, { members, count: members.length, notice: 'Circle opens at launch' });
     }
 
     // -------------------------------------------------------------
@@ -823,7 +844,7 @@ export async function adminHandler(req: Request, res: Response) {
       if (!auth.valid || !auth.user) {
         return res.status(401).json({ error: 'Unauthorized: Session invalid or expired' });
       }
-      const orders = getDbOrders(true);
+      const orders = await getDbOrders(true);
       return res.status(200).json({ orders, count: orders.length });
     }
 
@@ -863,10 +884,10 @@ export async function adminHandler(req: Request, res: Response) {
         emailMessage: rawOrder.emailMessage,
       };
 
-      const currentDbOrders = getDbOrders(true);
+      const currentDbOrders = await getDbOrders(true);
       const filtered = currentDbOrders.filter((o) => o.orderId.toLowerCase() !== newOrder.orderId.toLowerCase());
       const updatedOrders = [newOrder as any, ...filtered];
-      updateDbOrders(updatedOrders);
+      await updateDbOrders(updatedOrders);
 
       return res.status(200).json({
         success: true,
@@ -888,7 +909,7 @@ export async function adminHandler(req: Request, res: Response) {
         return res.status(400).json({ error: 'Please enter a valid email address.' });
       }
 
-      const { subscriber, isNew } = addDbSubscriber({ email, source, discountCode });
+      const { subscriber, isNew } = await addDbSubscriber({ email, source, discountCode });
       return res.status(200).json({
         success: true,
         isNew,
@@ -903,7 +924,7 @@ export async function adminHandler(req: Request, res: Response) {
       if (!auth.valid || !auth.user) {
         return res.status(401).json({ error: 'Unauthorized: Admin session required' });
       }
-      const subscribers = getDbSubscribers();
+      const subscribers = await getDbSubscribers();
       return res.status(200).json({ success: true, count: subscribers.length, subscribers });
     }
 
@@ -937,7 +958,7 @@ export async function adminHandler(req: Request, res: Response) {
         return res.status(401).json({ error: 'Unauthorized: Session invalid or expired' });
       }
 
-      const products = getDbProducts();
+      const products = await getDbProducts();
 
       // Read Products / Inventory: BOTH Owner and Staff can view
       if (
@@ -975,7 +996,7 @@ export async function adminHandler(req: Request, res: Response) {
         };
 
         const updated = [created, ...products];
-        updateDbProducts(updated);
+        await updateDbProducts(updated);
         return res.status(201).json({ success: true, product: created });
       }
 
@@ -990,7 +1011,7 @@ export async function adminHandler(req: Request, res: Response) {
         }
 
         products[index] = { ...products[index], ...updates };
-        updateDbProducts(products);
+        await updateDbProducts(products);
         return res.status(200).json({ success: true, product: products[index] });
       }
 
@@ -998,7 +1019,7 @@ export async function adminHandler(req: Request, res: Response) {
       if (action === 'delete-product' || (action === 'products' && req.method === 'DELETE')) {
         const targetId = req.body.id || req.query.id;
         const filtered = products.filter((p) => p.id !== targetId);
-        updateDbProducts(filtered);
+        await updateDbProducts(filtered);
         return res.status(200).json({ success: true, message: `Product ${targetId} removed.` });
       }
 
@@ -1019,7 +1040,7 @@ export async function adminHandler(req: Request, res: Response) {
           }
         });
 
-        updateDbProducts(products);
+        await updateDbProducts(products);
         return res.status(200).json({
           success: true,
           message: `Updated stock for ${updatedCount} products`,
@@ -1043,7 +1064,7 @@ export async function adminHandler(req: Request, res: Response) {
           }
         });
 
-        updateDbProducts(products);
+        await updateDbProducts(products);
         return res.status(200).json({
           success: true,
           message: `Updated prices for ${updatedCount} products`,
@@ -1053,10 +1074,12 @@ export async function adminHandler(req: Request, res: Response) {
     }
 
     return res.status(400).json({
-      error: `Unknown action: '${action}'. Supported actions: setup-status, setup, login, verify, logout, change-password, forgot-password-request, forgot-password-verify-reset, staff-list, create-staff, toggle-staff, delete-staff, get-products, create-product, update-product, delete-product, update-inventory, update-prices.`,
+      error: `Unknown action: '${action}'. Supported actions: setup-status, setup, login, verify, logout, firestore-health, change-password, forgot-password-request, forgot-password-verify-reset, staff-list, create-staff, toggle-staff, delete-staff, get-products, create-product, update-product, delete-product, update-inventory, update-prices.`,
     });
   } catch (err: any) {
-    console.error('[Admin Handler Error]:', err);
+    if (err instanceof DatabaseNotConfiguredError || err?.message === 'database not configured') {
+      return safeJson(503, { error: 'database not configured' });
+    }
     return safeJson(500, { error: err?.message || 'Internal server error in admin handler' });
   }
 }

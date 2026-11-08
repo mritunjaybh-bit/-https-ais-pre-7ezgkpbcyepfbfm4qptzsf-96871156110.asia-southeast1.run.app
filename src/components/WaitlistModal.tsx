@@ -74,9 +74,9 @@ export const WaitlistModal: React.FC<WaitlistModalProps> = ({
       } else {
         setError(data.error || 'Unable to join waitlist. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('[Waitlist] Error submitting entry:', err);
-      setError('Connection error. Please check your internet connection.');
+      setError('Unable to submit your waitlist request right now. Please try again shortly.');
     } finally {
       setIsSubmitting(false);
     }

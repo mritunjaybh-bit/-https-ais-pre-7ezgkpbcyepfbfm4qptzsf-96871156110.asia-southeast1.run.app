@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import {
   type UserAccount,
-  findDbUserById,
   addDbSession,
   removeDbSession,
   clearDbSessions,
@@ -54,7 +53,7 @@ export function verifySessionToken(token?: string): { valid: boolean; user?: Use
 
     const userId = parts[0];
     const username = parts[1];
-    const role = parts[2];
+    const role = (parts[2] === 'staff' ? 'staff' : 'owner') as 'owner' | 'staff';
     const timestampStr = parts[3];
     const timestamp = parseInt(timestampStr, 10);
 
@@ -65,19 +64,18 @@ export function verifySessionToken(token?: string): { valid: boolean; user?: Use
       return { valid: false, error: 'Session expired (12-hour limit)' };
     }
 
-    // Verify user actually exists in database and is active
-    const user = findDbUserById(userId);
-    if (!user) {
-      activeSessions.delete(token);
-      return { valid: false, error: 'User account no longer exists' };
-    }
-
-    if (user.status !== 'active') {
-      activeSessions.delete(token);
-      return { valid: false, error: 'User account has been deactivated' };
-    }
-
-    return { valid: true, user };
+    // Valid HMAC verified session
+    const verifiedUser: UserAccount = {
+      id: userId,
+      username,
+      email: '',
+      name: username,
+      role,
+      passwordHash: '',
+      status: 'active',
+      createdAt: new Date(timestamp).toISOString(),
+    };
+    return { valid: true, user: verifiedUser };
   } catch (err: any) {
     return { valid: false, error: err?.message || 'Token verification failed' };
   }
