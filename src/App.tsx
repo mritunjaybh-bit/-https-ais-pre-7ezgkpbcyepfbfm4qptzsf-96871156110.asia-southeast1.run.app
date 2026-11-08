@@ -832,7 +832,7 @@ export default function App() {
         onOpenPrivacyPolicy={() => setLegalModal({ isOpen: true, doc: 'privacy' })}
       />
 
-      {/* Traditional Vietnamese Ambient Background Music Player */}
+      {/* Ambient Background Music Player */}
       <BackgroundMusicPlayer />
 
       {/* AI Shopping Assistant: Coffee Master */}

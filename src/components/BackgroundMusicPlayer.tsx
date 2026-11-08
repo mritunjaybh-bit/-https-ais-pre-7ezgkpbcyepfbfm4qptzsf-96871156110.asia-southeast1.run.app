@@ -124,13 +124,8 @@ export const BackgroundMusicPlayer: React.FC = () => {
                   {isPlaying && !isMuted ? 'Now Playing' : 'Ambient Music'}
                 </span>
                 <p className="text-xs font-serif text-[#fcfbf7] truncate mt-0.5">
-                  {currentTrack?.title || 'Vietnamese Ambient Track'}
+                  {currentTrack?.title || 'Ambient 1'}
                 </p>
-                {currentTrack?.artist && (
-                  <p className="text-[10px] text-[#a3978f] truncate font-light">
-                    {currentTrack.artist}
-                  </p>
-                )}
               </div>
 
               <button

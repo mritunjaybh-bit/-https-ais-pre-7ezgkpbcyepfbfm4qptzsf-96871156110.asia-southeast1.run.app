@@ -18,23 +18,20 @@ export const PLAYLIST: AudioTrack[] = [
   {
     id: 'track1',
     src: '/audio/track1.mp3',
-    fallbackSrc: '/assets/background-music.mp3', // Gracefully plays existing asset if track1.mp3 is not yet uploaded
-    title: 'Acoustic Vietnamese Morning',
-    artist: 'Traditional Ensemble',
-    license: 'Royalty-Free Ambient Score',
+    fallbackSrc: '/assets/background-music.mp3',
+    title: 'Ambient 1',
+    artist: '',
   },
   {
     id: 'track2',
     src: '/audio/track2.mp3',
-    title: 'Highland Mist & Rain',
-    artist: 'Traditional Ensemble',
-    license: 'Royalty-Free Ambient Score',
+    title: 'Ambient 2',
+    artist: '',
   },
   {
     id: 'track3',
     src: '/audio/track3.mp3',
-    title: 'Saigon Twilight Drip',
-    artist: 'Traditional Ensemble',
-    license: 'Royalty-Free Ambient Score',
+    title: 'Ambient 3',
+    artist: '',
   },
 ];

@@ -3,7 +3,6 @@ import { Logo } from './Logo';
 import { ActiveTab, SiteSettings } from '../types';
 import { LegalDocType } from './LegalPagesModal';
 import { Check, Lock, MessageCircle } from 'lucide-react';
-import { useMusic } from '../context/MusicContext';
 
 interface FooterProps {
   onSelectTab: (tab: ActiveTab) => void;
@@ -18,7 +17,6 @@ export const Footer: React.FC<FooterProps> = ({
   siteSettings,
   onOpenLegalDoc,
 }) => {
-  const { currentTrack } = useMusic();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -249,12 +247,6 @@ export const Footer: React.FC<FooterProps> = ({
               {siteSettings?.footerLegalLine || 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).'}
             </p>
             <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-4 text-[11px]">
-              {currentTrack?.title && currentTrack?.artist && (
-                <>
-                  <span className="text-[#a3978f]">Music: {currentTrack.title}, {currentTrack.artist}</span>
-                  <span>•</span>
-                </>
-              )}
               <span>Vietnamese Heritage</span>
               <span>•</span>
               <span>Launching Soon</span>
