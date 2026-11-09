@@ -9,10 +9,7 @@ export interface AudioTrack {
 
 /**
  * Background Music Playlist Configuration
- * 
- * Upload MP3 files to public/audio/ as track1.mp3, track2.mp3, and track3.mp3.
- * You can edit titles, artists, and license credits below.
- * Credits will only appear in the footer if both title and artist are specified.
+ * Browser-generated ambient soundscapes.
  */
 export const PLAYLIST: AudioTrack[] = [
   {

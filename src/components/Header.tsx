@@ -102,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
             id="header-music-toggle-btn"
             type="button"
             onClick={toggleMute}
-            title={!isMuted ? 'Mute ambient Vietnamese instrumental score' : 'Play ambient Vietnamese instrumental score'}
+            title={!isMuted ? 'Mute ambient soundscape' : 'Play ambient soundscape'}
             aria-label={!isMuted ? 'Mute background music' : 'Play background music'}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-[#c5a880]/30 hover:border-[#c5a880] text-[#6e635d] hover:text-[#140d09] transition-all duration-300 text-[11px] font-light tracking-wider uppercase cursor-pointer"
           >
