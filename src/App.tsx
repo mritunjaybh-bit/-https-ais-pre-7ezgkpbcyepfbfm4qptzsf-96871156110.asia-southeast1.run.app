@@ -37,10 +37,8 @@ import { CookieConsent } from './components/CookieConsent';
 import { PreOrderModal } from './components/PreOrderModal';
 import { Footer } from './components/Footer';
 import { PartnerPage } from './components/PartnerPage';
-import { BackgroundMusicPlayer } from './components/BackgroundMusicPlayer';
 import { CoffeeMasterChat } from './components/CoffeeMasterChat';
 import { EmailCaptureModal } from './components/EmailCaptureModal';
-import { MusicProvider } from './context/MusicContext';
 import { CheckCircle2, X } from 'lucide-react';
 import { getAllOrders, saveOrder, updateOrderStatus as updateStoredOrderStatus } from './utils/orderStorage';
 import { getBlogPostBySlug } from './data/blogPosts';
@@ -581,8 +579,7 @@ export default function App() {
   }
 
   return (
-    <MusicProvider>
-      <div className="min-h-screen flex flex-col bg-[#fcfbf7] text-[#140d09] w-full max-w-full overflow-x-hidden selection:bg-[#c5a880]/30 selection:text-[#140d09]">
+    <div className="min-h-screen flex flex-col bg-[#fcfbf7] text-[#140d09] w-full max-w-full overflow-x-hidden selection:bg-[#c5a880]/30 selection:text-[#140d09]">
         {/* Top Header */}
         <Header
           activeTab={activeTab}
@@ -832,9 +829,6 @@ export default function App() {
         onOpenPrivacyPolicy={() => setLegalModal({ isOpen: true, doc: 'privacy' })}
       />
 
-      {/* Ambient Background Music Player */}
-      <BackgroundMusicPlayer />
-
       {/* AI Shopping Assistant: Coffee Master */}
       {activeTab !== 'admin' && (
         <CoffeeMasterChat
@@ -849,6 +843,5 @@ export default function App() {
         <EmailCaptureModal />
       )}
     </div>
-  </MusicProvider>
   );
 }

@@ -7,13 +7,10 @@ import {
   ChevronDown,
   Check,
   Clock,
-  Volume2,
-  VolumeX,
   Award
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatCurrency';
 import { CURRENCY_RATES } from '../data/coffeeData';
-import { useMusic } from '../context/MusicContext';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -42,7 +39,6 @@ export const Header: React.FC<HeaderProps> = ({
   activeOrdersCount = 0,
   siteSettings,
 }) => {
-  const { isMuted, toggleMute } = useMusic();
   const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
   const currencyMenuRef = useRef<HTMLDivElement>(null);
 
@@ -95,30 +91,8 @@ export const Header: React.FC<HeaderProps> = ({
           />
         </div>
 
-        {/* Right Tools: Discreet Music, Currency, Tracker, Cart */}
+        {/* Right Tools: Currency, Tracker, Cart */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Discreet Music Toggle */}
-          <button
-            id="header-music-toggle-btn"
-            type="button"
-            onClick={toggleMute}
-            title={!isMuted ? 'Mute ambient soundscape' : 'Play ambient soundscape'}
-            aria-label={!isMuted ? 'Mute background music' : 'Play background music'}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-[#c5a880]/30 hover:border-[#c5a880] text-[#6e635d] hover:text-[#140d09] transition-all duration-300 text-[11px] font-light tracking-wider uppercase cursor-pointer"
-          >
-            {!isMuted ? (
-              <>
-                <Volume2 className="w-3.5 h-3.5 text-[#c5a880]" />
-                <span className="hidden sm:inline">Sound: On</span>
-              </>
-            ) : (
-              <>
-                <VolumeX className="w-3.5 h-3.5 text-[#8c827a]" />
-                <span className="hidden sm:inline text-[#8c827a]">Sound</span>
-              </>
-            )}
-          </button>
-
           {/* Currency Dropdown Selector */}
           <div className="relative shrink-0" ref={currencyMenuRef}>
             <button
