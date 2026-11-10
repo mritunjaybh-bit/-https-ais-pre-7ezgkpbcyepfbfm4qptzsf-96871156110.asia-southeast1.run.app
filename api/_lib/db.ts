@@ -1,11 +1,5 @@
 import crypto from 'crypto';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import {
-  getFirestore as initFirestore,
-  FieldValue,
-  type Firestore,
-  type Query,
-} from 'firebase-admin/firestore';
+import type { Firestore, Query } from 'firebase-admin/firestore';
 import type {
   ProductItem,
   PlacedOrder,
@@ -101,11 +95,15 @@ export function isFirestoreConfigured(): boolean {
     !projectId ||
     !clientEmail ||
     !privateKey ||
+    !privateKey.includes('BEGIN') ||
     projectId.toLowerCase().includes('placeholder') ||
     clientEmail.toLowerCase().includes('placeholder') ||
     projectId.toLowerCase().includes('example') ||
     clientEmail.toLowerCase().includes('example') ||
-    privateKey.toLowerCase().includes('placeholder')
+    projectId.toLowerCase().includes('your_') ||
+    clientEmail.toLowerCase().includes('your_') ||
+    privateKey.toLowerCase().includes('placeholder') ||
+    privateKey.toLowerCase().includes('your_')
   ) {
     return false;
   }
@@ -124,6 +122,10 @@ export function getFirestore(): Firestore {
   const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
   try {
+    // Lazily load Firebase Admin SDK only when database is configured and requested
+    const { initializeApp, getApps, cert } = require('firebase-admin/app');
+    const { getFirestore: initFirestore } = require('firebase-admin/firestore');
+
     if (!getApps().length) {
       initializeApp({
         credential: cert({
@@ -167,6 +169,7 @@ export async function checkFirestoreHealth(): Promise<{
   const testDocRef = db.collection('_health_test').doc(testDocId);
 
   try {
+    const { FieldValue } = require('firebase-admin/firestore');
     // 1. Write probe doc
     await testDocRef.set({
       probe: true,

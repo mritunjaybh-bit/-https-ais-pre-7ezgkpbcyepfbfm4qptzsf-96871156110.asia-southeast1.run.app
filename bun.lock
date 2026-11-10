@@ -1,5 +1,5 @@
 {
-  "lockfileVersion": 1,
+  "lockfileVersion": 3,
   "configVersion": 1,
   "workspaces": {
     "": {
@@ -29,8 +29,12 @@
         "tailwindcss": "^4.1.14",
         "tsx": "^4.21.0",
         "typescript": "~5.8.2",
-        "vite": "^6.2.3",
       },
+    },
+  },
+  "overrides": {
+    "@babel/helper-compilation-targets": {
+      "lru-cache": "^5.1.1",
     },
   },
   "packages": {

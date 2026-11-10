@@ -41,12 +41,12 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               </p>
             </div>
 
-            {/* Refined Luxury Action Buttons */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
+            {/* Refined Luxury Action Buttons with safe mobile side margins */}
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 sm:gap-4 pt-2 max-w-[280px] sm:max-w-none mx-auto lg:mx-0 px-2 sm:px-0">
               <button
                 id="hero-shop-coffee-btn"
                 onClick={() => onSelectTab('shop')}
-                className="px-8 py-4 rounded-none bg-[#c5a880] hover:bg-[#d8be98] text-[#140d09] font-medium text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-sm"
+                className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 rounded-none bg-[#c5a880] hover:bg-[#d8be98] text-[#140d09] font-medium text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               >
                 <span>View Planned Range</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -55,7 +55,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               <button
                 id="hero-instant-matcher-btn"
                 onClick={onOpenMatcher}
-                className="px-7 py-4 rounded-none bg-transparent hover:bg-white/5 text-[#fcfbf7] border border-[#c5a880]/40 hover:border-[#c5a880] font-light text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto px-6 sm:px-7 py-3.5 sm:py-4 rounded-none bg-transparent hover:bg-white/5 text-[#fcfbf7] border border-[#c5a880]/40 hover:border-[#c5a880] font-light text-xs uppercase tracking-[0.2em] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Taste Matcher</span>
               </button>
