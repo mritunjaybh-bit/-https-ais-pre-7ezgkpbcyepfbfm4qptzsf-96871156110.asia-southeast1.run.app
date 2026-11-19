@@ -17,17 +17,20 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
     preOrderMode: false,
     directCheckoutEnabled: false,
     dispatchWindow: 'Batches prepared upon official launch',
-    fssaiNumber: '',
+    legalName: 'SuleVina International Ventures (OPC) Private Limited',
+    cin: 'U46307RJ2026OPC119787',
+    partnerAddress: '',
+    showPartnerAddressPublicly: false,
     gstin: '',
+    iec: '',
+    fssaiNumber: '',
+    udyamNumber: '',
     whatsappNumber: '+91 87640 01534',
     announcementBarText: 'A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.',
     freeShippingThreshold: 0,
     supportEmail: 'mritunjay.bhardwaj@caphevietnam.in',
     publicContactEmail: 'mritunjay.bhardwaj@caphevietnam.in',
     metaPixelId: '',
-    footerLegalLine: 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).',
-    showPartnerAddressPublicly: false,
-    partnerAddress: '',
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -46,7 +49,19 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
       if (res.ok) {
         const data = await res.json();
         if (data.settings) {
-          setSettings(data.settings);
+          setSettings({
+            ...data.settings,
+            legalName:
+              data.settings.legalName?.trim() ||
+              'SuleVina International Ventures (OPC) Private Limited',
+            cin: data.settings.cin?.trim() || 'U46307RJ2026OPC119787',
+            partnerAddress: data.settings.partnerAddress || '',
+            showPartnerAddressPublicly: Boolean(data.settings.showPartnerAddressPublicly),
+            gstin: data.settings.gstin || '',
+            iec: data.settings.iec || '',
+            fssaiNumber: data.settings.fssaiNumber || '',
+            udyamNumber: data.settings.udyamNumber || '',
+          });
         }
       } else {
         setError('Failed to fetch site settings from server.');
@@ -203,22 +218,139 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
           </div>
         </div>
 
-        {/* Footer Legal Entity Line */}
-        <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
-            Footer Legal Line (Editable Entity Notice)
-          </label>
-          <input
-            type="text"
-            value={settings.footerLegalLine ?? 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).'}
-            onChange={(e) => setSettings({ ...settings, footerLegalLine: e.target.value })}
-            placeholder="Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress)."
-            className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
-          />
-          <p className="text-[10px] text-[#827472]">Displayed in the storefront footer copyright notice.</p>
+        {/* Legal details (Owner-only) */}
+        <div className="p-5 rounded-2xl bg-[#1d1210] border border-[#c5a880]/30 space-y-5">
+          <div className="flex items-center justify-between border-b border-[#3e2723] pb-3">
+            <div>
+              <h3 className="text-sm font-serif font-bold text-white flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#c5a880]" />
+                <span>Legal details</span>
+              </h3>
+              <p className="text-[11px] text-[#a8928e] mt-0.5">
+                Corporate entity and statutory registrations displayed in the footer and Partner page. Empty optional fields are hidden automatically.
+              </p>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880]">
+              Owner only
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Legal name */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+                Legal name
+              </label>
+              <input
+                type="text"
+                value={settings.legalName ?? 'SuleVina International Ventures (OPC) Private Limited'}
+                onChange={(e) => setSettings({ ...settings, legalName: e.target.value })}
+                placeholder="SuleVina International Ventures (OPC) Private Limited"
+                className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+              />
+            </div>
+
+            {/* CIN */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+                CIN
+              </label>
+              <input
+                type="text"
+                value={settings.cin ?? 'U46307RJ2026OPC119787'}
+                onChange={(e) => setSettings({ ...settings, cin: e.target.value })}
+                placeholder="U46307RJ2026OPC119787"
+                className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white font-mono placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+              />
+            </div>
+
+            {/* Registered office address + toggle */}
+            <div className="space-y-2 md:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+                  Registered office address
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-xs text-[#a8928e]">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(settings.showPartnerAddressPublicly)}
+                    onChange={(e) => setSettings({ ...settings, showPartnerAddressPublicly: e.target.checked })}
+                    className="rounded-sm border-white/20 bg-white/10 text-[#c5a880] focus:ring-0 accent-[#c5a880]"
+                  />
+                  <span>Show registered office publicly</span>
+                </label>
+              </div>
+              <textarea
+                rows={2}
+                value={settings.partnerAddress || ''}
+                onChange={(e) => setSettings({ ...settings, partnerAddress: e.target.value })}
+                placeholder="Enter registered office address"
+                className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+              />
+              <p className="text-[10px] text-[#827472]">
+                Hidden across footer and Partner page unless &quot;Show registered office publicly&quot; is turned on.
+              </p>
+            </div>
+
+            {/* GSTIN */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+                GSTIN
+              </label>
+              <input
+                type="text"
+                value={settings.gstin || ''}
+                onChange={(e) => setSettings({ ...settings, gstin: e.target.value })}
+                placeholder="Optional"
+                className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white font-mono placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+              />
+            </div>
+
+            {/* IEC */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+                IEC
+              </label>
+              <input
+                type="text"
+                value={settings.iec || ''}
+                onChange={(e) => setSettings({ ...settings, iec: e.target.value })}
+                placeholder="Optional"
+                className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white font-mono placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+              />
+            </div>
+
+            {/* FSSAI licence number */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+                FSSAI licence number
+              </label>
+              <input
+                type="text"
+                value={settings.fssaiNumber || ''}
+                onChange={(e) => setSettings({ ...settings, fssaiNumber: e.target.value })}
+                placeholder="Optional"
+                className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white font-mono placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+              />
+            </div>
+
+            {/* Udyam number */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
+                Udyam number
+              </label>
+              <input
+                type="text"
+                value={settings.udyamNumber || ''}
+                onChange={(e) => setSettings({ ...settings, udyamNumber: e.target.value })}
+                placeholder="Optional"
+                className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white font-mono placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Operational & Legal Inputs */}
+        {/* Operational Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Dispatch Window */}
           <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
@@ -248,102 +380,6 @@ export const AdminSiteSettings: React.FC<AdminSiteSettingsProps> = ({
               className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
             />
             <p className="text-[10px] text-[#827472]">Leave blank to completely hide the announcement bar.</p>
-          </div>
-
-          {/* FSSAI Licence Number */}
-          <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
-              FSSAI Licence Number (Strict: hidden until set)
-            </label>
-            <input
-              type="text"
-              value={settings.fssaiNumber}
-              onChange={(e) => setSettings({ ...settings, fssaiNumber: e.target.value })}
-              placeholder="Enter your registered 14-digit FSSAI number"
-              className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
-            />
-            <p className="text-[10px] text-[#827472]">
-              Strictly invisible on storefront footer until entered.
-            </p>
-          </div>
-
-          {/* GSTIN */}
-          <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
-              GSTIN (Tax Identification)
-            </label>
-            <input
-              type="text"
-              value={settings.gstin}
-              onChange={(e) => setSettings({ ...settings, gstin: e.target.value })}
-              placeholder="e.g. 29ABCDE1234F1Z5"
-              className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
-            />
-            <p className="text-[10px] text-[#827472]">
-              Strictly hidden on storefront footer until entered.
-            </p>
-          </div>
-
-          {/* CIN (Corporate Identification Number) */}
-          <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
-              CIN (Corporate Identification Number)
-            </label>
-            <input
-              type="text"
-              value={settings.cin || ''}
-              onChange={(e) => setSettings({ ...settings, cin: e.target.value })}
-              placeholder="e.g. U15400KA2026OPC123456"
-              className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
-            />
-            <p className="text-[10px] text-[#827472]">
-              Strictly hidden on partner page and footer until entered.
-            </p>
-          </div>
-
-          {/* IEC (Import Export Code) */}
-          <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
-              IEC (Import Export Code)
-            </label>
-            <input
-              type="text"
-              value={settings.iec || ''}
-              onChange={(e) => setSettings({ ...settings, iec: e.target.value })}
-              placeholder="e.g. 0517001234"
-              className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
-            />
-            <p className="text-[10px] text-[#827472]">
-              Strictly hidden on partner page and footer until entered.
-            </p>
-          </div>
-
-          {/* Partner Address */}
-          <div className="p-4 rounded-xl bg-[#1d1210] border border-[#3e2723] space-y-1.5 md:col-span-2">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-[#c5a880] block">
-                Registered Postal Address (for Partner Page)
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-[#a8928e]">
-                <input
-                  type="checkbox"
-                  checked={Boolean(settings.showPartnerAddressPublicly)}
-                  onChange={(e) => setSettings({ ...settings, showPartnerAddressPublicly: e.target.checked })}
-                  className="rounded-sm border-white/20 bg-white/10 text-[#c5a880] focus:ring-0 accent-[#c5a880]"
-                />
-                <span>Show Address Publicly on /partner</span>
-              </label>
-            </div>
-            <textarea
-              rows={2}
-              value={settings.partnerAddress || ''}
-              onChange={(e) => setSettings({ ...settings, partnerAddress: e.target.value })}
-              placeholder="Enter company registered postal address"
-              className="w-full bg-[#140b09] border border-[#3e2723] rounded-lg px-3 py-2 text-xs text-white placeholder:text-[#504442] focus:outline-none focus:border-[#c5a880]"
-            />
-            <p className="text-[10px] text-[#827472]">
-              Hidden on /partner unless the &quot;Show Address Publicly&quot; checkbox is ticked.
-            </p>
           </div>
 
           {/* WhatsApp Support Number */}

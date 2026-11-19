@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+.vercel-test-dist
+api/**/*.js
+src/**/*.js

@@ -8,8 +8,8 @@ import type {
   PreOrderRecord,
   ProductReview,
   CircleMember,
-} from '../../src/types.ts';
-import { PRODUCT_ITEMS } from '../../src/data/coffeeData.ts';
+} from '../../src/types.js';
+import { PRODUCT_ITEMS } from '../../src/data/coffeeData.js';
 
 export type UserRole = 'owner' | 'staff';
 
@@ -110,7 +110,7 @@ export function isFirestoreConfigured(): boolean {
   return true;
 }
 
-export function getFirestore(): Firestore {
+export async function getFirestore(): Promise<Firestore> {
   if (firestoreDb) return firestoreDb;
 
   if (!isFirestoreConfigured()) {
@@ -122,9 +122,9 @@ export function getFirestore(): Firestore {
   const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
   try {
-    // Lazily load Firebase Admin SDK only when database is configured and requested
-    const { initializeApp, getApps, cert } = require('firebase-admin/app');
-    const { getFirestore: initFirestore } = require('firebase-admin/firestore');
+    // Lazily load Firebase Admin SDK with dynamic import only when database is configured and requested
+    const { initializeApp, cert, getApps } = await import('firebase-admin/app');
+    const { getFirestore: initFirestore } = await import('firebase-admin/firestore');
 
     if (!getApps().length) {
       initializeApp({
@@ -155,7 +155,7 @@ export async function checkFirestoreHealth(): Promise<{
 }> {
   let db: Firestore;
   try {
-    db = getFirestore();
+    db = await getFirestore();
   } catch (e: any) {
     return {
       success: false,
@@ -169,7 +169,7 @@ export async function checkFirestoreHealth(): Promise<{
   const testDocRef = db.collection('_health_test').doc(testDocId);
 
   try {
-    const { FieldValue } = require('firebase-admin/firestore');
+    const { FieldValue } = await import('firebase-admin/firestore');
     // 1. Write probe doc
     await testDocRef.set({
       probe: true,
@@ -208,23 +208,24 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   preOrderMode: false,
   directCheckoutEnabled: false,
   dispatchWindow: 'Batches prepared upon official launch',
+  legalName: 'SuleVina International Ventures (OPC) Private Limited',
+  cin: 'U46307RJ2026OPC119787',
   fssaiNumber: '',
   gstin: '',
-  cin: '',
   iec: '',
+  udyamNumber: '',
   whatsappNumber: '+91 87640 01534',
   announcementBarText: 'A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.',
   freeShippingThreshold: 0,
   supportEmail: 'mritunjay.bhardwaj@caphevietnam.in',
   publicContactEmail: 'mritunjay.bhardwaj@caphevietnam.in',
   metaPixelId: '',
-  footerLegalLine: 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).',
   showPartnerAddressPublicly: false,
   partnerAddress: '',
 };
 
 export async function getDbSiteSettings(): Promise<SiteSettings> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const docRef = db.collection('siteSettings').doc('current');
   const snap = await docRef.get();
 
@@ -237,11 +238,13 @@ export async function getDbSiteSettings(): Promise<SiteSettings> {
   return {
     ...DEFAULT_SITE_SETTINGS,
     ...data,
+    legalName: data.legalName?.trim() || DEFAULT_SITE_SETTINGS.legalName,
+    cin: data.cin?.trim() || DEFAULT_SITE_SETTINGS.cin,
   };
 }
 
 export async function updateDbSiteSettings(partial: Partial<SiteSettings>): Promise<SiteSettings> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const current = await getDbSiteSettings();
   const updated: SiteSettings = {
     ...current,
@@ -255,7 +258,7 @@ export async function updateDbSiteSettings(partial: Partial<SiteSettings>): Prom
 // PRODUCTS (SEEDED FROM STATIC DATA ONLY IF COLLECTION EMPTY)
 // -------------------------------------------------------------
 export async function getDbProducts(): Promise<ProductItem[]> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const snap = await db.collection('products').get();
 
   if (snap.empty) {
@@ -278,7 +281,7 @@ export async function getDbProducts(): Promise<ProductItem[]> {
 }
 
 export async function updateDbProducts(products: ProductItem[]): Promise<void> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const batch = db.batch();
   for (const prod of products) {
     const docRef = db.collection('products').doc(prod.id);
@@ -291,13 +294,13 @@ export async function updateDbProducts(products: ProductItem[]): Promise<void> {
 // ADMIN USERS & OWNER SETUP
 // -------------------------------------------------------------
 export async function getDbUsers(): Promise<UserAccount[]> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const snap = await db.collection('adminUsers').get();
   return snap.docs.map((d) => d.data() as UserAccount);
 }
 
 export async function findDbUserById(id: string): Promise<UserAccount | null> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const doc = await db.collection('adminUsers').doc(id).get();
   if (!doc.exists) return null;
   return doc.data() as UserAccount;
@@ -306,7 +309,7 @@ export async function findDbUserById(id: string): Promise<UserAccount | null> {
 export async function findDbUserByIdentifier(identifier: string): Promise<UserAccount | null> {
   if (!identifier) return null;
   const clean = identifier.trim().toLowerCase();
-  const db = getFirestore();
+  const db = await getFirestore();
 
   const snapUser = await db.collection('adminUsers').where('username', '==', clean).limit(1).get();
   if (!snapUser.empty) {
@@ -343,7 +346,7 @@ export async function findDbUserByRecovery(detail: string): Promise<{ user: User
 }
 
 export async function createDbUser(userData: Omit<UserAccount, 'id' | 'createdAt'>): Promise<UserAccount> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const newUser: UserAccount = {
     ...userData,
     id: `usr-${userData.role}-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`,
@@ -355,7 +358,7 @@ export async function createDbUser(userData: Omit<UserAccount, 'id' | 'createdAt
 }
 
 export async function updateDbUser(id: string, updates: Partial<UserAccount>): Promise<UserAccount | null> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const docRef = db.collection('adminUsers').doc(id);
   const snap = await docRef.get();
   if (!snap.exists) return null;
@@ -370,7 +373,7 @@ export async function updateDbUser(id: string, updates: Partial<UserAccount>): P
 }
 
 export async function deleteDbUser(id: string): Promise<boolean> {
-  const db = getFirestore();
+  const db = await getFirestore();
   await db.collection('adminUsers').doc(id).delete();
   return true;
 }
@@ -390,7 +393,7 @@ export async function updateDbAdminConfig(updates: Partial<AdminConfig>): Promis
 }
 
 export async function resetDatabaseAuth(): Promise<void> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const userSnaps = await db.collection('adminUsers').get();
   const batch = db.batch();
   userSnaps.docs.forEach((doc) => batch.delete(doc.ref));
@@ -426,12 +429,12 @@ export function clearDbSessions(): void {
 // ADMIN OTPS (EXPIRES IN 10 MINUTES)
 // -------------------------------------------------------------
 export async function saveDbOtp(resetToken: string, record: OtpRecord): Promise<void> {
-  const db = getFirestore();
+  const db = await getFirestore();
   await db.collection('adminOtps').doc(resetToken).set(record);
 }
 
 export async function getDbOtp(resetToken: string): Promise<OtpRecord | null> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const snap = await db.collection('adminOtps').doc(resetToken).get();
   if (!snap.exists) return null;
 
@@ -444,7 +447,7 @@ export async function getDbOtp(resetToken: string): Promise<OtpRecord | null> {
 }
 
 export async function deleteDbOtp(resetToken: string): Promise<void> {
-  const db = getFirestore();
+  const db = await getFirestore();
   await db.collection('adminOtps').doc(resetToken).delete();
 }
 
@@ -452,13 +455,13 @@ export async function deleteDbOtp(resetToken: string): Promise<void> {
 // ORDERS
 // -------------------------------------------------------------
 export async function getDbOrders(_forceReload = true): Promise<PlacedOrder[]> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const snap = await db.collection('orders').orderBy('createdAt', 'desc').get();
   return snap.docs.map((d) => d.data() as PlacedOrder);
 }
 
 export async function updateDbOrders(orders: PlacedOrder[]): Promise<void> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const batch = db.batch();
   for (const order of orders) {
     const docId = String(order.orderId);
@@ -469,7 +472,7 @@ export async function updateDbOrders(orders: PlacedOrder[]): Promise<void> {
 }
 
 export async function saveDbOrder(order: PlacedOrder): Promise<PlacedOrder> {
-  const db = getFirestore();
+  const db = await getFirestore();
   await db.collection('orders').doc(String(order.orderId)).set(order, { merge: true });
   return order;
 }
@@ -478,7 +481,7 @@ export async function saveDbOrder(order: PlacedOrder): Promise<PlacedOrder> {
 // SUBSCRIBERS / WAITLIST (DUPLICATE-PROTECTED)
 // -------------------------------------------------------------
 export async function getDbSubscribers(): Promise<EmailSubscriber[]> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const snap = await db.collection('subscribers').orderBy('createdAt', 'desc').get();
   return snap.docs.map((d) => d.data() as EmailSubscriber);
 }
@@ -492,7 +495,7 @@ export async function addDbSubscriber(subscriber: {
   consent?: boolean;
 }): Promise<{ subscriber: EmailSubscriber; isNew: boolean }> {
   const cleanEmail = subscriber.email.trim().toLowerCase();
-  const db = getFirestore();
+  const db = await getFirestore();
 
   const snap = await db
     .collection('subscribers')
@@ -534,7 +537,7 @@ export async function addDbSubscriber(subscriber: {
 // PRE-ORDERS & WAITLIST RESERVATIONS
 // -------------------------------------------------------------
 export async function getDbPreOrders(): Promise<PreOrderRecord[]> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const snap = await db.collection('preOrders').orderBy('createdAt', 'desc').get();
   return snap.docs.map((d) => d.data() as PreOrderRecord);
 }
@@ -547,7 +550,7 @@ export async function createDbPreOrder(data: {
   quantity?: number;
   notes?: string;
 }): Promise<PreOrderRecord> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const newRecord: PreOrderRecord = {
     id: `pre-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`,
     customerName: data.customerName.trim(),
@@ -568,7 +571,7 @@ export async function updateDbPreOrderStatus(
   id: string,
   status: PreOrderRecord['status']
 ): Promise<PreOrderRecord | null> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const docRef = db.collection('preOrders').doc(id);
   const snap = await docRef.get();
   if (!snap.exists) return null;
@@ -582,7 +585,7 @@ export async function updateDbPreOrderStatus(
 // PRODUCT REVIEWS
 // -------------------------------------------------------------
 export async function getDbReviews(includeAll = false): Promise<ProductReview[]> {
-  const db = getFirestore();
+  const db = await getFirestore();
   let query: Query = db.collection('reviews');
   if (!includeAll) {
     query = query.where('status', '==', 'approved');
@@ -600,7 +603,7 @@ export async function createDbReview(data: {
   title?: string;
   comment: string;
 }): Promise<{ success: boolean; review: ProductReview }> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const newReview: ProductReview = {
     id: `rev-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`,
     productId: data.productId,
@@ -622,7 +625,7 @@ export async function updateDbReviewStatus(
   id: string,
   status: ProductReview['status']
 ): Promise<ProductReview | null> {
-  const db = getFirestore();
+  const db = await getFirestore();
   const docRef = db.collection('reviews').doc(id);
   const snap = await docRef.get();
   if (!snap.exists) return null;
@@ -633,7 +636,7 @@ export async function updateDbReviewStatus(
 }
 
 export async function deleteDbReview(id: string): Promise<boolean> {
-  const db = getFirestore();
+  const db = await getFirestore();
   await db.collection('reviews').doc(id).delete();
   return true;
 }

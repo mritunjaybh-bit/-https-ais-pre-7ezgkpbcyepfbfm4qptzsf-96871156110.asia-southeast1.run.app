@@ -4,13 +4,13 @@ import express, { type Request, type Response } from 'express';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 
-import paymentsHandler from './api/payments.ts';
-import healthHandler from './api/health.ts';
-import coffeeMasterHandler from './api/coffee-master.ts';
-import adminHandler from './api/admin.ts';
-import publicProductsHandler from './api/products.ts';
-import ordersHandler from './api/orders.ts';
-import subscribersHandler from './api/subscribers.ts';
+import paymentsHandler from './api/payments.js';
+import healthHandler from './api/health.js';
+import coffeeMasterHandler from './api/coffee-master.js';
+import adminHandler from './api/admin.js';
+import publicProductsHandler from './api/products.js';
+import ordersHandler from './api/orders.js';
+import subscribersHandler from './api/subscribers.js';
 
 // Load environment variables from .env with override
 dotenv.config({ override: true });

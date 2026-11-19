@@ -69,9 +69,19 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
   );
   const mailtoHref = `mailto:mritunjay.bhardwaj@caphevietnam.in?subject=${mailtoSubject}&body=${mailtoBody}`;
 
-  const hasAnyComplianceNumber = Boolean(
-    siteSettings?.cin || siteSettings?.gstin || siteSettings?.iec
-  );
+  const legalName =
+    siteSettings?.legalName?.trim() || 'SuleVina International Ventures (OPC) Private Limited';
+  const cin = siteSettings?.cin?.trim() || 'U46307RJ2026OPC119787';
+  const gstin = siteSettings?.gstin?.trim();
+  const iec = siteSettings?.iec?.trim();
+  const fssai = siteSettings?.fssaiNumber?.trim();
+  const udyam = siteSettings?.udyamNumber?.trim();
+  const registeredOffice =
+    siteSettings?.showPartnerAddressPublicly && siteSettings?.partnerAddress?.trim()
+      ? siteSettings.partnerAddress.trim()
+      : '';
+
+  const hasAnyComplianceNumber = Boolean(gstin || iec || fssai || udyam);
 
   return (
     <div className="min-h-screen bg-[#fcfbf7] text-[#140d09] selection:bg-[#c5a880]/30 selection:text-[#140d09]">
@@ -138,7 +148,10 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
             Who We Are
           </h2>
           <p className="text-sm sm:text-base text-[#4a3f37] font-light leading-relaxed">
-            SuleVina Global Ventures (OPC) Private Limited (incorporation in progress) is an India-focused venture developing premium consumer product opportunities through thoughtful international sourcing and brand building. Through Cà Phê, we are exploring the introduction of Vietnamese-origin coffee products to the Indian market.
+            {legalName} is an India-focused venture developing premium consumer product opportunities through thoughtful international sourcing and brand building. Through Cà Phê, we are exploring the introduction of Vietnamese-origin coffee products to the Indian market.
+          </p>
+          <p className="text-xs text-[#6e635d] font-light">
+            Cà Phê is a brand of {legalName}. CIN: {cin}.
           </p>
         </div>
       </section>
@@ -499,16 +512,16 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
                 </div>
               </div>
 
-              {/* SECTION 10: SHOW POSTAL ADDRESS ONLY IF OWNER SETTING IS ON */}
-              {siteSettings?.showPartnerAddressPublicly && siteSettings?.partnerAddress && (
+              {/* SECTION 10: SHOW REGISTERED OFFICE ONLY IF TOGGLE IS ON */}
+              {registeredOffice && (
                 <div className="pt-3 border-t border-[#c5a880]/20 flex items-start gap-3">
                   <div className="w-8 h-8 rounded-full bg-[#140d09] text-[#c5a880] flex items-center justify-center shrink-0 mt-0.5">
                     <Building2 className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-[9px] uppercase tracking-[0.15em] text-[#8c827a] block">Registered Address</span>
+                    <span className="text-[9px] uppercase tracking-[0.15em] text-[#8c827a] block">Registered Office</span>
                     <p className="text-xs text-[#4a3f37] font-light leading-relaxed whitespace-pre-line">
-                      {siteSettings.partnerAddress}
+                      {registeredOffice}
                     </p>
                   </div>
                 </div>
@@ -532,29 +545,40 @@ export const PartnerPage: React.FC<PartnerPageProps> = ({
               </p>
             </div>
 
-            {/* SECTION 12: STATUTORY COMPLIANCE NUMBERS (CIN, GSTIN, IEC) - SHOW ONLY IF ENTERED */}
-            {hasAnyComplianceNumber && (
-              <div className="pt-4 border-t border-[#c5a880]/20 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
-                {siteSettings?.cin && (
-                  <div className="p-2.5 bg-[#fcfbf7] border border-[#c5a880]/20">
-                    <span className="text-[9px] uppercase tracking-[0.15em] text-[#8c827a] block">CIN</span>
-                    <span className="text-xs font-mono font-medium text-[#140d09]">{siteSettings.cin}</span>
-                  </div>
-                )}
-                {siteSettings?.gstin && (
-                  <div className="p-2.5 bg-[#fcfbf7] border border-[#c5a880]/20">
-                    <span className="text-[9px] uppercase tracking-[0.15em] text-[#8c827a] block">GSTIN</span>
-                    <span className="text-xs font-mono font-medium text-[#140d09]">{siteSettings.gstin}</span>
-                  </div>
-                )}
-                {siteSettings?.iec && (
-                  <div className="p-2.5 bg-[#fcfbf7] border border-[#c5a880]/20">
-                    <span className="text-[9px] uppercase tracking-[0.15em] text-[#8c827a] block">IEC</span>
-                    <span className="text-xs font-mono font-medium text-[#140d09]">{siteSettings.iec}</span>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* SECTION 12: LEGAL ENTITY & STATUTORY COMPLIANCE NUMBERS */}
+            <div className="pt-4 border-t border-[#c5a880]/20 space-y-3">
+              <p className="text-xs text-center text-[#4a3f37] font-light">
+                Cà Phê is a brand of {legalName}. CIN: <span className="font-mono">{cin}</span>.
+              </p>
+              {hasAnyComplianceNumber && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                  {gstin && (
+                    <div className="p-2.5 bg-[#fcfbf7] border border-[#c5a880]/20">
+                      <span className="text-[9px] uppercase tracking-[0.15em] text-[#8c827a] block">GSTIN</span>
+                      <span className="text-xs font-mono font-medium text-[#140d09]">{gstin}</span>
+                    </div>
+                  )}
+                  {iec && (
+                    <div className="p-2.5 bg-[#fcfbf7] border border-[#c5a880]/20">
+                      <span className="text-[9px] uppercase tracking-[0.15em] text-[#8c827a] block">IEC</span>
+                      <span className="text-xs font-mono font-medium text-[#140d09]">{iec}</span>
+                    </div>
+                  )}
+                  {fssai && (
+                    <div className="p-2.5 bg-[#fcfbf7] border border-[#c5a880]/20">
+                      <span className="text-[9px] uppercase tracking-[0.15em] text-[#8c827a] block">FSSAI</span>
+                      <span className="text-xs font-mono font-medium text-[#140d09]">{fssai}</span>
+                    </div>
+                  )}
+                  {udyam && (
+                    <div className="p-2.5 bg-[#fcfbf7] border border-[#c5a880]/20">
+                      <span className="text-[9px] uppercase tracking-[0.15em] text-[#8c827a] block">Udyam</span>
+                      <span className="text-xs font-mono font-medium text-[#140d09]">{udyam}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>

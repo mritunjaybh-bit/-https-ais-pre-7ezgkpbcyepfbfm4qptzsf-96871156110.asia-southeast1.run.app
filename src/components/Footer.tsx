@@ -38,8 +38,16 @@ export const Footer: React.FC<FooterProps> = ({
 
   const supportEmail = siteSettings?.publicContactEmail || siteSettings?.supportEmail || 'mritunjay.bhardwaj@caphevietnam.in';
   const whatsapp = siteSettings?.whatsappNumber;
-  const fssai = siteSettings?.fssaiNumber;
-  const gstin = siteSettings?.gstin;
+  const legalName = siteSettings?.legalName?.trim() || 'SuleVina International Ventures (OPC) Private Limited';
+  const cin = siteSettings?.cin?.trim() || 'U46307RJ2026OPC119787';
+  const fssai = siteSettings?.fssaiNumber?.trim();
+  const gstin = siteSettings?.gstin?.trim();
+  const iec = siteSettings?.iec?.trim();
+  const udyam = siteSettings?.udyamNumber?.trim();
+  const registeredOffice =
+    siteSettings?.showPartnerAddressPublicly && siteSettings?.partnerAddress?.trim()
+      ? siteSettings.partnerAddress.trim()
+      : '';
 
   return (
     <>
@@ -210,32 +218,37 @@ export const Footer: React.FC<FooterProps> = ({
             </div>
           </div>
 
-          {/* Statutory Registration Line (FSSAI, GSTIN, CIN, IEC displayed ONLY IF present in siteSettings) */}
-          {(fssai || gstin || siteSettings?.cin || siteSettings?.iec) && (
-            <div className="py-4 border-b border-[#c5a880]/15 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-[11px] text-[#a3978f] font-mono">
-              {fssai && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[#c5a880]">FSSAI Central Licence:</span>
-                  <span>{fssai}</span>
-                </div>
-              )}
-              {fssai && gstin && <span className="text-[#c5a880]/40">•</span>}
+          {/* Statutory Registration Line (GSTIN, IEC, FSSAI, Udyam, Registered Office displayed ONLY when set / toggled on) */}
+          {(gstin || iec || fssai || udyam || registeredOffice) && (
+            <div className="py-4 border-b border-[#c5a880]/15 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] text-[#a3978f] font-mono">
               {gstin && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-[#c5a880]">GSTIN:</span>
                   <span>{gstin}</span>
                 </div>
               )}
-              {siteSettings?.cin && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[#c5a880]">CIN:</span>
-                  <span>{siteSettings.cin}</span>
-                </div>
-              )}
-              {siteSettings?.iec && (
+              {iec && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-[#c5a880]">IEC:</span>
-                  <span>{siteSettings.iec}</span>
+                  <span>{iec}</span>
+                </div>
+              )}
+              {fssai && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#c5a880]">FSSAI:</span>
+                  <span>{fssai}</span>
+                </div>
+              )}
+              {udyam && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#c5a880]">Udyam:</span>
+                  <span>{udyam}</span>
+                </div>
+              )}
+              {registeredOffice && (
+                <div className="flex items-center gap-1.5 font-sans">
+                  <span className="text-[#c5a880] font-mono">Registered Office:</span>
+                  <span>{registeredOffice}</span>
                 </div>
               )}
             </div>
@@ -244,7 +257,7 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Bottom Bar */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#8c827a] font-light">
             <p className="text-center sm:text-left">
-              {siteSettings?.footerLegalLine || 'Cà Phê is a brand of SuleVina Global Ventures (OPC) Private Limited (incorporation in progress).'}
+              Cà Phê is a brand of {legalName}. CIN: {cin}.
             </p>
             <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-4 text-[11px]">
               <span>Vietnamese Heritage</span>

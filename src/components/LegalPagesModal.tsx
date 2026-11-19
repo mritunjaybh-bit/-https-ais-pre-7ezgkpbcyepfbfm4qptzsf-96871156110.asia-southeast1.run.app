@@ -28,8 +28,16 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
 
   if (!isOpen) return null;
 
-  const fssai = siteSettings?.fssaiNumber;
-  const gstin = siteSettings?.gstin;
+  const legalName = siteSettings?.legalName?.trim() || 'SuleVina International Ventures (OPC) Private Limited';
+  const cin = siteSettings?.cin?.trim() || 'U46307RJ2026OPC119787';
+  const fssai = siteSettings?.fssaiNumber?.trim();
+  const gstin = siteSettings?.gstin?.trim();
+  const iec = siteSettings?.iec?.trim();
+  const udyam = siteSettings?.udyamNumber?.trim();
+  const registeredOffice =
+    siteSettings?.showPartnerAddressPublicly && siteSettings?.partnerAddress?.trim()
+      ? siteSettings.partnerAddress.trim()
+      : '';
   const supportEmail = siteSettings?.publicContactEmail || siteSettings?.supportEmail || 'mritunjay.bhardwaj@caphevietnam.in';
   const whatsapp = siteSettings?.whatsappNumber;
   const dispatchWindow = siteSettings?.dispatchWindow || '24 to 48 business hours';
@@ -305,10 +313,13 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                     Statutory Registry
                   </span>
                   <div className="space-y-1 text-xs">
-                    <p><strong>Brand Entity:</strong> Cà Phê Vietnam</p>
-                    <p><strong>Registered Office:</strong> [Edit before launch: Registered Business Address, Karnataka, India - 560001]</p>
+                    <p><strong>Brand Entity:</strong> Cà Phê is a brand of {legalName}</p>
+                    <p><strong>CIN:</strong> <span className="font-mono">{cin}</span></p>
+                    {registeredOffice && <p><strong>Registered Office:</strong> {registeredOffice}</p>}
+                    {gstin && <p><strong>GSTIN:</strong> <span className="font-mono">{gstin}</span></p>}
+                    {iec && <p><strong>IEC:</strong> <span className="font-mono">{iec}</span></p>}
                     {fssai && <p><strong>FSSAI Central Licence:</strong> <span className="font-mono">{fssai}</span></p>}
-                    {gstin && <p><strong>GST Identification Number (GSTIN):</strong> <span className="font-mono">{gstin}</span></p>}
+                    {udyam && <p><strong>Udyam Number:</strong> <span className="font-mono">{udyam}</span></p>}
                   </div>
                 </div>
               </div>

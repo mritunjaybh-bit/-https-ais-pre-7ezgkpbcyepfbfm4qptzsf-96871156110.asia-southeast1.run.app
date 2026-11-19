@@ -1,4 +1,4 @@
-import type { BrewRecipe } from '../types.ts';
+import type { BrewRecipe } from '../types.js';
 
 export const BREW_RECIPES: Record<string, BrewRecipe> = {
   // 1. Saigon Artisan Chocolate & Dark Cacao Phin Powder

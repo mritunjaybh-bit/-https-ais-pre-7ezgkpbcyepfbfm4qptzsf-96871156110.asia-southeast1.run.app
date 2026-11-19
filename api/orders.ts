@@ -7,9 +7,9 @@ import {
   handleOrderDeliveredRewards,
   handleOrderCancelledReversal,
   DatabaseNotConfiguredError,
-} from './_lib/db.ts';
-import { isValidSession } from './_lib/auth-util.ts';
-import type { PlacedOrder, OrderState } from '../src/types.ts';
+} from './_lib/db.js';
+import { isValidSession } from './_lib/auth-util.js';
+import type { PlacedOrder, OrderState } from '../src/types.js';
 
 export default async function handler(req: any, res: any) {
   return ordersHandler(req, res);

@@ -189,10 +189,12 @@ export interface EmailSubscriber {
 export interface SiteSettings {
   preOrderMode: boolean;
   dispatchWindow: string;
+  legalName?: string;
   fssaiNumber: string;
   gstin: string;
   cin?: string;
   iec?: string;
+  udyamNumber?: string;
   whatsappNumber: string;
   announcementBarText: string;
   freeShippingThreshold: number;

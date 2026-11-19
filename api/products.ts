@@ -7,9 +7,9 @@ import {
   createDbReview,
   createDbPreOrder,
   DatabaseNotConfiguredError,
-} from './_lib/db.ts';
-import { isValidSession } from './_lib/auth-util.ts';
-import type { ProductItem } from '../src/types.ts';
+} from './_lib/db.js';
+import { isValidSession } from './_lib/auth-util.js';
+import type { ProductItem } from '../src/types.js';
 
 export default async function handler(req: any, res: any) {
   // CORS Headers

@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { getDbSubscribers, addDbSubscriber, getDbOrders, DatabaseNotConfiguredError } from './_lib/db.ts';
+import { getDbSubscribers, addDbSubscriber, getDbOrders, DatabaseNotConfiguredError } from './_lib/db.js';
 
 export default async function handler(req: any, res: any) {
   return subscribersHandler(req, res);

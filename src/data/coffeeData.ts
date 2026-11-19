@@ -1,5 +1,5 @@
-import type { ProductItem, BrewRecipe } from '../types.ts';
-import { BREW_RECIPES } from './brewRecipes.ts';
+import type { ProductItem, BrewRecipe } from '../types.js';
+import { BREW_RECIPES } from './brewRecipes.js';
 
 export const PRODUCT_ITEMS: ProductItem[] = [
   // ==================== PLANNED REAL PRODUCT RANGE (ACTIVE: COMING SOON) ====================

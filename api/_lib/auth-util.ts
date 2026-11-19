@@ -4,7 +4,7 @@ import {
   addDbSession,
   removeDbSession,
   clearDbSessions,
-} from './db.ts';
+} from './db.js';
 
 const activeSessions = new Set<string>();
 const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'caphe_vietnam_secret_roastery_2026';

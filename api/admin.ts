@@ -35,7 +35,7 @@ import {
   DatabaseNotConfiguredError,
   type UserAccount,
   type AdminConfig,
-} from './_lib/db.ts';
+} from './_lib/db.js';
 import {
   generateSessionToken,
   verifySessionToken,
@@ -46,8 +46,8 @@ import {
   checkLoginRateLimit,
   recordFailedLogin,
   resetLoginRateLimit,
-} from './_lib/auth-util.ts';
-import type { ProductItem } from '../src/types.ts';
+} from './_lib/auth-util.js';
+import type { ProductItem } from '../src/types.js';
 
 function sanitizeUser(u: any) {
   if (!u) return null;

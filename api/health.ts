@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { isFirestoreConfigured } from './_lib/db.ts';
+import { isFirestoreConfigured } from './_lib/db.js';
 
 dotenv.config();
 
