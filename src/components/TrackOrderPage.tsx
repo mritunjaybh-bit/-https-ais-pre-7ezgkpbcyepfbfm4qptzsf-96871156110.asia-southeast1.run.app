@@ -215,7 +215,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
       {/* Verification Search Box */}
       <div className="bg-white rounded-2xl border border-[#d3c3c0]/70 p-6 shadow-sm mb-8">
         {orderIdInput && !verifiedOrder && (
-          <div className="mb-4 p-3 rounded-xl bg-amber-50/80 border border-amber-200/80 flex items-center gap-2.5 text-xs text-amber-900">
+          <div className="mb-4 p-3 rounded-xl bg-[#faf2f0] border border-[#785a00]/30 flex items-center gap-2.5 text-xs text-[#271310]">
             <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>
               Order ID <strong className="font-mono text-[#785a00] font-bold">{orderIdInput}</strong> pre-filled from your tracking link. Please enter your email or phone below to view real-time delivery status.
@@ -308,7 +308,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
       {verifiedOrder ? (
         <div className="space-y-6">
           {/* Main Status Card */}
-          <div className="bg-white rounded-2xl border border-[#d3c3c0]/70 p-6 shadow-sm space-y-6">
+          <div className="bg-white rounded-2xl border border-[#d3c3c0] p-6 shadow-sm space-y-6">
             {/* Header info */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#f4ecea] pb-4">
               <div>
@@ -325,7 +325,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
                         ? 'bg-rose-100 text-rose-800 border border-rose-200'
                         : verifiedOrder.status === 'Delivered'
                         ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                        : 'bg-[#feca4d]/30 text-[#785a00] border border-[#feca4d]'
+                        : 'bg-[#feca4d]/20 text-[#785a00] border border-[#feca4d]'
                     }`}
                   >
                     {verifiedOrder.status}
@@ -374,10 +374,10 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
                         key={stg.label}
                         className={`p-3.5 rounded-xl border transition-all text-left flex flex-col justify-between ${
                           isCurrent
-                            ? 'bg-[#271310] text-white border-[#271310] shadow-md ring-2 ring-[#785a00]/40'
+                            ? 'bg-[#271310] text-white border-[#271310] shadow-md ring-2 ring-[#feca4d]/60'
                             : isCompleted
                             ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
-                            : 'bg-[#faf2f0] text-[#827472] border-[#d3c3c0]/60'
+                            : 'bg-[#faf2f0] text-[#827472] border-[#d3c3c0]/70'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-2">
@@ -387,7 +387,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
                                 ? 'bg-[#feca4d] text-[#271310]'
                                 : isCompleted
                                 ? 'bg-emerald-600 text-white'
-                                : 'bg-[#e5dcd9] text-[#827472]'
+                                : 'bg-[#f4ecea] text-[#827472]'
                             }`}
                           >
                             <Icon className="w-3.5 h-3.5" />
@@ -415,7 +415,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
                           </p>
                           <p
                             className={`text-[10px] mt-0.5 leading-snug ${
-                              isCurrent ? 'text-[#e5dcd9]' : isCompleted ? 'text-emerald-800' : 'text-[#827472]'
+                              isCurrent ? 'text-[#d3c3c0]' : isCompleted ? 'text-emerald-800' : 'text-[#827472]'
                             }`}
                           >
                             {stg.sub}
@@ -449,7 +449,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
                 <button
                   type="button"
                   onClick={() => handleCopyTrackingNumber(verifiedOrder.trackingNumber!)}
-                  className="px-3 py-1.5 rounded-lg border border-[#d3c3c0] bg-white hover:bg-[#eee3e1] text-[#271310] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-[#d3c3c0] bg-white hover:bg-[#faf2f0] text-[#271310] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   {copiedTracking ? (
                     <>
@@ -458,7 +458,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5 text-[#827472]" />
+                      <Copy className="w-3.5 h-3.5 text-[#785a00]" />
                       <span>Copy Tracking AWB</span>
                     </>
                   )}
@@ -519,7 +519,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-[#d3c3c0] flex items-center justify-between text-xs">
+                <div className="pt-2 border-t border-[#d3c3c0]/50 flex items-center justify-between text-xs">
                   <div>
                     <span className="text-[10px] text-[#827472] block">Payment Method</span>
                     <span className="font-semibold text-[#271310]">{verifiedOrder.paymentMethod}</span>
@@ -559,7 +559,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({
           </div>
         </div>
       ) : hasSearched && !searchError ? (
-        <div className="text-center py-10 bg-white rounded-2xl border border-[#d3c3c0]/70 p-6 space-y-3">
+        <div className="text-center py-10 bg-white rounded-2xl border border-[#d3c3c0] p-6 space-y-3">
           <Package className="w-10 h-10 text-[#827472] mx-auto" />
           <h3 className="font-serif font-bold text-base text-[#271310]">No Order Record Found</h3>
           <p className="text-xs text-[#504442] max-w-sm mx-auto">

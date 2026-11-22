@@ -16,7 +16,6 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
   const [triggerSource, setTriggerSource] = useState<'exit_intent' | 'timed_fallback'>('exit_intent');
 
   useEffect(() => {
-    // 1. Check if already submitted previously (persistent suppression)
     const alreadySubmitted =
       typeof window !== 'undefined' &&
       (localStorage.getItem('caphe_email_subscriber_submitted') === 'true' ||
@@ -26,7 +25,6 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
       return;
     }
 
-    // 2. Check if already shown in the current browser session (session flag)
     const sessionShown =
       typeof window !== 'undefined' &&
       sessionStorage.getItem('caphe_email_popup_session_shown') === 'true';
@@ -36,7 +34,6 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
     }
 
     const showModal = (source: 'exit_intent' | 'timed_fallback') => {
-      // Re-verify flags right before opening
       if (
         sessionStorage.getItem('caphe_email_popup_session_shown') === 'true' ||
         localStorage.getItem('caphe_email_subscriber_submitted') === 'true'
@@ -49,9 +46,7 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
       sessionStorage.setItem('caphe_email_popup_session_shown', 'true');
     };
 
-    // A. Exit-Intent Detection (Desktop: cursor moving towards closing tab / window top)
     const handleMouseLeave = (e: MouseEvent) => {
-      // When clientY is close to 0 or negative, mouse is exiting the top of the viewport
       if (e.clientY <= 12) {
         showModal('exit_intent');
       }
@@ -59,7 +54,6 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
 
     document.addEventListener('mouseleave', handleMouseLeave);
 
-    // B. Timed Fallback (Mobile devices + users browsing without top exit: 24 seconds)
     const timedTimer = setTimeout(() => {
       showModal('timed_fallback');
     }, 24000);
@@ -88,7 +82,6 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
     setIsSubmitting(true);
 
     try {
-      // 1. Send to server endpoint
       let serverSaved = false;
       try {
         const res = await fetch('/api/subscribers', {
@@ -112,7 +105,6 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
         console.warn('[Newsletter] /api/subscribers failed, trying admin fallback:', netErr);
       }
 
-      // 2. Admin fallback if needed
       if (!serverSaved) {
         try {
           await fetch('/api/admin', {
@@ -130,11 +122,9 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
         }
       }
 
-      // 3. Persist locally to guarantee permanent suppression
       localStorage.setItem('caphe_email_subscriber_submitted', 'true');
       localStorage.setItem('caphe_subscriber_email', cleanEmail);
 
-      // Also maintain offline list in localStorage
       try {
         const existingRaw = localStorage.getItem('caphe_subscribers_list') || '[]';
         const existingList = JSON.parse(existingRaw);
@@ -150,7 +140,6 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
       }
     } catch (err: any) {
       console.error('Subscription error:', err);
-      // Even if network fails, grant the discount code so user isn't punished
       localStorage.setItem('caphe_email_subscriber_submitted', 'true');
       localStorage.setItem('caphe_subscriber_email', cleanEmail);
       setIsClaimed(true);
@@ -165,7 +154,6 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 3000);
     } catch {
-      // Fallback
       setIsCopied(true);
     }
   };
@@ -176,31 +164,30 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fade-in"
     >
       <div className="relative w-full max-w-lg bg-[#fff8f6] border border-[#d3c3c0] rounded-3xl shadow-2xl overflow-hidden transform transition-all animate-scale-up">
+        {/* Top Accent Strip */}
+        <div className="h-2 w-full bg-gradient-to-r from-[#271310] via-[#785a00] to-[#feca4d]" />
+
         {/* Close Button */}
         <button
           onClick={handleClose}
           aria-label="Close discount modal"
-          className="absolute top-4 right-4 z-10 p-2 rounded-full text-[#827472] hover:text-[#271310] hover:bg-[#ede0dc]/70 transition-colors cursor-pointer"
+          className="absolute top-4 right-4 z-10 p-2 rounded-full text-[#827472] hover:text-[#271310] hover:bg-[#faf2f0] transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Decorative Top Accent Banner */}
-        <div className="h-2 w-full bg-linear-to-r from-[#785a00] via-[#feca4d] to-[#271310]" />
-
         <div className="p-7 sm:p-9 space-y-6">
-          {/* Badge & Decorative Icon */}
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f4ecea] border border-[#d3c3c0] text-[#785a00] text-xs font-bold tracking-widest uppercase">
-              <Sparkles className="w-3.5 h-3.5 text-[#feca4d] fill-[#feca4d]" />
-              <span>Chao Ban • Welcome Gift</span>
-            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#feca4d]/20 border border-[#feca4d]/50 text-[#785a00] text-[10px] font-bold tracking-[0.2em] uppercase">
+              <Sparkles className="w-3 h-3 text-[#785a00]" />
+              <span>Chào Bạn · Welcome Gift</span>
+            </span>
 
             <h3
-              className="text-2xl sm:text-3xl font-serif font-bold text-[#271310] leading-tight"
+              className="text-2xl sm:text-3xl font-serif font-bold text-[#271310] leading-tight pt-1"
               style={{ fontFamily: 'Playfair Display, serif' }}
             >
               Get 10% Off Your First Order
@@ -212,7 +199,6 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
           </div>
 
           {!isClaimed ? (
-            /* Email Capture Form */
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
                 <div className="relative flex items-center">
@@ -235,11 +221,10 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
                 )}
               </div>
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 px-6 rounded-xl bg-linear-to-r from-[#271310] to-[#3d201c] hover:from-[#3d201c] hover:to-[#271310] text-[#feca4d] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-60"
+                className="w-full py-3.5 px-6 rounded-xl bg-[#271310] hover:bg-[#3e2723] text-[#feca4d] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-60"
               >
                 {isSubmitting ? (
                   <div className="w-4 h-4 border-2 border-[#feca4d] border-t-transparent rounded-full animate-spin" />
@@ -251,7 +236,6 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
                 )}
               </button>
 
-              {/* Secondary Dismissal Link */}
               <div className="text-center pt-1">
                 <button
                   type="button"
@@ -263,9 +247,8 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
               </div>
             </form>
           ) : (
-            /* Success State with Coupon Code */
             <div className="space-y-5 animate-fade-in">
-              <div className="p-4 rounded-2xl bg-amber-50/80 border border-[#feca4d]/60 text-center space-y-2">
+              <div className="p-4 rounded-2xl bg-[#faf2f0] border border-[#d3c3c0] text-center space-y-2">
                 <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 mb-1">
                   <Check className="w-4 h-4 stroke-[3]" />
                 </div>
@@ -279,7 +262,7 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
                   </div>
                   <button
                     onClick={handleCopyCode}
-                    className="px-3.5 py-2 rounded-xl bg-[#271310] hover:bg-[#3d201c] text-[#feca4d] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    className="px-3.5 py-2 rounded-xl bg-[#271310] hover:bg-[#3e2723] text-[#feca4d] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                   >
                     {isCopied ? (
                       <>
@@ -302,7 +285,7 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
               <button
                 type="button"
                 onClick={handleClose}
-                className="w-full py-3 px-5 rounded-xl bg-[#785a00] hover:bg-[#5f4700] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
+                className="w-full py-3 px-5 rounded-xl bg-[#271310] hover:bg-[#3e2723] text-[#feca4d] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
               >
                 <span>Continue Shopping & Enjoy</span>
                 <ArrowRight className="w-4 h-4" />
@@ -310,8 +293,7 @@ export const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({ onCouponCl
             </div>
           )}
 
-          {/* Privacy Note */}
-          <div className="pt-2 border-t border-[#d3c3c0]/50 text-center">
+          <div className="pt-2 border-t border-[#d3c3c0]/60 text-center">
             <p className="text-[10px] text-[#827472]">
               We respect your privacy. No spam — only roastery updates, freshly roasted arrivals & brewing guides.
             </p>

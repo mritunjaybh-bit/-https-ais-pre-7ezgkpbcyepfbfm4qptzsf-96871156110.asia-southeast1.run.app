@@ -443,7 +443,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
             particleCount: 50,
             spread: 60,
             origin: { y: 0.7 },
-            colors: ['#feca4d', '#785a00', '#271310', '#fff8f6'],
+            colors: ['#feca4d', '#785a00', '#271310', '#081c17'],
           });
 
           // Mark current step as completed
@@ -495,7 +495,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
         particleCount: 100,
         spread: 100,
         origin: { y: 0.6 },
-        colors: ['#feca4d', '#785a00', '#271310', '#fff8f6'],
+        colors: ['#feca4d', '#785a00', '#271310', '#081c17'],
       });
     }
   };
@@ -533,7 +533,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
     <section id="brewing-guides-section" className="py-12 max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* Section Editorial Header */}
       <div className="text-center max-w-3xl mx-auto mb-10">
-        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#785a00] bg-[#feca4d]/15 px-3 py-1 rounded-full border border-[#feca4d]/30 inline-block mb-3">
+        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#785a00] bg-[#feca4d]/20 px-3 py-1 rounded-full border border-[#feca4d]/40 inline-block mb-3">
           Master Barista Guides • Living Craft
         </span>
         <h2
@@ -562,15 +562,15 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
                 setSelectedGuideId(guide.id);
                 setActiveStepIndex(0);
               }}
-              className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all relative overflow-hidden flex flex-col justify-between ${
+              className={`p-3.5 sm:p-4 rounded-xl border text-left transition-all relative overflow-hidden flex flex-col justify-between cursor-pointer ${
                 isSelected
-                  ? 'bg-[#271310] text-white border-[#271310] shadow-md ring-2 ring-[#785a00]/40'
-                  : 'bg-[#faf2f0] text-[#271310] border-[#d3c3c0]/60 hover:bg-[#eee3e1]'
+                  ? 'bg-[#271310] text-white border-[#271310] shadow-md ring-2 ring-[#feca4d]/60'
+                  : 'bg-[#faf2f0] text-[#271310] border-[#d3c3c0] hover:bg-[#eee3e1]'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                  isSelected ? 'bg-white/15 text-[#feca4d]' : 'bg-[#785a00]/10 text-[#785a00]'
+                  isSelected ? 'bg-[#feca4d]/20 text-[#feca4d]' : 'bg-[#785a00]/10 text-[#785a00]'
                 }`}>
                   {guide.difficulty}
                 </span>
@@ -600,19 +600,19 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
       </div>
 
       {/* Active Guide Card */}
-      <div className="bg-[#faf2f0] border border-[#d3c3c0]/60 rounded-3xl overflow-hidden shadow-md mb-12">
+      <div className="bg-[#faf2f0] border border-[#d3c3c0] rounded-3xl overflow-hidden shadow-md mb-12">
         {/* Guide Overview Banner */}
-        <div className="bg-[#271310] text-white p-6 sm:p-8 lg:p-10 relative overflow-hidden">
+        <div className="bg-[#271310] text-white p-6 sm:p-8 lg:p-10 relative overflow-hidden border-b border-[#785a00]/30">
           <div className="relative z-10 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#feca4d] bg-white/10 px-2.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#feca4d] bg-[#feca4d]/20 px-2.5 py-0.5 rounded-full border border-[#feca4d]/40">
                 {currentGuide.origin}
               </span>
               <span className="text-[10px] font-bold uppercase tracking-widest text-[#d3c3c0] bg-white/10 px-2.5 py-0.5 rounded-full">
                 Prep: {currentGuide.prepTime} • Brew: {currentGuide.brewTime}
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#feca4d] bg-white/10 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                <Thermometer className="w-3 h-3 text-[#feca4d]" /> {currentGuide.temperature}
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#feca4d] bg-[#feca4d]/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <Thermometer className="w-3 h-3" /> {currentGuide.temperature}
               </span>
             </div>
 
@@ -629,16 +629,16 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
         </div>
 
         {/* Equipment & Ingredients Specs Bar */}
-        <div className="p-6 sm:p-8 border-b border-[#d3c3c0]/40 bg-[#f4ecea]">
+        <div className="p-6 sm:p-8 border-b border-[#d3c3c0]/50 bg-[#fff8f6]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Ingredients Checklist */}
             <div className="space-y-2.5">
               <h4 className="text-xs font-bold uppercase tracking-wider text-[#785a00] flex items-center gap-1.5">
-                <Coffee className="w-4 h-4 text-[#785a00]" /> Ingredients Required
+                <Coffee className="w-4 h-4" /> Ingredients Required
               </h4>
               <ul className="space-y-1.5 text-xs text-[#271310]">
                 {currentGuide.ingredients.map((ing, idx) => (
-                  <li key={idx} className="flex items-start justify-between bg-white/80 p-2 rounded-lg border border-[#d3c3c0]/30">
+                  <li key={idx} className="flex items-start justify-between bg-[#faf2f0]/70 p-2 rounded-lg border border-[#d3c3c0]/40">
                     <span className="font-semibold">{ing.item}</span>
                     <span className="text-[#785a00] font-bold ml-2 text-right">
                       {ing.amount}
@@ -652,11 +652,11 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
             {/* Equipment Checklist */}
             <div className="space-y-2.5">
               <h4 className="text-xs font-bold uppercase tracking-wider text-[#785a00] flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-[#785a00]" /> Barista Equipment Needed
+                <Layers className="w-4 h-4" /> Barista Equipment Needed
               </h4>
               <ul className="space-y-1.5 text-xs text-[#271310]">
                 {currentGuide.equipment.map((eq, idx) => (
-                  <li key={idx} className="flex items-center gap-2 bg-white/80 p-2 rounded-lg border border-[#d3c3c0]/30">
+                  <li key={idx} className="flex items-center gap-2 bg-[#faf2f0]/70 p-2 rounded-lg border border-[#d3c3c0]/40">
                     <CheckCircle className="w-3.5 h-3.5 text-[#785a00] flex-shrink-0" />
                     <span>{eq}</span>
                   </li>
@@ -669,7 +669,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
         {/* Step-by-Step Interactive Workflow */}
         <div className="p-6 sm:p-8 space-y-8">
           {/* Step Navigation Pill Tracker */}
-          <div className="flex items-center justify-between border-b border-[#d3c3c0]/40 pb-4 overflow-x-auto no-scrollbar gap-2">
+          <div className="flex items-center justify-between border-b border-[#d3c3c0]/60 pb-4 overflow-x-auto no-scrollbar gap-2">
             {currentGuide.steps.map((step, idx) => {
               const isCurrent = idx === activeStepIndex;
               const isDone = completedSteps[selectedGuideId]?.includes(step.stepNumber);
@@ -678,16 +678,16 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
                 <button
                   key={idx}
                   onClick={() => setActiveStepIndex(idx)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     isCurrent
-                      ? 'bg-[#785a00] text-white shadow-sm font-bold'
+                      ? 'bg-[#271310] text-white shadow-sm font-bold'
                       : isDone
                       ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                      : 'bg-white text-[#504442] border border-[#d3c3c0]/60 hover:bg-[#eee3e1]'
+                      : 'bg-white text-[#504442] border border-[#d3c3c0] hover:bg-[#eee3e1]'
                   }`}
                 >
                   <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                    isCurrent ? 'bg-white text-[#785a00]' : isDone ? 'bg-emerald-600 text-white' : 'bg-[#e4d7d5] text-[#271310]'
+                    isCurrent ? 'bg-[#feca4d] text-[#271310]' : isDone ? 'bg-emerald-600 text-white' : 'bg-[#eee3e1] text-[#271310]'
                   }`}>
                     {isDone ? '✓' : step.stepNumber}
                   </span>
@@ -717,7 +717,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
                 {currentStep.title}
               </h3>
 
-              <div className="bg-white p-4 sm:p-5 rounded-xl border border-[#d3c3c0]/60 shadow-xs space-y-3">
+              <div className="bg-white p-4 sm:p-5 rounded-xl border border-[#d3c3c0]/70 shadow-xs space-y-3">
                 <p className="text-sm font-semibold text-[#271310] leading-snug">
                   {currentStep.shortInstruction}
                 </p>
@@ -727,9 +727,9 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
               </div>
 
               {/* Barista Pro Tip */}
-              <div className="bg-[#fff8e7] border-l-4 border-[#785a00] p-4 rounded-r-xl space-y-1">
+              <div className="bg-[#fff8f6] border-l-4 border-[#785a00] p-4 rounded-r-xl space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-[#785a00]">
-                  <Lightbulb className="w-4 h-4 text-[#785a00]" />
+                  <Lightbulb className="w-4 h-4" />
                   <span>Barista Masterclass Tip</span>
                 </div>
                 <p className="text-xs text-[#504442] leading-relaxed">
@@ -738,7 +738,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
               </div>
 
               {/* Step Navigation Controls */}
-              <div className="flex items-center justify-between pt-4 border-t border-[#d3c3c0]/40">
+              <div className="flex items-center justify-between pt-4 border-t border-[#d3c3c0]/50">
                 <button
                   type="button"
                   onClick={handlePrevStep}
@@ -746,7 +746,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
                   className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                     activeStepIndex === 0
                       ? 'text-[#a39492] cursor-not-allowed'
-                      : 'bg-white border border-[#d3c3c0] text-[#271310] hover:bg-[#eee3e1]'
+                      : 'bg-white border border-[#d3c3c0] text-[#271310] hover:bg-[#eee3e1] cursor-pointer'
                   }`}
                 >
                   <ChevronLeft className="w-4 h-4" /> Previous Step
@@ -776,8 +776,8 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
             <div className="lg:col-span-5 space-y-4">
               {/* Interactive Countdown Timer (if step requires timing) */}
               {currentStep.durationSeconds ? (
-                <div className="bg-[#271310] text-white rounded-2xl p-6 sm:p-7 shadow-lg relative overflow-hidden space-y-4 border border-[#3d201c]">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="bg-[#271310] text-white rounded-2xl p-6 sm:p-7 shadow-lg relative overflow-hidden space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/15 pb-3">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-[#feca4d]" />
                       <span className="text-xs font-bold uppercase tracking-wider text-[#feca4d]">
@@ -787,7 +787,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
                     <button
                       type="button"
                       onClick={() => setSoundEnabled(!soundEnabled)}
-                      className={`p-1.5 rounded-lg text-xs transition-colors ${
+                      className={`p-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
                         soundEnabled ? 'text-[#feca4d] bg-white/10' : 'text-[#827472] bg-white/5'
                       }`}
                       title={soundEnabled ? 'Chime sound enabled' : 'Chime sound muted'}
@@ -838,7 +838,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
                       <button
                         type="button"
                         onClick={handleStartTimer}
-                        className="py-2.5 px-3 bg-[#feca4d] hover:bg-[#ffc229] text-[#271310] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                        className="py-2.5 px-3 bg-[#feca4d] hover:bg-[#e5b33d] text-[#271310] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
                       >
                         <Play className="w-4 h-4" /> Start Timer ({Math.ceil(currentStep.durationSeconds / 60)}m)
                       </button>
@@ -854,7 +854,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#271310] text-white rounded-2xl p-6 text-center space-y-2 border border-[#3d201c]">
+                <div className="bg-[#271310] text-white rounded-2xl p-6 text-center space-y-2">
                   <CheckCircle className="w-8 h-8 text-[#feca4d] mx-auto" />
                   <h5 className="text-sm font-bold font-serif">Action-Based Step</h5>
                   <p className="text-xs text-[#d3c3c0]">
@@ -864,7 +864,7 @@ export const BrewingGuidesSection: React.FC<BrewingGuidesSectionProps> = ({
               )}
 
               {/* Visual Cue Card */}
-              <div className="bg-white p-4 rounded-xl border border-[#d3c3c0]/60 space-y-2">
+              <div className="bg-white p-4 rounded-xl border border-[#d3c3c0]/70 space-y-2">
                 <div className="flex items-center gap-2 text-xs font-bold text-[#271310]">
                   <Sparkles className="w-3.5 h-3.5 text-[#785a00]" />
                   <span>Visual Texture Target</span>

@@ -12,7 +12,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   onOpenMatcher,
 }) => {
   return (
-    <section className="relative w-full max-w-full overflow-hidden bg-[#140d09] text-[#fcfbf7] border-b border-[#c5a880]/20 py-20 sm:py-28 lg:py-36 font-sans">
+    <section className="relative w-full max-w-full overflow-hidden bg-[#140d09] text-[#fcfbf7] border-b border-[#c5a880]/20 py-14 sm:py-24 lg:py-28 font-sans">
       {/* Background Editorial Ambient Lighting */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a170e]/60 via-[#140d09] to-[#0c0806]" />
@@ -25,9 +25,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           {/* Left Column: Brand Story & Pure Editorial Typography (7 cols) */}
           <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
             {/* Super Header Tagline */}
-            <div className="inline-flex items-center gap-2 text-[#c5a880] text-[10px] font-medium tracking-[0.3em] uppercase border-b border-[#c5a880]/40 pb-1">
+            <div className="inline-flex items-center gap-2 text-[#c5a880] text-[10px] font-medium tracking-[0.3em] uppercase border-b border-[#c5a880]/40 pb-1.5">
               <Sparkles className="w-3 h-3" />
-              <span>Cà Phê • Vietnamese Coffee House</span>
+              <span>Cà Phê • From Vietnam With Love</span>
             </div>
 
             {/* Display Headline */}
@@ -81,7 +81,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           {/* Right Column: Editorial Visual Showcase (5 cols) */}
           <div className="lg:col-span-5">
             <div className="relative bg-white/5 backdrop-blur-sm rounded-none border border-[#c5a880]/30 p-6 sm:p-8 space-y-6">
-              <div className="flex items-center justify-between border-b border-[#c5a880]/20 pb-4">
+              <div className="flex items-center justify-between border-b border-[#c5a880]/20 pb-3">
                 <span className="text-[9px] uppercase tracking-[0.25em] text-[#c5a880] font-medium">
                   Planned Product Range
                 </span>

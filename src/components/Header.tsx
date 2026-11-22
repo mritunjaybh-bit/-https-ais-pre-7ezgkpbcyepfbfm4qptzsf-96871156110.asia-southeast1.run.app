@@ -53,37 +53,38 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const currencies: Currency[] = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'VND'];
-  const supportEmail = siteSettings?.publicContactEmail || siteSettings?.supportEmail || 'mritunjay.bhardwaj@caphevietnam.in';
+  const supportEmail = (
+    siteSettings?.publicContactEmail ||
+    siteSettings?.supportEmail ||
+    'mritunjay.bhardwaj@caphevietnam.in'
+  ).trim();
   const isWaitlistMode = !siteSettings?.directCheckoutEnabled;
-  const announcementText = siteSettings?.announcementBarText || 'A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.';
 
   return (
     <header className="sticky top-0 z-40 w-full max-w-full bg-[#fcfbf7]/95 backdrop-blur-md border-b border-[#c5a880]/20 font-sans transition-colors duration-300">
       {/* Editorial Luxury Top Announcement Bar */}
       <div className="w-full bg-[#140d09] text-[#fcfbf7] text-[11px] py-2 px-4 font-light tracking-[0.2em] uppercase border-b border-[#c5a880]/20">
-        {/* Mobile View (< 640px): Single short line, no email, no wrapping */}
-        <div className="sm:hidden text-center text-[#c5a880] tracking-[0.25em] font-normal truncate">
+        {/* Mobile View (< 640px): Single short line, no email, no truncation */}
+        <div className="sm:hidden text-center text-[#c5a880] tracking-[0.2em] font-normal leading-snug">
           Launching soon in India
         </div>
 
-        {/* Tablet & Desktop View (>= 640px): Full announcement without overflow */}
-        <div className="hidden sm:flex items-center justify-between gap-4">
-          <div className="hidden lg:flex items-center gap-2 text-[#c5a880] truncate max-w-sm xl:max-w-md">
-            <span className="truncate">{announcementText}</span>
-          </div>
-          <div className="mx-auto lg:mx-0 flex items-center gap-2 text-center shrink-0">
-            <span className="text-[#c5a880] tracking-widest font-normal">Vietnamese Heritage • Launching Soon in India</span>
-            <span className="text-[#c5a880]">•</span>
-            <a
-              href={`mailto:${supportEmail}`}
-              className="text-[#e5ded8] hover:text-[#c5a880] underline underline-offset-2 transition-colors"
-            >
-              {supportEmail}
-            </a>
-          </div>
-          <div className="hidden lg:flex items-center gap-3 text-[10px] text-[#c5a880] tracking-[0.25em] shrink-0">
-            <span>Cà Phê Việt Nam</span>
-          </div>
+        {/* Tablet & Desktop View (>= 640px): Single centered message + mailto link, wraps cleanly if narrow */}
+        <div className="hidden sm:flex flex-wrap items-center justify-center gap-x-2.5 gap-y-0.5 text-center leading-snug">
+          <span className="text-[#c5a880] font-normal">
+            Vietnamese-origin coffee · Launching soon in India
+          </span>
+          {supportEmail && (
+            <>
+              <span aria-hidden="true" className="text-[#c5a880]">·</span>
+              <a
+                href={`mailto:${supportEmail}`}
+                className="text-[#e5ded8] hover:text-[#c5a880] underline underline-offset-2 transition-colors"
+              >
+                {supportEmail}
+              </a>
+            </>
+          )}
         </div>
       </div>
 

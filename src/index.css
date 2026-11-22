@@ -2,7 +2,7 @@
 
 @layer base {
   :root {
-    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-serif: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
     --font-sans: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
@@ -15,8 +15,8 @@
 
   body {
     font-family: var(--font-sans);
-    background-color: #fff8f6;
-    color: #271310;
+    background-color: #fcfbf7;
+    color: #140d09;
     overflow-x: hidden;
     max-width: 100%;
     width: 100%;
@@ -54,7 +54,7 @@
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #827472;
+  background: #785a00;
 }
 
 @keyframes slowDrip {

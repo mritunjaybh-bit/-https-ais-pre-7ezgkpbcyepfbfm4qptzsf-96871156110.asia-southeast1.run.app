@@ -51,7 +51,7 @@ export const CirclePage: React.FC<CirclePageProps> = ({ onBackToShop, onOpenTerm
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
         {/* LAUNCH NOTICE CARD (Sign-up form hidden until launch) */}
         <div className="max-w-xl mx-auto p-8 sm:p-10 rounded-2xl bg-[#140d09] text-[#fcfbf7] border border-[#c5a880]/40 shadow-2xl text-center space-y-6">
-          <div className="w-14 h-14 rounded-full bg-[#c5a880]/15 border border-[#c5a880]/50 text-[#c5a880] flex items-center justify-center mx-auto">
+          <div className="w-14 h-14 rounded-full bg-[#c5a880]/15 border border-[#c5a880]/40 flex items-center justify-center mx-auto text-[#c5a880]">
             <Award className="w-7 h-7" />
           </div>
 

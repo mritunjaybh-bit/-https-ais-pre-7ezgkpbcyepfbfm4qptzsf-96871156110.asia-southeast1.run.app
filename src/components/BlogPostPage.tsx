@@ -52,7 +52,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
 
       <div className="w-full max-w-[860px] mx-auto px-4 sm:px-6 space-y-8">
         {/* Top Breadcrumb & Action Navigation Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#d3c3c0]/60 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#d3c3c0]/50 pb-4">
           <div className="flex items-center gap-2 text-xs">
             <button
               onClick={onBackToBlog}
@@ -71,7 +71,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <button
               onClick={onNavigateToShop}
-              className="inline-flex items-center gap-1.5 bg-[#271310] hover:bg-[#3e2723] text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-[#271310] hover:bg-[#3d201c] text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-xs transition-colors cursor-pointer"
               title="Shop artisanal Vietnamese coffee powders and Phin kits"
             >
               <ShoppingBag className="w-3.5 h-3.5 text-[#feca4d]" />
@@ -90,7 +90,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                 </>
               ) : (
                 <>
-                  <Share2 className="w-3.5 h-3.5 text-[#785a00]" />
+                  <Share2 className="w-3.5 h-3.5" />
                   <span>Share</span>
                 </>
               )}
@@ -101,7 +101,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
         {/* Post Header */}
         <header className="space-y-4">
           <div className="flex flex-wrap items-center gap-2.5 text-xs">
-            <span className="font-bold text-[#785a00] uppercase tracking-wider text-[11px] bg-[#feca4d]/20 px-3 py-1 rounded-full border border-[#feca4d]/35">
+            <span className="font-bold text-[#785a00] uppercase tracking-wider text-[11px] bg-[#feca4d]/20 px-3 py-1 rounded-full border border-[#feca4d]/40">
               {post.category}
             </span>
             <div className="flex items-center gap-1 text-[#827472]">
@@ -122,7 +122,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
           </p>
 
           {/* Author Byline */}
-          <div className="flex items-center gap-3 pt-3 border-t border-[#d3c3c0]/40">
+          <div className="flex items-center gap-3 pt-3 border-t border-[#f4ecea]">
             <div>
               <div className="text-xs font-bold text-[#271310]">
                 By Cà Phê Editorial
@@ -136,7 +136,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
 
         {/* Featured Image with Caption */}
         <figure className="space-y-2">
-          <div className="w-full h-72 sm:h-96 md:h-[460px] rounded-2xl overflow-hidden border border-[#d3c3c0]/80 shadow-sm bg-[#271310]/5">
+          <div className="w-full h-72 sm:h-96 md:h-[460px] rounded-2xl overflow-hidden border border-[#d3c3c0] shadow-sm bg-[#271310]/5">
             <img
               src={post.featuredImage}
               alt={post.title}
@@ -156,7 +156,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
             switch (block.type) {
               case 'paragraph':
                 return (
-                  <p key={idx} className="text-[#3c302d] leading-relaxed">
+                  <p key={idx} className="text-[#3e2723] leading-relaxed">
                     {block.text}
                   </p>
                 );
@@ -166,7 +166,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                   return (
                     <h2
                       key={idx}
-                      className="text-xl sm:text-2xl font-bold text-[#271310] pt-4 border-b border-[#d3c3c0]/40 pb-2 font-serif-brand"
+                      className="text-xl sm:text-2xl font-bold text-[#271310] pt-4 border-b border-[#f4ecea] pb-2 font-serif-brand"
                       style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
                     >
                       {block.text}
@@ -176,7 +176,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                   return (
                     <h3
                       key={idx}
-                      className="text-lg sm:text-xl font-bold text-[#271310] pt-2 font-serif-brand text-[#785a00]"
+                      className="text-lg sm:text-xl font-bold text-[#785a00] pt-2 font-serif-brand"
                       style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
                     >
                       {block.text}
@@ -189,7 +189,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                   return (
                     <ol
                       key={idx}
-                      className="space-y-2.5 list-decimal pl-5 text-[#3c302d] text-sm sm:text-[15px]"
+                      className="space-y-2.5 list-decimal pl-5 text-[#3e2723] text-sm sm:text-[15px]"
                     >
                       {block.items.map((item, itemIdx) => (
                         <li key={itemIdx} className="pl-1">
@@ -202,7 +202,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                   return (
                     <ul
                       key={idx}
-                      className="space-y-2 list-disc pl-5 text-[#3c302d] text-sm sm:text-[15px]"
+                      className="space-y-2 list-disc pl-5 text-[#3e2723] text-sm sm:text-[15px]"
                     >
                       {block.items.map((item, itemIdx) => (
                         <li key={itemIdx} className="pl-1">
@@ -217,13 +217,13 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                 return (
                   <div
                     key={idx}
-                    className="my-4 p-4 sm:p-5 rounded-xl bg-[#faf2f0] border-l-4 border-[#785a00] border-t border-r border-b border-[#d3c3c0]/60 space-y-1.5"
+                    className="my-4 p-4 sm:p-5 rounded-xl bg-[#faf2f0] border-l-4 border-[#785a00] space-y-1.5"
                   >
                     <div className="flex items-center gap-2 text-xs font-bold text-[#785a00] uppercase tracking-wider">
                       <Lightbulb className="w-4 h-4 text-[#785a00]" />
                       <span>{block.title || 'Barista Tip'}</span>
                     </div>
-                    <p className="text-xs sm:text-sm text-[#3c302d] leading-relaxed">
+                    <p className="text-xs sm:text-sm text-[#3e2723] leading-relaxed">
                       {block.text}
                     </p>
                   </div>
@@ -233,9 +233,9 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                 return (
                   <blockquote
                     key={idx}
-                    className="my-6 p-5 sm:p-6 rounded-2xl bg-white border border-[#d3c3c0]/60 shadow-2xs relative space-y-2"
+                    className="my-6 p-5 sm:p-6 rounded-2xl bg-white border border-[#d3c3c0] shadow-2xs relative space-y-2"
                   >
-                    <Quote className="w-6 h-6 text-[#feca4d] opacity-70" />
+                    <Quote className="w-6 h-6 text-[#feca4d]" />
                     <p
                       className="text-base sm:text-lg italic text-[#271310] font-serif-brand"
                       style={{ fontFamily: 'Playfair Display, Georgia, serif' }}
@@ -273,7 +273,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
         </div>
 
         {/* Tags & Share Section */}
-        <div className="pt-6 border-t border-[#d3c3c0]/60 flex flex-wrap items-center justify-between gap-4">
+        <div className="pt-6 border-t border-[#d3c3c0]/50 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs font-semibold text-[#827472] mr-1">Tags:</span>
             {post.tags.map((tag) => (
@@ -305,10 +305,10 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
         </div>
 
         {/* Product / Roastery Mid-Post Callout Card */}
-        <div className="bg-[#271310] text-[#f4eceb] rounded-2xl p-6 sm:p-8 border border-[#3e2723] shadow-md flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="bg-[#271310] text-white rounded-2xl p-6 sm:p-8 border border-[#785a00]/40 shadow-md flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center sm:text-left">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-[#feca4d] bg-[#feca4d]/15 px-2.5 py-0.5 rounded-full border border-[#feca4d]/30">
-              <Sparkles className="w-3 h-3 text-[#feca4d]" />
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-[#feca4d] bg-[#feca4d]/10 px-2.5 py-0.5 rounded-full border border-[#feca4d]/30">
+              <Sparkles className="w-3 h-3" />
               <span>Authentic Vietnamese Tradition</span>
             </div>
             <h4
@@ -317,23 +317,23 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
             >
               Ready to Brew Like a Vietnamese Master?
             </h4>
-            <p className="text-xs text-[#ae8d87] max-w-md">
+            <p className="text-xs text-[#d3c3c0] max-w-md">
               Order authentic heirloom Robusta ground powders, artisanal egg & cacao blends, and stainless steel Phin drippers.
             </p>
           </div>
 
           <button
             onClick={onNavigateToShop}
-            className="shrink-0 bg-[#feca4d] hover:bg-[#ffc02e] text-[#271310] text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs transition-all duration-200 flex items-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap"
+            className="shrink-0 bg-[#feca4d] hover:bg-[#e5b33d] text-[#271310] text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs transition-all duration-200 flex items-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap"
           >
-            <ShoppingBag className="w-4 h-4 text-[#271310]" />
+            <ShoppingBag className="w-4 h-4" />
             <span>Shop Coffee & Phin</span>
           </button>
         </div>
 
         {/* Related Reads & Navigation */}
         {relatedPosts.length > 0 && (
-          <div className="pt-8 border-t border-[#d3c3c0]/60 space-y-6">
+          <div className="pt-8 border-t border-[#d3c3c0]/50 space-y-6">
             <div className="flex items-center justify-between">
               <h3
                 className="text-lg sm:text-xl font-bold text-[#271310] font-serif-brand"
@@ -354,12 +354,12 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                 <div
                   key={rel.id}
                   onClick={() => onSelectRelatedPost(rel)}
-                  className="bg-white rounded-xl border border-[#d3c3c0]/80 p-4 hover:shadow-md transition-shadow cursor-pointer flex gap-3 group"
+                  className="bg-white rounded-xl border border-[#d3c3c0] p-4 hover:shadow-md transition-shadow cursor-pointer flex gap-3 group"
                 >
                   <img
                     src={rel.featuredImage}
                     alt={rel.title}
-                    className="w-20 h-20 rounded-lg object-cover shrink-0 border border-[#d3c3c0]"
+                    className="w-20 h-20 rounded-lg object-cover shrink-0"
                   />
                   <div className="space-y-1 min-w-0">
                     <span className="text-[10px] font-bold text-[#785a00] uppercase tracking-wider block">

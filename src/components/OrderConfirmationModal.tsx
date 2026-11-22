@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Currency, CartItem } from '../types';
 import { formatPrice } from '../utils/formatCurrency';
-import { Logo } from './Logo';
 import {
   CheckCircle,
   Truck,
@@ -106,23 +105,20 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
     >
       <div
         id="order-confirmation-modal"
-        className="bg-[#fff8f6] w-full max-w-lg rounded-2xl border border-[#d3c3c0]/60 shadow-2xl overflow-hidden my-6 text-xs text-[#271310]"
+        className="bg-[#fff8f6] w-full max-w-lg rounded-2xl border border-[#d3c3c0] shadow-2xl overflow-hidden my-6 text-xs text-[#271310]"
       >
         {/* Receipt Header Banner */}
-        <div className="bg-[#271310] text-[#f4eceb] p-6 text-center space-y-2">
-          <div className="w-12 h-12 rounded-full bg-[#785a00] text-white mx-auto flex items-center justify-center mb-2 shadow-inner">
-            <CheckCircle className="w-7 h-7 text-[#feca4d]" />
+        <div className="bg-[#271310] text-white p-6 text-center space-y-2 border-b border-[#785a00]/30">
+          <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 flex items-center justify-center mx-auto mb-1">
+            <CheckCircle className="w-6 h-6" />
           </div>
-          <span className="text-[10px] uppercase font-bold tracking-widest text-[#feca4d] block">
-            Order Confirmed
-          </span>
           <h3
             className="text-2xl font-bold text-white font-serif"
             style={{ fontFamily: 'Playfair Display, serif' }}
           >
             Your order has been placed successfully!
           </h3>
-          <p className="text-xs text-[#f4eceb]/80 max-w-sm mx-auto">
+          <p className="text-xs text-[#feca4d] max-w-sm mx-auto">
             Thank you for brewing with us! A confirmation email has been sent to{' '}
             <strong className="text-white font-mono">{orderDetails.customerEmail}</strong>.
           </p>
@@ -337,7 +333,7 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-[#fff8f6] p-4 border-t border-[#d3c3c0]/50 flex flex-wrap items-center justify-between gap-2.5">
+        <div className="bg-[#faf2f0] p-4 border-t border-[#d3c3c0] flex flex-wrap items-center justify-between gap-2.5">
           <button
             type="button"
             onClick={() => window.print()}
@@ -350,7 +346,7 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
           <button
             type="button"
             onClick={handleTrackClick}
-            className="px-4 py-2 rounded-lg bg-[#feca4d] hover:bg-[#ffda7a] text-[#271310] font-bold text-xs flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-lg bg-[#feca4d] hover:bg-[#e5b33d] text-[#271310] font-bold text-xs flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
           >
             <Truck className="w-3.5 h-3.5 text-[#271310]" />
             <span>Track Your Order</span>

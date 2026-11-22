@@ -57,8 +57,15 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 pb-14 border-b border-[#c5a880]/20">
             {/* Brand Identity & Mission (5 cols) */}
             <div className="lg:col-span-5 space-y-5">
-              <div className="inline-block bg-[#fcfbf7] p-2.5 rounded-lg">
-                <Logo size="sm" showTagline={false} />
+              <div className="inline-block bg-[#fcfbf7] rounded-lg p-2.5">
+                <Logo
+                  size="md"
+                  showTagline={true}
+                  onClick={() => {
+                    onSelectTab('shop');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
               </div>
               <p className="text-xs text-[#a3978f] font-light leading-relaxed pr-4">
                 A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon.

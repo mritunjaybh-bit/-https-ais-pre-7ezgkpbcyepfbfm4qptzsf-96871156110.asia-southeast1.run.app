@@ -2017,8 +2017,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           {authView === 'login' && (
             <div className="space-y-5">
               <div className="text-center space-y-2">
-                <div className="w-14 h-14 rounded-2xl bg-[#785a00]/30 border border-[#feca4d]/40 text-[#feca4d] flex items-center justify-center mx-auto shadow-md">
-                  <Lock className="w-7 h-7" />
+                <div className="w-12 h-12 rounded-2xl bg-[#feca4d]/15 border border-[#feca4d]/40 text-[#feca4d] flex items-center justify-center mx-auto mb-1">
+                  <Coffee className="w-6 h-6" />
                 </div>
                 <h1
                   className="font-serif font-bold text-2xl text-white tracking-wide"
@@ -2174,10 +2174,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       {/* Top Bar / Dedicated Console Header */}
       <div className="bg-[#1f110f] text-white rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg border border-[#3e2723]">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#785a00] to-[#feca4d] p-0.5 flex items-center justify-center shadow-sm shrink-0">
-            <div className="w-full h-full rounded-[10px] bg-[#140b09] flex items-center justify-center text-[#feca4d]">
-              <Coffee className="w-5 h-5" />
-            </div>
+          <div className="w-11 h-11 rounded-xl bg-[#feca4d] text-[#271310] flex items-center justify-center shadow-sm shrink-0">
+            <Coffee className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">

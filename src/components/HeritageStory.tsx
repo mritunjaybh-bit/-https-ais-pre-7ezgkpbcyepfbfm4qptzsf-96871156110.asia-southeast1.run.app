@@ -43,7 +43,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
     <section id="heritage-story-section" className="w-full max-w-[1200px] mx-auto py-10 px-4 sm:px-6">
       {/* Editorial Header */}
       <div className="text-center max-w-3xl mx-auto mb-14">
-        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#785a00] bg-[#feca4d]/15 px-3 py-1 rounded-full border border-[#feca4d]/30 inline-block mb-3">
+        <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#785a00] bg-[#feca4d]/20 px-3 py-1 rounded-full border border-[#feca4d]/40 inline-block mb-3">
           The Living Heritage • 1857 to The Modern Era
         </span>
         <h2
@@ -61,7 +61,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
       </div>
 
       {/* Featured Narrative Hero Block */}
-      <div className="bg-[#faf2f0] rounded-2xl border border-[#d3c3c0]/40 overflow-hidden shadow-sm mb-16">
+      <div className="bg-[#faf2f0] rounded-2xl border border-[#d3c3c0]/50 overflow-hidden shadow-sm mb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12">
           <div className="lg:col-span-6 relative aspect-[4/3] lg:aspect-auto">
             <img
@@ -103,7 +103,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
       {/* Interactive Regional Coffee Traditions */}
       <div className="mb-16">
         <div className="text-center max-w-xl mx-auto mb-8">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#785a00] bg-[#feca4d]/15 px-2.5 py-0.5 rounded-full border border-[#feca4d]/30">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#785a00] bg-[#feca4d]/20 px-2.5 py-0.5 rounded-full">
             Regional Alchemy
           </span>
           <h3
@@ -125,10 +125,10 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
               <button
                 key={reg.id}
                 onClick={() => setSelectedRegion(reg.id)}
-                className={`p-3.5 rounded-xl border text-left transition-all ${
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-[#271310] text-white border-[#271310] shadow-md'
-                    : 'bg-[#faf2f0] text-[#271310] border-[#d3c3c0]/60 hover:bg-[#eee3e1]'
+                    : 'bg-[#faf2f0] text-[#271310] border-[#d3c3c0] hover:bg-[#eee3e1]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
@@ -147,9 +147,9 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
         </div>
 
         {/* Selected Region Showcase Card */}
-        <div className="bg-[#faf2f0] border border-[#d3c3c0]/50 rounded-2xl p-6 sm:p-8 shadow-xs">
+        <div className="bg-[#faf2f0] border border-[#d3c3c0] rounded-2xl p-6 sm:p-8 shadow-xs">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-5 aspect-[4/3] rounded-xl overflow-hidden shadow-sm bg-[#eee6e5]">
+            <div className="lg:col-span-5 aspect-[4/3] rounded-xl overflow-hidden shadow-sm bg-[#eee3e1]">
               <img
                 src={currentRegion.imageUrl}
                 alt={currentRegion.title}
@@ -157,7 +157,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
               />
             </div>
             <div className="lg:col-span-7 space-y-4">
-              <div className="inline-flex items-center gap-2 bg-[#feca4d]/20 text-[#785a00] text-xs font-bold px-3 py-1 rounded-full border border-[#feca4d]/40">
+              <div className="inline-flex items-center gap-2 bg-[#feca4d]/20 text-[#785a00] text-xs font-bold px-3 py-1 rounded-full">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Specialty: {currentRegion.specialty}</span>
               </div>
@@ -170,7 +170,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
               <p className="text-xs sm:text-sm text-[#504442] leading-relaxed">
                 {currentRegion.description}
               </p>
-              <div className="bg-[#fff8f6] p-3.5 rounded-lg border-l-2 border-[#785a00] text-xs text-[#271310]">
+              <div className="bg-[#fff8f6] p-3.5 rounded-lg border border-[#d3c3c0] text-xs text-[#271310]">
                 <strong>Atmosphere & Essence:</strong> {currentRegion.mood}
               </div>
             </div>
@@ -181,7 +181,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
       {/* The Historical Timeline (1857 - Present) */}
       <div className="mb-16">
         <div className="text-center max-w-xl mx-auto mb-10">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#785a00] bg-[#feca4d]/15 px-2.5 py-0.5 rounded-full border border-[#feca4d]/30">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#785a00] bg-[#feca4d]/20 px-2.5 py-0.5 rounded-full">
             Historical Milestones
           </span>
           <h3
@@ -198,12 +198,12 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
         <div className="relative border-l-2 border-[#d3c3c0] ml-4 md:ml-32 space-y-8 pl-6 md:pl-8">
           {VIETNAM_COFFEE_TIMELINE.map((item, idx) => (
             <div key={idx} className="relative group">
-              {/* Year Pill / Dot */}
+              {/* Year Dot */}
               <div className="absolute -left-[31px] md:-left-[39px] top-0 w-6 h-6 rounded-full bg-[#785a00] border-4 border-[#fff8f6] flex items-center justify-center text-white" />
               <div className="md:absolute md:-left-32 md:top-0 text-xs font-bold text-[#785a00] uppercase tracking-wider mb-1 md:mb-0">
                 {item.year}
               </div>
-              <div className="bg-[#faf2f0] p-5 rounded-xl border border-[#d3c3c0]/40 shadow-2xs group-hover:border-[#785a00]/40 transition-colors">
+              <div className="bg-[#faf2f0] p-5 rounded-xl border border-[#d3c3c0]/50 shadow-2xs group-hover:border-[#785a00]/50 transition-colors">
                 <h4
                   className="text-base font-bold text-[#271310] font-serif mb-1.5"
                   style={{ fontFamily: 'Playfair Display, serif' }}
@@ -222,14 +222,14 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
       {/* Our Story: Vietnamese Coffee Tradition */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
         {/* Tradition Card 1 */}
-        <div className="bg-[#faf2f0] rounded-xl border border-[#d3c3c0]/40 overflow-hidden shadow-xs">
-          <div className="aspect-[16/9] w-full bg-[#eee6e5] relative">
+        <div className="bg-[#faf2f0] rounded-xl border border-[#d3c3c0]/50 overflow-hidden shadow-xs">
+          <div className="aspect-[16/9] w-full bg-[#eee3e1] relative">
             <img
               src="https://images.unsplash.com/photo-1587734195503-904fca47e0e9?auto=format&fit=crop&w=800&q=80"
               alt="Vietnamese Coffee Landscape"
               className="w-full h-full object-cover"
             />
-            <div className="absolute top-3 left-3 bg-[#271310] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
+            <div className="absolute top-3 left-3 bg-[#271310] text-[#feca4d] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
               Vietnamese Coffee Tradition
             </div>
           </div>
@@ -251,14 +251,14 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
         </div>
 
         {/* Tradition Card 2 */}
-        <div className="bg-[#faf2f0] rounded-xl border border-[#d3c3c0]/40 overflow-hidden shadow-xs">
-          <div className="aspect-[16/9] w-full bg-[#eee6e5] relative">
+        <div className="bg-[#faf2f0] rounded-xl border border-[#d3c3c0]/50 overflow-hidden shadow-xs">
+          <div className="aspect-[16/9] w-full bg-[#eee3e1] relative">
             <img
               src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=800&q=80"
               alt="Highland Mountain Landscape"
               className="w-full h-full object-cover"
             />
-            <div className="absolute top-3 left-3 bg-[#081c17] text-[#d0e8de] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
+            <div className="absolute top-3 left-3 bg-[#081c17] text-[#feca4d] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded">
               Highland Climate
             </div>
           </div>
@@ -290,7 +290,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
             }`}
           >
             <div className={`lg:col-span-6 ${idx % 2 === 1 ? 'lg:order-2' : ''}`}>
-              <div className="aspect-[16/10] rounded-xl overflow-hidden shadow-sm bg-[#eee6e5]">
+              <div className="aspect-[16/10] rounded-xl overflow-hidden shadow-sm bg-[#eee3e1]">
                 <img
                   src={story.imageUrl}
                   alt={story.title}
@@ -316,7 +316,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
               <p className="text-xs text-[#504442] leading-relaxed">
                 {story.content}
               </p>
-              <div className="bg-[#fff8f6] p-3.5 rounded-lg border-l-2 border-[#785a00] text-xs font-semibold text-[#271310] italic">
+              <div className="bg-[#faf2f0] p-3.5 rounded-lg border-l-4 border-[#785a00] text-xs font-semibold text-[#271310] italic">
                 “{story.highlight}”
               </div>
             </div>
@@ -340,7 +340,7 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
       {/* Authentic Origin Commitments */}
       <div className="bg-[#271310] text-[#f4eceb] rounded-2xl p-8 sm:p-12 shadow-lg">
         <div className="max-w-3xl mx-auto text-center space-y-5">
-          <div className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#feca4d] bg-[#3e2723] px-3 py-1 rounded-full border border-[#feca4d]/30">
+          <div className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#feca4d] bg-white/10 px-3 py-1 rounded-full">
             <Leaf className="w-3.5 h-3.5 text-[#feca4d]" />
             <span>Vietnamese Origin & Cultural Tradition</span>
           </div>
@@ -350,25 +350,25 @@ export const HeritageStory: React.FC<HeritageStoryProps> = ({
           >
             A Premium Vietnamese-Origin Coffee Brand
           </h3>
-          <p className="text-xs sm:text-sm text-[#ae8d87] leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#d3c3c0] leading-relaxed">
             A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon. Honoring centuries of slow coffee heritage and bringing distinct Vietnamese flavor profiles to discerning coffee lovers.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-[#3e2723]">
-            <div className="p-4 bg-[#3e2723]/60 rounded-xl text-center border border-[#5b403c]/40">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-white/15">
+            <div className="p-4 bg-[#3d201c] rounded-xl text-center">
               <p className="text-2xl font-bold text-[#feca4d] font-serif">100%</p>
               <p className="text-[11px] text-white font-semibold mt-1">Authentic Heritage</p>
-              <p className="text-[10px] text-[#ae8d87] mt-0.5">Vietnamese recipes & formats</p>
+              <p className="text-[10px] text-[#d3c3c0] mt-0.5">Vietnamese recipes & formats</p>
             </div>
-            <div className="p-4 bg-[#3e2723]/60 rounded-xl text-center border border-[#5b403c]/40">
+            <div className="p-4 bg-[#3d201c] rounded-xl text-center">
               <p className="text-2xl font-bold text-[#feca4d] font-serif">India</p>
               <p className="text-[11px] text-white font-semibold mt-1">Launching Soon</p>
-              <p className="text-[10px] text-[#ae8d87] mt-0.5">Sachets & instant formats</p>
+              <p className="text-[10px] text-[#d3c3c0] mt-0.5">Sachets & instant formats</p>
             </div>
-            <div className="p-4 bg-[#3e2723]/60 rounded-xl text-center border border-[#5b403c]/40">
+            <div className="p-4 bg-[#3d201c] rounded-xl text-center">
               <p className="text-2xl font-bold text-[#feca4d] font-serif">Curated</p>
               <p className="text-[11px] text-white font-semibold mt-1">Planned Flavours</p>
-              <p className="text-[10px] text-[#ae8d87] mt-0.5">Classic 3-in-1, coconut & mocha</p>
+              <p className="text-[10px] text-[#d3c3c0] mt-0.5">Classic 3-in-1, coconut & mocha</p>
             </div>
           </div>
         </div>

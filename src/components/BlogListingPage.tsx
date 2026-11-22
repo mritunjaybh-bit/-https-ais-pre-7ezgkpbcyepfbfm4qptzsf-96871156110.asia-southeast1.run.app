@@ -60,7 +60,7 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 space-y-10">
         {/* Editorial Journal Header Banner */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#feca4d]/20 border border-[#feca4d]/40 text-[#785a00] text-xs font-bold tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#feca4d]/20 border border-[#feca4d]/50 text-[#785a00] text-xs font-bold tracking-wider uppercase">
             <BookOpen className="w-3.5 h-3.5 text-[#785a00]" />
             <span>The Cà Phê Journal</span>
           </div>
@@ -78,7 +78,7 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
         </div>
 
         {/* Search & Category Filter Controls */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b border-[#d3c3c0]/60 pb-6">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b border-[#d3c3c0]/50 pb-6">
           {/* Category Filter Pills */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
             {categories.map((cat) => (
@@ -88,7 +88,7 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   selectedCategory === cat
                     ? 'bg-[#271310] text-white shadow-xs'
-                    : 'bg-white text-[#504442] hover:text-[#271310] hover:bg-[#faf2f0] border border-[#d3c3c0]/60'
+                    : 'bg-white text-[#504442] hover:text-[#271310] hover:bg-[#faf2f0] border border-[#d3c3c0]'
                 }`}
               >
                 {cat}
@@ -104,14 +104,14 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
               placeholder="Search articles or brew tips..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white rounded-xl border border-[#d3c3c0]/80 text-xs text-[#271310] placeholder:text-[#827472] focus:outline-none focus:border-[#785a00] focus:ring-1 focus:ring-[#785a00] transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-white rounded-xl border border-[#d3c3c0] text-xs text-[#271310] placeholder:text-[#827472] focus:outline-none focus:border-[#785a00] focus:ring-1 focus:ring-[#785a00] transition-colors"
             />
           </div>
         </div>
 
         {/* Featured Spotlight Card (Shown when viewing "All" and no search query) */}
         {selectedCategory === 'All' && !searchQuery && featuredPost && (
-          <div className="bg-white rounded-2xl border border-[#d3c3c0]/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
+          <div className="bg-white rounded-2xl border border-[#d3c3c0] overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
             <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
               {/* Image Column */}
               <div className="lg:col-span-7 relative h-64 sm:h-80 lg:h-96 overflow-hidden bg-[#271310]/5">
@@ -122,8 +122,8 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
                   loading="lazy"
                 />
                 <div className="absolute top-4 left-4">
-                  <span className="bg-[#271310]/90 text-[#feca4d] backdrop-blur-xs text-[11px] font-extrabold uppercase px-3 py-1 rounded-full tracking-wider border border-[#feca4d]/40 shadow-xs flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-[#feca4d]" />
+                  <span className="bg-[#feca4d] text-[#271310] text-[11px] font-extrabold uppercase px-3 py-1 rounded-full tracking-wider shadow-xs flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3" />
                     Featured Masterclass
                   </span>
                 </div>
@@ -132,7 +132,7 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
               {/* Content Column */}
               <div className="lg:col-span-5 p-6 sm:p-8 space-y-4">
                 <div className="flex items-center gap-3 text-xs text-[#827472]">
-                  <span className="font-semibold text-[#785a00] uppercase tracking-wider text-[11px] bg-[#feca4d]/20 px-2.5 py-0.5 rounded-full border border-[#feca4d]/30">
+                  <span className="font-semibold text-[#785a00] uppercase tracking-wider text-[11px] bg-[#feca4d]/20 px-2.5 py-0.5 rounded-full">
                     {featuredPost.category}
                   </span>
                   <span>•</span>
@@ -155,7 +155,7 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
                 </p>
 
                 {/* Author Info */}
-                <div className="flex items-center justify-between pt-2 border-t border-[#d3c3c0]/40">
+                <div className="flex items-center justify-between pt-2 border-t border-[#f4ecea]">
                   <div className="flex items-center gap-2.5">
                     <div>
                       <div className="text-xs font-semibold text-[#271310]">
@@ -195,7 +195,7 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
           </div>
 
           {filteredPosts.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-2xl border border-[#d3c3c0]/60 p-8 space-y-4">
+            <div className="text-center py-16 bg-white rounded-2xl border border-[#d3c3c0] p-8 space-y-4">
               <div className="w-12 h-12 rounded-full bg-[#faf2f0] flex items-center justify-center text-[#785a00] mx-auto">
                 <Coffee className="w-6 h-6" />
               </div>
@@ -208,7 +208,7 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
                   setSelectedCategory('All');
                   setSearchQuery('');
                 }}
-                className="px-4 py-2 bg-[#271310] text-white text-xs font-bold rounded-lg hover:bg-[#3e2723] transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[#271310] text-white text-xs font-bold rounded-lg hover:bg-[#3d201c] transition-colors cursor-pointer"
               >
                 Reset Filters
               </button>
@@ -229,7 +229,7 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                     />
-                    <span className="absolute top-3 left-3 bg-[#271310]/90 text-[#feca4d] backdrop-blur-xs text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full tracking-wider border border-[#feca4d]/30">
+                    <span className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs text-[#785a00] text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full tracking-wider border border-[#d3c3c0]">
                       {post.category}
                     </span>
                   </div>
@@ -258,7 +258,7 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
                     </div>
 
                     {/* Footer: Author & Read Link */}
-                    <div className="pt-3 border-t border-[#d3c3c0]/40 flex items-center justify-between">
+                    <div className="pt-3 border-t border-[#f4ecea] flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-medium text-[#504442]">
                           By Cà Phê Editorial
@@ -278,9 +278,9 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
         </div>
 
         {/* Bottom Call to Action: Authentic Vietnamese Coffee */}
-        <div className="bg-[#271310] text-white rounded-2xl p-6 sm:p-10 border border-[#3e2723] relative overflow-hidden shadow-md">
+        <div className="bg-[#271310] text-white rounded-2xl p-6 sm:p-10 border border-[#785a00]/40 relative overflow-hidden shadow-md">
           <div className="relative z-10 max-w-2xl space-y-4">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#feca4d] bg-[#feca4d]/15 px-3 py-1 rounded-full border border-[#feca4d]/30 inline-block">
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#feca4d] bg-[#feca4d]/10 px-3 py-1 rounded-full border border-[#feca4d]/30 inline-block">
               Authentic Vietnamese Coffee Tradition
             </span>
 
@@ -291,20 +291,20 @@ export const BlogListingPage: React.FC<BlogListingPageProps> = ({
               Discover the Authentic Vietnamese Ritual
             </h3>
 
-            <p className="text-xs sm:text-sm text-[#ae8d87] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#d3c3c0] leading-relaxed">
               A premium Vietnamese-origin coffee brand, being developed for the Indian market. Launching soon. Explore our planned product range and join the early access waitlist.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
               <button
                 onClick={onNavigateToShop}
-                className="bg-[#feca4d] hover:bg-[#ffc02e] text-[#271310] text-xs font-bold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-sm flex items-center gap-2 cursor-pointer active:scale-95"
+                className="bg-[#feca4d] hover:bg-[#e5b33d] text-[#271310] text-xs font-bold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-sm flex items-center gap-2 cursor-pointer active:scale-95"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>Shop Fresh Coffee & Phin Kits</span>
               </button>
 
-              <div className="flex items-center gap-1.5 text-xs text-[#f4eceb]/80 ml-2">
+              <div className="flex items-center gap-1.5 text-xs text-[#f4eceb] ml-2">
                 <CheckCircle2 className="w-4 h-4 text-[#feca4d]" />
                 <span>Free shipping on orders above ₹799</span>
               </div>

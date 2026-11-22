@@ -356,10 +356,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     >
       <div
         id="cart-drawer-panel"
-        className="w-full max-w-md bg-[#faf2f0] h-full shadow-2xl flex flex-col justify-between border-l border-[#d3c3c0]/50"
+        className="w-full max-w-md bg-[#fff8f6] h-full shadow-2xl flex flex-col justify-between border-l border-[#d3c3c0]"
       >
         {/* Cart Drawer Header */}
-        <div className="bg-[#271310] text-[#f4eceb] p-5 flex items-center justify-between">
+        <div className="bg-[#271310] text-white p-5 flex items-center justify-between border-b border-[#785a00]/30">
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5 text-[#feca4d]" />
             <h3 className="font-serif font-bold text-base text-white" style={{ fontFamily: 'Playfair Display, serif' }}>
@@ -368,14 +368,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-full text-[#d3c3c0] hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1 rounded-full text-[#d3c3c0] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Free Shipping Progress Indicator */}
-        <div className="bg-[#f0e6e4] px-5 py-2.5 border-b border-[#d3c3c0]/40 text-xs">
+        <div className="bg-[#faf2f0] px-5 py-2.5 border-b border-[#d3c3c0]/50 text-xs">
           {subtotalINR >= freeShippingThreshold ? (
             <div className="flex items-center gap-1.5 text-emerald-800 font-bold">
               <Check className="w-4 h-4 text-emerald-600" />
@@ -401,14 +401,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         <div className="flex-1 overflow-y-auto p-5 space-y-5 text-[#271310]">
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
-              <Package className="w-12 h-12 text-[#827472]/50 stroke-[1.5]" />
+              <Package className="w-12 h-12 text-[#785a00]/60 stroke-[1.5]" />
               <h4 className="font-bold text-sm text-[#271310] font-serif">Your shopping cart is empty</h4>
               <p className="text-xs text-[#504442] max-w-xs">
                 Explore our planned Vietnamese instant coffee varieties and reserve early access.
               </p>
               <button
                 onClick={onClose}
-                className="mt-2 px-5 py-2.5 rounded-lg bg-[#785a00] text-white font-bold text-xs uppercase tracking-wide hover:bg-[#8e6b00] transition-colors"
+                className="mt-2 px-5 py-2.5 rounded-lg bg-[#271310] text-white font-bold text-xs uppercase tracking-wide hover:bg-[#3d201c] transition-colors cursor-pointer"
               >
                 Browse Coffee Catalog
               </button>
@@ -425,7 +425,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <img
                       src={item.imageUrl}
                       alt={item.name}
-                      className="w-16 h-16 object-cover rounded-lg flex-shrink-0 bg-[#f4ecea]"
+                      className="w-16 h-16 object-cover rounded-lg flex-shrink-0 bg-[#faf2f0]"
                     />
 
                     <div className="flex-1 min-w-0 pr-6">
@@ -438,7 +438,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           {item.selectedSize}
                         </span>
                         {item.selectedGrind && (
-                          <span className="text-[9px] bg-[#feca4d]/15 border border-[#feca4d]/40 text-[#785a00] px-1.5 py-0.2 rounded font-semibold truncate max-w-[140px]">
+                          <span className="text-[9px] bg-[#feca4d]/20 border border-[#feca4d]/40 text-[#785a00] px-1.5 py-0.2 rounded font-semibold truncate max-w-[140px]">
                             {item.selectedGrind}
                           </span>
                         )}
